@@ -1,0 +1,17 @@
+# Sekrety i konfiguracja
+.env
+
+# Środowisko wirtualne
+venv/
+ENV/
+
+# Pliki tymczasowe Pythona
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Baza danych (lokalna, jeśli jej używasz)
+*.sqlite3
+
+# Foldery systemowe
+.DS_Store
