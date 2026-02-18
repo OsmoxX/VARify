@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'matches',
+    'django_celery_beat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -116,3 +117,33 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# ==========================================
+# CELERY & REDIS SETTINGS
+# ==========================================
+# Gdzie Celery ma szukać nowych zadań (nasz lokalny Redis)
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+
+# Gdzie Celery ma zapisywać wyniki zakończonych zadań
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+
+# Bezpieczeństwo - format danych do komunikacji to JSON
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Strefa czasowa dla zadań automatycznych (np. żeby o 15:00 znaczyło 15:00 w Polsce)
+CELERY_TIMEZONE = 'Europe/Warsaw'
+
+
+from celery.schedules import crontab
+# ==========================================
+# CELERY BEAT (Harmonogram zadań)
+# ==========================================
+CELERY_BEAT_SCHEDULE = {
+    'pobieraj-mecze-co-5-minut': {
+        'task': 'matches.tasks.sync_football_data',
+        # Wykonuj co 5 minut (zmień na '*/1' jeśli chcesz co minutę do testów)
+        'schedule': crontab(minute='*/10'),
+    },
+}
