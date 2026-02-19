@@ -1,0 +1,385 @@
+/* =========================================
+   KONTROLKI NAGŁÓWKOWE (tytuł + filtr + toggle)
+========================================= */
+.controls-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.main-title {
+    font-size: 1.6rem;
+    color: var(--text-light, #f3f4f6);
+    margin: 0;
+}
+
+.actions-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.live-dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--danger);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+        transform: scale(0.9);
+    }
+
+    70% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    100% {
+        opacity: 0.6;
+        transform: scale(0.9);
+    }
+}
+
+/* =========================================
+   SEKCJE LIGOWE
+========================================= */
+.league-section {
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    border: 1px solid #333;
+}
+
+.league-header {
+    background-color: #242424;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.league-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.league-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: white;
+}
+
+.country-tag {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.league-icon {
+    color: var(--accent);
+}
+
+.chevron-icon {
+    transition: transform 0.3s;
+    color: var(--text-muted);
+}
+
+.league-section.collapsed .chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.league-section.collapsed .league-matches {
+    display: none;
+}
+
+/* =========================================
+   WIERSZ MECZU
+========================================= */
+.match-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 18px 20px;
+    border-top: 1px solid #333;
+    text-decoration: none;
+    color: white;
+    transition: background 0.2s;
+}
+
+.match-row:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.team {
+    font-weight: 500;
+    font-size: 1.05rem;
+}
+
+.team-home {
+    text-align: right;
+}
+
+.team-away {
+    text-align: left;
+}
+
+.score-container {
+    text-align: center;
+    padding: 0 40px;
+}
+
+.score-display {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin: 0;
+}
+
+.match-time-live {
+    color: var(--danger);
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+/* =========================================
+   FILTROWANIE LIG
+========================================= */
+.filter-wrapper {
+    position: relative;
+}
+
+.filter-btn {
+    background: #2a2a2a;
+    color: white;
+    border: 1px solid #444;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-menu {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: var(--nav-bg);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    width: 300px;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.filter-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: var(--text-light, #f3f4f6);
+}
+
+.filter-menu-header .close-filter {
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.filter-menu-header .close-filter:hover {
+    color: var(--danger);
+}
+
+.filter-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.filter-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.filter-content::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+}
+
+/* Search box inside filter */
+.filter-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.filter-search-icon {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.filter-search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-light, #f3f4f6);
+    font-size: 0.9rem;
+}
+
+.filter-search-box input::placeholder {
+    color: #666;
+}
+
+/* Select all / deselect all */
+.filter-actions-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.filter-select-btn {
+    flex: 1;
+    padding: 5px 0;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.filter-select-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+/* League checkbox items */
+.league-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.league-filter-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.checkbox-label input {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.league-filter-name {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+/* No results */
+.filter-no-results {
+    text-align: center;
+    color: #666;
+    padding: 15px;
+    font-size: 0.85rem;
+}
+
+.filter-no-results i {
+    margin-right: 6px;
+}
+
+/* =========================================
+   SUWAK (TOGGLE SWITCH)
+========================================= */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 22px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #333;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--accent);
+}
+
+input:checked+.slider:before {
+    transform: translateX(22px);
+}
+
+.global-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+}
+
+/* =========================================
+   PUSTY STAN
+========================================= */
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 60px 20px;
+    font-size: 1.1rem;
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    display: block;
+    color: #444;
+}

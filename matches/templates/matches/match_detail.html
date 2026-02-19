@@ -1,0 +1,321 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/match_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrapper">
+    <a href="{% url 'home' %}" class="back-btn-modern">
+        <i class="fa-solid fa-chevron-left"></i> Wróć do wyników
+    </a>
+
+    <div class="match-card-premium">
+        <div class="scoreboard-header">
+            <div class="team-block">
+                <span class="team-name-lg">{{ match.home_team.name }}</span>
+            </div>
+            <div class="score-center">
+                <div class="main-score">{{ match.home_score }} - {{ match.away_score }}</div>
+                <div class="status-badge">
+                    <span class="pulse-icon"></span>
+                    {{ match.status }} {% if match.time_elapsed %}/ {{ match.time_elapsed }}'{% endif %}
+                </div>
+            </div>
+            <div class="team-block">
+                <span class="team-name-lg">{{ match.away_team.name }}</span>
+            </div>
+        </div>
+
+        <div class="match-tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'timeline-tab')">Oś czasu</button>
+            <button class="tab-btn" onclick="openTab(event, 'lineups-tab')">Składy</button>
+            <button class="tab-btn" onclick="openTab(event, 'stats-tab')">Statystyki</button>
+        </div>
+
+        {# ======================= OŚ CZASU ======================= #}
+        <div id="timeline-tab" class="tab-content" style="display: block;">
+            <div class="timeline-container">
+                {% for event in events %}
+                <div class="feed-row {{ event.side }}">
+
+                    <div class="feed-time">
+                        {{ event.formatted_time }}{% if event.formatted_time %}'{% endif %}
+                    </div>
+
+                    {# ---------- PERIOD (HT / FT) ---------- #}
+                    {% if event.is_period_marker %}
+                    <div class="feed-badge period-badge">
+                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{% else
+                        %}FT{% endif %}
+                    </div>
+                    <div class="feed-info period-info">
+                        {% if event.text == 'HT' or event.time == 45 %}
+                        Koniec pierwszej połowy
+                        {% elif event.text == 'FT' or event.time == 90 %}
+                        Koniec meczu
+                        {% elif event.text %}
+                        {{ event.text }}
+                        {% else %}
+                        Przerwa
+                        {% endif %}
+                        {% if event.running_score %}
+                        <span class="period-score">{{ event.running_score }}</span>
+                        {% endif %}
+                    </div>
+
+                    {# ---------- INJURY TIME ---------- #}
+                    {% elif event.is_injury_time_announcement %}
+                    <div class="feed-badge injurytime-badge">
+                        <i class="fa-regular fa-clock"></i>
+                    </div>
+                    <div class="feed-info injurytime-info">
+                        Sędzia dolicza: <strong>+{{ event.length|default:event.added_time }} min</strong>
+                    </div>
+
+                    {# ---------- VAR DECISION ---------- #}
+                    {% elif event.is_var_decision %}
+                    <div class="feed-card var-card">
+                        <div class="feed-icon">
+                            <i class="fa-solid fa-display var-icon"></i>
+                        </div>
+                        <div class="feed-details">
+                            <span class="player-name">{{ event.player_name }}</span>
+                            <span class="var-label">
+                                VAR:
+                                {% if event.confirmed %}
+                                <span class="var-confirmed"><i class="fa-solid fa-check"></i> Potwierdzone</span>
+                                {% elif event.confirmed == False %}
+                                <span class="var-overturned"><i class="fa-solid fa-xmark"></i> Odrzucone</span>
+                                {% else %}
+                                <span class="var-pending">W trakcie analizy</span>
+                                {% endif %}
+                            </span>
+                            {% if event.incident_class_label %}
+                            <span class="sub-info">({{ event.incident_class_label }})</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# ---------- STANDARD EVENTS ---------- #}
+                    {% else %}
+                    <div class="feed-card">
+                        <div class="feed-icon">
+
+                            {# --- GOL --- #}
+                            {% if event.is_goal %}
+                            <i class="fa-solid fa-futbol goal-icon"></i>
+                            {% if event.running_score %}
+                            <span class="goal-score">{{ event.running_score }}</span>
+                            {% endif %}
+
+                            {# --- KARTKA --- #}
+                            {% elif event.is_card %}
+                            {% if event.card_color == 'red' %}
+                            <div class="card-icon red"></div>
+                            {% elif event.card_color == 'yellow-red' %}
+                            <div class="card-icon-double">
+                                <div class="card-icon yellow card-overlap"></div>
+                                <div class="card-icon red card-overlap"></div>
+                            </div>
+                            {% else %}
+                            <div class="card-icon yellow"></div>
+                            {% endif %}
+
+                            {# --- ZMIANA --- #}
+                            {% elif event.is_substitution %}
+                            <i class="fa-solid fa-right-left sub-icon"></i>
+
+                            {# --- INNE --- #}
+                            {% else %}
+                            <i class="fa-solid fa-circle-info info-icon"></i>
+                            {% endif %}
+                        </div>
+
+                        <div class="feed-details">
+                            {# === GOL: szczegóły === #}
+                            {% if event.is_goal %}
+                            <span class="player-name">
+                                {{ event.player_name }}
+                                {% if event.incident_class_label %}
+                                <span class="incident-tag">{{ event.incident_class_label }}</span>
+                                {% endif %}
+                            </span>
+                            {% if event.assist_player_name %}
+                            <span class="sub-info">
+                                <i class="fa-solid fa-shoe-prints" style="font-size:0.7rem;"></i>
+                                {{ event.assist_player_name }}
+                            </span>
+                            {% endif %}
+                            {% if event.assist2_player_name %}
+                            <span class="sub-info">
+                                <i class="fa-solid fa-shoe-prints" style="font-size:0.7rem;"></i>
+                                {{ event.assist2_player_name }}
+                            </span>
+                            {% endif %}
+
+                            {# === KARTKA: szczegóły === #}
+                            {% elif event.is_card %}
+                            <span class="player-name">
+                                {{ event.player_name }}
+                                {% if event.rescinded %}
+                                <span class="rescinded-tag">ANULOWANA</span>
+                                {% endif %}
+                            </span>
+                            {% if event.reason %}
+                            <span class="sub-info">{{ event.reason }}</span>
+                            {% endif %}
+                            {% if event.incident_class_label %}
+                            <span class="sub-info card-type-label">{{ event.incident_class_label }}</span>
+                            {% endif %}
+
+                            {# === ZMIANA: szczegóły === #}
+                            {% elif event.is_substitution %}
+                            <span class="sub-detail">
+                                <i class="fa-solid fa-arrow-up" style="color: #10b981;"></i>
+                                <span class="player-name">{{ event.display_player_in }}</span>
+                            </span>
+                            {% if event.display_player_out %}
+                            <span class="sub-detail">
+                                <i class="fa-solid fa-arrow-down" style="color: #ef4444;"></i>
+                                <span class="player-out">{{ event.display_player_out }}</span>
+                                {% if event.injury %}
+                                <i class="fa-solid fa-kit-medical injury-badge" title="Kontuzja"></i>
+                                {% endif %}
+                            </span>
+                            {% endif %}
+
+                            {# === INNE === #}
+                            {% else %}
+                            <span class="player-name">{{ event.player_name }}</span>
+                            {% if event.text %}
+                            <span class="sub-info">{{ event.text }}</span>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="no-data">Brak zdarzeń.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ======================= SKŁADY ======================= #}
+        <div id="lineups-tab" class="tab-content" style="display: none;">
+            <div class="lineups-dual">
+                {# --- GOSPODARZE --- #}
+                <div class="lineup-side">
+                    <div class="side-label">{{ match.home_team.name }}</div>
+
+                    <div class="lineup-section-header">Pierwszy skład</div>
+                    {% for player in lineups.home_xi %}
+                    <div class="player-row {% if player.is_captain %}captain-row{% endif %}">
+                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
+                        <span class="p-name">
+                            {{ player.player_name }}
+                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
+                            {% if player.is_goalkeeper %}<span class="gk-badge">GK</span>{% endif %}
+                        </span>
+                        {% if player.position_label and not player.is_goalkeeper %}
+                        <span class="p-position">{{ player.position_label }}</span>
+                        {% endif %}
+                        {% if player.avg_rating %}
+                        <span class="p-rating">{{ player.avg_rating }}</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="no-data">Brak danych.</p>
+                    {% endfor %}
+
+                    {% if lineups.home_subs %}
+                    <div class="lineup-section-header subs-header">Rezerwa</div>
+                    {% for player in lineups.home_subs %}
+                    <div class="player-row sub-player {% if player.is_captain %}captain-row{% endif %}">
+                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
+                        <span class="p-name">
+                            {{ player.player_name }}
+                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
+                        </span>
+                        {% if player.position_label %}
+                        <span class="p-position">{{ player.position_label }}</span>
+                        {% endif %}
+                        {% if player.avg_rating %}
+                        <span class="p-rating">{{ player.avg_rating }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+
+                {# --- GOŚCIE --- #}
+                <div class="lineup-side">
+                    <div class="side-label">{{ match.away_team.name }}</div>
+
+                    <div class="lineup-section-header">Pierwszy skład</div>
+                    {% for player in lineups.away_xi %}
+                    <div class="player-row {% if player.is_captain %}captain-row{% endif %}">
+                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
+                        <span class="p-name">
+                            {{ player.player_name }}
+                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
+                            {% if player.is_goalkeeper %}<span class="gk-badge">GK</span>{% endif %}
+                        </span>
+                        {% if player.position_label and not player.is_goalkeeper %}
+                        <span class="p-position">{{ player.position_label }}</span>
+                        {% endif %}
+                        {% if player.avg_rating %}
+                        <span class="p-rating">{{ player.avg_rating }}</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="no-data">Brak danych.</p>
+                    {% endfor %}
+
+                    {% if lineups.away_subs %}
+                    <div class="lineup-section-header subs-header">Rezerwa</div>
+                    {% for player in lineups.away_subs %}
+                    <div class="player-row sub-player {% if player.is_captain %}captain-row{% endif %}">
+                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
+                        <span class="p-name">
+                            {{ player.player_name }}
+                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
+                        </span>
+                        {% if player.position_label %}
+                        <span class="p-position">{{ player.position_label }}</span>
+                        {% endif %}
+                        {% if player.avg_rating %}
+                        <span class="p-rating">{{ player.avg_rating }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="stats-tab" class="tab-content" style="display: none;">
+            <p class="no-data">Statystyki niedostępne.</p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+</script>
+{% endblock %}

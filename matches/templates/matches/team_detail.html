@@ -1,0 +1,95 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/match_detail.css' %}">
+<link rel="stylesheet" href="{% static 'matches/team_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrapper">
+    <a class="back-btn-modern" href="/">
+        <i class="fa-solid fa-chevron-left"></i> Powrót
+    </a>
+
+    {# ── NAGŁÓWEK DRUŻYNY ── #}
+    <div class="team-header">
+        {% if team.logo_url %}
+        <img class="team-logo" src="{{ team.logo_url }}" alt="{{ team.name }}">
+        {% else %}
+        <div class="team-logo-placeholder">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        {% endif %}
+        <div class="team-name-section">
+            <h1>{{ team.name }}</h1>
+            <div class="team-meta">
+                {% if recent_matches %}
+                {{ recent_matches|length }} meczów w bazie
+                {% else %}
+                Brak meczów
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ── OSTATNIE MECZE ── #}
+    <div class="team-section">
+        <h2><i class="fa-solid fa-clock-rotate-left"></i> Ostatnie mecze</h2>
+        {% for match in recent_matches %}
+        <a href="{% url 'match_detail' match.id %}" class="team-match-row">
+            <div class="match-teams">
+                <span class="match-team-name home {% if match.home_team == team %}highlight{% endif %}">
+                    {{ match.home_team.name }}
+                </span>
+                <span class="match-score-box">{{ match.home_score }} - {{ match.away_score }}</span>
+                <span class="match-team-name away {% if match.away_team == team %}highlight{% endif %}">
+                    {{ match.away_team.name }}
+                </span>
+            </div>
+            <span class="match-league-tag">
+                {% if match.league %}{{ match.league.name }}{% endif %}
+            </span>
+        </a>
+        {% empty %}
+        <div class="empty-state-small">
+            <i class="fa-solid fa-circle-info"></i>
+            Brak meczów w bazie danych.
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── SKŁAD ── #}
+    {% if squad %}
+    <div class="team-section">
+        <h2><i class="fa-solid fa-users"></i> Skład (z meczu: {{ latest_match }})</h2>
+        <div class="squad-grid">
+            {% for player in squad %}
+            <div class="squad-player">
+                <div class="squad-number">{{ player.shirt_number|default:"–" }}</div>
+                <div class="squad-player-info">
+                    <div class="squad-player-name">
+                        {{ player.player_name }}
+                        {% if player.is_captain %}
+                        <span class="captain-badge">C</span>
+                        {% endif %}
+                    </div>
+                    <div class="squad-player-meta">
+                        {% if player.position %}
+                        <span class="pos-tag">{{ player.position }}</span>
+                        {% endif %}
+                        {% if not player.is_starting_xi %}
+                        <span class="sub-badge">Rezerwowy</span>
+                        {% endif %}
+                        {% if player.avg_rating %}
+                        ⭐ {{ player.avg_rating }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

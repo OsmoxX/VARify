@@ -1,15 +1,189 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Matches</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-</head>
-<body>
-   <h1>Live Football Scores</h1>
-    <div hx-get="/live-list-only/" hx-trigger="every 30s" hx-swap="innerHTML">
-        {% include 'matches/match_list_snippet.html' %}
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block title %}VARify - Centrum Wyników{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/live_match_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="controls-wrapper">
+    <div class="title-section">
+        <h1 class="main-title">Mecze na żywo</h1>
+        <span class="live-dot"></span>
+    </div>
+
+    <div class="actions-section">
+        <div class="filter-wrapper">
+            <button class="filter-btn" onclick="toggleFilterMenu()">
+                <i class="fa-solid fa-filter"></i> Filtruj ligi
+            </button>
+
+            <div id="filter-menu" class="filter-menu">
+                <div class="filter-menu-header">
+                    <strong>Filtruj ligi</strong>
+                    <i class="fa-solid fa-xmark close-filter" onclick="toggleFilterMenu()"></i>
+                </div>
+
+                <div class="filter-search-box">
+                    <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
+                    <input type="text" id="league-search-input" placeholder="Szukaj ligi..."
+                        oninput="filterLeagueCheckboxes(this.value)" autocomplete="off">
+                </div>
+
+                <div class="filter-actions-bar">
+                    <button class="filter-select-btn" onclick="selectAllVisible()">Zaznacz wszystkie</button>
+                    <button class="filter-select-btn" onclick="deselectAllVisible()">Odznacz wszystkie</button>
+                </div>
+
+                <div class="filter-content" id="league-filter-list">
+                    {% for league_name in all_league_names %}
+                    <label class="checkbox-label league-filter-item" data-league-lower="{{ league_name|lower }}">
+                        <input type="checkbox" checked class="league-filter-cb" onchange="applyFilters()"
+                            data-league="{{ league_name }}">
+                        <span class="league-filter-name">{{ league_name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <div class="filter-no-results" id="filter-no-results" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    Nie znaleziono lig
+                </div>
+            </div>
+        </div>
+
+        <div class="global-toggle">
+            <span class="toggle-text">Rozwiń wszystkie</span>
+            <label class="switch">
+                <input type="checkbox" id="global-toggle-input" checked onchange="toggleAllLeagues(this)">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 </div>
-</body>
-</html>
+
+<div class="leagues-container">
+    {% for item in structured_data %}
+    {% for league in item.leagues %}
+    <div class="league-section" data-league-name="{{ league.name }}">
+        <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
+            <div class="league-info">
+                <i class="fa-solid fa-trophy league-icon"></i>
+                <span class="league-title">{{ league.name }}</span>
+                <span class="country-tag">• {{ item.country }}</span>
+            </div>
+            <i class="fa-solid fa-chevron-down chevron-icon"></i>
+        </div>
+
+        <div class="league-matches">
+            {% for match in league.matches %}
+            <a href="{% url 'match_detail' match.id %}" class="match-row">
+                <div class="team team-home">{{ match.home_team.name }}</div>
+                <div class="score-container">
+                    <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
+                    <div class="match-time-live">{{ match.time_elapsed|default:"0" }}'</div>
+                </div>
+                <div class="team team-away">{{ match.away_team }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    {% empty %}
+    <div class="empty-state">
+        <i class="fa-solid fa-circle-nodes"></i>
+        <p>Brak meczów na żywo w Twojej bazie danych.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 1. Toggle filter menu
+    function toggleFilterMenu() {
+        const menu = document.getElementById('filter-menu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 2. Search/filter league checkboxes
+    function filterLeagueCheckboxes(query) {
+        const q = query.trim().toLowerCase();
+        const items = document.querySelectorAll('.league-filter-item');
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            const name = item.getAttribute('data-league-lower');
+            const match = !q || name.includes(q);
+            item.style.display = match ? 'flex' : 'none';
+            if (match) visibleCount++;
+        });
+
+        document.getElementById('filter-no-results').style.display =
+            visibleCount === 0 ? 'block' : 'none';
+    }
+
+    // 3. Select / Deselect all visible
+    function selectAllVisible() {
+        document.querySelectorAll('.league-filter-item').forEach(item => {
+            if (item.style.display !== 'none') {
+                item.querySelector('.league-filter-cb').checked = true;
+            }
+        });
+        applyFilters();
+    }
+
+    function deselectAllVisible() {
+        document.querySelectorAll('.league-filter-item').forEach(item => {
+            if (item.style.display !== 'none') {
+                item.querySelector('.league-filter-cb').checked = false;
+            }
+        });
+        applyFilters();
+    }
+
+    // 4. Apply filters — show/hide league sections
+    function applyFilters() {
+        const checkboxes = document.querySelectorAll('.league-filter-cb');
+        const sections = document.querySelectorAll('.league-section');
+
+        checkboxes.forEach(cb => {
+            const leagueName = cb.getAttribute('data-league');
+            sections.forEach(section => {
+                if (section.getAttribute('data-league-name') === leagueName) {
+                    section.style.display = cb.checked ? 'block' : 'none';
+                }
+            });
+        });
+    }
+
+    // 5. Toggle single league section
+    function toggleLeagueSection(section) {
+        section.classList.toggle('collapsed');
+    }
+
+    // 6. Global expand/collapse
+    function toggleAllLeagues(checkbox) {
+        const sections = document.querySelectorAll('.league-section');
+        sections.forEach(section => {
+            if (checkbox.checked) {
+                section.classList.remove('collapsed');
+            } else {
+                section.classList.add('collapsed');
+            }
+        });
+    }
+
+    // Close filter menu on outside click
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('filter-menu');
+        const btn = document.querySelector('.filter-btn');
+        if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+</script>
+
+{% endblock %}

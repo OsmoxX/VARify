@@ -1,0 +1,560 @@
+/* =========================================
+   Przycisk powrotu
+========================================= */
+.back-btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    text-decoration: none;
+    background: var(--card-bg);
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    margin-bottom: 25px;
+    transition: 0.3s;
+    font-weight: 500;
+}
+
+.back-btn-modern:hover {
+    background: #2a2a2a;
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* =========================================
+   Karta meczu – premium
+========================================= */
+.match-card-premium {
+    background: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+/* Nagłówek tablicy wyników */
+.scoreboard-header {
+    background: linear-gradient(180deg, #1a1a1a 0%, #242424 100%);
+    padding: 50px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    text-align: center;
+}
+
+.team-block { flex: 1; }
+.team-name-lg { font-size: 2rem; font-weight: 800; color: white; }
+
+.score-center { flex: 1; }
+.main-score {
+    font-size: 5rem;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 15px;
+    text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+}
+
+.status-badge {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 15px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* =========================================
+   ZAKŁADKI (TABS)
+========================================= */
+.match-tabs {
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid #333;
+    background: #1e1e1e;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 15px 30px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: 0.3s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover { color: white; }
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+}
+
+.tab-content {
+    padding: 30px;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   CENTRALNA OŚ CZASU (FEED)
+========================================= */
+.timeline-container {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Linia pionowa na środku */
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #333;
+    transform: translateX(-50%);
+    z-index: 0;
+}
+
+.feed-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    position: relative;
+    width: 100%;
+    z-index: 1;
+}
+
+/* Kółko z czasem na środku */
+.feed-time, .feed-badge {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #242424;
+    border: 2px solid #333;
+    color: white;
+    font-weight: bold;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    z-index: 2;
+}
+
+/* =========================================
+   KARTA ZDARZENIA
+========================================= */
+.feed-card {
+    width: 45%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #333;
+    padding: 12px 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: 0.2s;
+}
+
+.feed-card:hover { border-color: var(--accent); }
+
+/* =========================================
+   POZYCJONOWANIE HOME / AWAY / NEUTRAL
+========================================= */
+
+/* GOSPODARZE - Lewa strona */
+.feed-row.home { justify-content: flex-start; }
+.feed-row.home .feed-card { margin-right: auto; flex-direction: row-reverse; text-align: right; }
+.feed-row.home .feed-details { align-items: flex-end; }
+
+/* GOŚCIE - Prawa strona */
+.feed-row.away { justify-content: flex-end; }
+.feed-row.away .feed-card { margin-left: auto; text-align: left; }
+.feed-row.away .feed-details { align-items: flex-start; }
+
+/* PRZERWA (NEUTRAL) */
+.feed-row.neutral { justify-content: center; margin: 40px 0; }
+.feed-row.neutral .feed-badge {
+    width: auto;
+    padding: 0 15px;
+    border-radius: 20px;
+}
+.feed-row.neutral .feed-info {
+    margin-top: 50px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* =========================================
+   PERIOD SEPARATORS (HT / FT)
+========================================= */
+.period-badge {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    background: #1a2e25;
+}
+
+.period-info {
+    color: var(--text-muted);
+}
+
+.period-score {
+    display: inline-block;
+    margin-left: 8px;
+    color: white;
+    font-weight: 700;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+/* =========================================
+   INJURY TIME
+========================================= */
+.injurytime-badge {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+.injurytime-info {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+/* =========================================
+   IKONY ZDARZEŃ
+========================================= */
+.feed-icon { display: flex; align-items: center; gap: 6px; }
+
+.goal-icon { color: white; font-size: 1.2rem; }
+.sub-icon { color: var(--accent); font-size: 1.1rem; }
+.info-icon { color: var(--text-muted); }
+.var-icon { color: #818cf8; font-size: 1.1rem; }
+
+/* Kartki */
+.card-icon {
+    width: 12px;
+    height: 17px;
+    border-radius: 2px;
+    display: inline-block;
+}
+.card-icon.yellow {
+    background: #eab308;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.4);
+}
+.card-icon.red {
+    background: #ef4444;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+/* Podwójna kartka (2x żółta) */
+.card-icon-double {
+    position: relative;
+    width: 20px;
+    height: 17px;
+}
+.card-icon-double .card-overlap:first-child {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+.card-icon-double .card-overlap:last-child {
+    position: absolute;
+    left: 6px;
+    top: 2px;
+}
+
+/* Wynik przy golu */
+.goal-score {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-left: 6px;
+}
+
+/* =========================================
+   DETALE ZDARZENIA
+========================================= */
+.feed-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-weight: 600;
+    color: white;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.player-out {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.95rem;
+}
+
+.sub-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Tag incidentClass (samobój, karny, itp.) */
+.incident-tag {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Anulowana kartka */
+.rescinded-tag {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-type-label {
+    font-style: italic;
+    color: #6b7280;
+}
+
+/* Zmiana – detale */
+.sub-detail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+/* Kontuzja */
+.injury-badge {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-left: 4px;
+    animation: pulse-injury 2s infinite;
+}
+
+@keyframes pulse-injury {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* =========================================
+   VAR DECISION
+========================================= */
+.var-card {
+    border-color: #818cf8 !important;
+    background: rgba(129, 140, 248, 0.05);
+}
+
+.var-card:hover {
+    border-color: #a5b4fc !important;
+}
+
+.var-label {
+    font-size: 0.8rem;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.var-confirmed {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.var-overturned {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.var-pending {
+    color: #fbbf24;
+    font-weight: 500;
+}
+
+/* =========================================
+   SKŁADY (LINEUPS) – rozbudowane
+========================================= */
+.lineups-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.lineup-side {
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #2d2d2d;
+}
+
+.side-label {
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lineup-section-header {
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 0 8px;
+    margin-top: 5px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 5px;
+}
+
+.subs-header {
+    margin-top: 20px;
+    color: var(--text-muted);
+}
+
+.player-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.player-row:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.captain-row {
+    background: rgba(16, 185, 129, 0.04);
+}
+
+.sub-player {
+    opacity: 0.7;
+}
+
+.sub-player:hover {
+    opacity: 1;
+}
+
+.p-num {
+    color: #555;
+    width: 30px;
+    min-width: 30px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.p-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.captain-badge {
+    background: var(--accent);
+    color: #0d2818;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+}
+
+.gk-badge {
+    background: #eab308;
+    color: #1a1a1a;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.p-position {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.p-rating {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.85rem;
+    min-width: 35px;
+    text-align: right;
+}
+
+/* =========================================
+   NO DATA
+========================================= */
+.no-data {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 30px;
+    font-style: italic;
+}
+
+/* =========================================
+   RESPONSYWNOŚĆ
+========================================= */
+@media (max-width: 900px) {
+    .scoreboard-header { flex-direction: column; gap: 30px; }
+    .main-score { font-size: 4rem; }
+    .lineups-dual { grid-template-columns: 1fr; }
+
+    .feed-card { width: 42%; }
+    .feed-time, .feed-badge { width: 36px; height: 36px; font-size: 0.75rem; }
+}
+
+@media (max-width: 600px) {
+    .tab-btn { padding: 12px 15px; font-size: 0.9rem; }
+    .feed-card { width: 40%; padding: 10px 12px; }
+    .team-name-lg { font-size: 1.4rem; }
+    .main-score { font-size: 3rem; }
+}

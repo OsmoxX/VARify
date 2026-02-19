@@ -3,7 +3,7 @@
         {% for match in matches %}
             <li>
                 <strong>[{{ match.status }}]</strong>
-                {{ match.home_team.name }} {{ match.home_score }} : {{ match.away_score }} {{ match.away_team.name }}
+                <a href="{% url 'match_detail' match_id=match.id %}">{{ match.home_team.name }}</a> {{ match.home_score }} : {{ match.away_score }} {{ match.away_team.name }}
                 <small>({{ match.league.name }})</small>
             </li>
         {% empty %}

@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VARify{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'matches/base.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <i class="fa-solid fa-futbol"></i> VAR<span>ify</span>
+        </a>
+
+        <div class="nav-search-container">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="live-search-input" class="nav-search-input" placeholder="Szukaj w VARify"
+                autocomplete="off">
+
+            <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
+        </div>
+
+        <div class="nav-links">
+            <a href="/" class="nav-link">
+                <i class="fa-solid fa-tower-broadcast"></i> Mecze na żywo
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fa-solid fa-calendar-days"></i> Kalendarz
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        const searchInput = document.getElementById('live-search-input');
+        const dropdown = document.getElementById('search-results-dropdown');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            clearTimeout(searchTimeout);
+
+            if (query.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Debounce — 200ms delay
+            searchTimeout = setTimeout(() => {
+                fetch(`/search-api/?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        dropdown.innerHTML = '';
+
+                        if (data.results.length === 0) {
+                            dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-circle-exclamation" style="color:#666;margin-right:8px;"></i>Brak wyników...</div>';
+                        } else {
+                            data.results.forEach(team => {
+                                const item = document.createElement('a');
+                                item.className = 'search-item';
+                                item.href = `/team/${team.id}/`;
+                                item.innerHTML = `<i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 10px;"></i> ${team.name}`;
+                                dropdown.appendChild(item);
+                            });
+                        }
+                        dropdown.style.display = 'block';
+                    });
+            }, 200);
+        });
+
+        // Ukrywamy listę, jeśli klikniesz gdziekolwiek indziej na ekranie
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
