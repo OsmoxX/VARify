@@ -310,9 +310,9 @@ API incidentType → MatchEvent mapping:
 │ goal          │ player, assists, score, incidentClass    │
 │ card          │ player, color, reason, rescinded         │
 │ substitution  │ playerIn, playerOut, injury              │
-│ period        │ text (HT/FT), score, isLive             │
+│ period        │ text (HT/FT), score, isLive              │
 │ injuryTime    │ length (added minutes)                   │
-│ varDecision   │ player, confirmed                       │
+│ varDecision   │ player, confirmed                        │
 └───────────────┴──────────────────────────────────────────┘
 ```
 
