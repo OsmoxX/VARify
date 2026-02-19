@@ -1,7 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-from .models import LiveMatch, Team, League, MatchEvent, MatchLineup
+from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer
 
 # Ładujemy klucze z pliku .env
 load_dotenv()
@@ -287,6 +287,17 @@ def fetch_match_details(local_match_id, api_match_id):
         if response_lin.status_code == 200:
             data = response_lin.json()
 
+            # Zapisz formacje
+            home_formation = data.get('home', {}).get('formation')
+            away_formation = data.get('away', {}).get('formation')
+            if home_formation or away_formation:
+                if home_formation:
+                    match.home_formation = home_formation
+                if away_formation:
+                    match.away_formation = away_formation
+                match.save()
+                print(f"Formacje: {home_formation} vs {away_formation}")
+
             def _save_players(players_list, is_home):
                 count = 0
                 for p in players_list:
@@ -309,15 +320,46 @@ def fetch_match_details(local_match_id, api_match_id):
                     count += 1
                 return count
 
+            def _save_missing_players(missing_list, is_home):
+                count = 0
+                if not missing_list:
+                    return 0
+                
+                for item in missing_list:
+                    player_info = item.get('player', {})
+                    if not player_info:
+                        continue
+                        
+                    MissingPlayer.objects.get_or_create(
+                        match=match,
+                        player_name=player_info.get('name', 'Nieznany'),
+                        is_home_team=is_home,
+                        defaults={
+                            'type': item.get('type', 'missing'),
+                            'reason': str(item.get('reason', '')),
+                        }
+                    )
+                    count += 1
+                return count
+
             # --- GOSPODARZE ---
-            home_players = data.get('home', {}).get('players', [])
+            home_data = data.get('home', {})
+            home_players = home_data.get('players', [])
+            home_missing = home_data.get('missingPlayers', [])
+            
             home_count = _save_players(home_players, is_home=True)
+            home_missing_count = _save_missing_players(home_missing, is_home=True)
 
             # --- GOŚCIE ---
-            away_players = data.get('away', {}).get('players', [])
+            away_data = data.get('away', {})
+            away_players = away_data.get('players', [])
+            away_missing = away_data.get('missingPlayers', [])
+            
             away_count = _save_players(away_players, is_home=False)
+            away_missing_count = _save_missing_players(away_missing, is_home=False)
 
             print(f"Zapisano składy (Home: {home_count}, Away: {away_count})")
+            print(f"Zapisano brakujących graczy (Home: {home_missing_count}, Away: {away_missing_count})")
 
     except Exception as e:
         print(f"Wyjątek przy pobieraniu składów: {e}")

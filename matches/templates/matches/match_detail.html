@@ -47,8 +47,7 @@
                     {# ---------- PERIOD (HT / FT) ---------- #}
                     {% if event.is_period_marker %}
                     <div class="feed-badge period-badge">
-                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{% else
-                        %}FT{% endif %}
+                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{% else%}FT{% endif %}
                     </div>
                     <div class="feed-info period-info">
                         {% if event.text == 'HT' or event.time == 45 %}
@@ -175,6 +174,7 @@
                             <span class="sub-detail">
                                 <i class="fa-solid fa-arrow-up" style="color: #10b981;"></i>
                                 <span class="player-name">{{ event.display_player_in }}</span>
+
                             </span>
                             {% if event.display_player_out %}
                             <span class="sub-detail">
@@ -205,95 +205,158 @@
 
         {# ======================= SKŁADY ======================= #}
         <div id="lineups-tab" class="tab-content" style="display: none;">
-            <div class="lineups-dual">
-                {# --- GOSPODARZE --- #}
-                <div class="lineup-side">
-                    <div class="side-label">{{ match.home_team.name }}</div>
 
-                    <div class="lineup-section-header">Pierwszy skład</div>
-                    {% for player in lineups.home_xi %}
-                    <div class="player-row {% if player.is_captain %}captain-row{% endif %}">
-                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
-                        <span class="p-name">
-                            {{ player.player_name }}
-                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
-                            {% if player.is_goalkeeper %}<span class="gk-badge">GK</span>{% endif %}
-                        </span>
-                        {% if player.position_label and not player.is_goalkeeper %}
-                        <span class="p-position">{{ player.position_label }}</span>
-                        {% endif %}
-                        {% if player.avg_rating %}
-                        <span class="p-rating">{{ player.avg_rating }}</span>
+            {# ══════ BOISKO ══════ #}
+            <div class="pitch-container">
+                {# Header z nazwami drużyn i formacjami #}
+                <div class="pitch-teams-header">
+                    <div class="team-header-home">
+                        {{ match.home_team.name }}
+                        {% if match.home_formation %}<span class="formation-tag">{{ match.home_formation }}</span>
                         {% endif %}
                     </div>
-                    {% empty %}
-                    <p class="no-data">Brak danych.</p>
-                    {% endfor %}
-
-                    {% if lineups.home_subs %}
-                    <div class="lineup-section-header subs-header">Rezerwa</div>
-                    {% for player in lineups.home_subs %}
-                    <div class="player-row sub-player {% if player.is_captain %}captain-row{% endif %}">
-                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
-                        <span class="p-name">
-                            {{ player.player_name }}
-                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
-                        </span>
-                        {% if player.position_label %}
-                        <span class="p-position">{{ player.position_label }}</span>
+                    <div class="team-header-away">
+                        {% if match.away_formation %}<span class="formation-tag">{{ match.away_formation }}</span>
                         {% endif %}
-                        {% if player.avg_rating %}
-                        <span class="p-rating">{{ player.avg_rating }}</span>
+                        {{ match.away_team.name }}
+                    </div>
+                </div>
+
+                {# Pitch markings #}
+                <div class="pitch-field">
+                    <div class="pitch-half-line"></div>
+                    <div class="pitch-center-circle"></div>
+                    <div class="pitch-center-dot"></div>
+
+                    <div class="pitch-penalty-box pitch-penalty-left"></div>
+                    <div class="pitch-penalty-box pitch-penalty-right"></div>
+
+                    <div class="pitch-goal-box pitch-goal-left"></div>
+                    <div class="pitch-goal-box pitch-goal-right"></div>
+
+                    <div class="pitch-corner pitch-corner-tl"></div>
+                    <div class="pitch-corner pitch-corner-tr"></div>
+                    <div class="pitch-corner pitch-corner-bl"></div>
+                    <div class="pitch-corner pitch-corner-br"></div>
+
+
+                    {# Home players #}
+                    {% if pitch_home %}
+                    {% for item in pitch_home %}
+                    <div class="pitch-player home-player" style="--p-top: {{ item.top }}%; --p-left: {{ item.left }}%;">
+                        <div class="pitch-player-circle {% if item.player.is_captain %}captain-circle{% endif %}">
+                            {{ item.player.shirt_number|default:"" }}
+                        </div>
+                        <div class="pitch-player-name">
+                            {{ item.player.player_name|truncatewords:2 }}
+                        </div>
+                        {% if item.player.avg_rating %}
+                        <div class="pitch-rating {{ item.rating_class }}">
+                            {{ item.player.avg_rating }}
+                        </div>
                         {% endif %}
                     </div>
                     {% endfor %}
                     {% endif %}
+
+                    {# Away players #}
+                    {% if pitch_away %}
+                    {% for item in pitch_away %}
+                    <div class="pitch-player away-player" style="--p-top: {{ item.top }}%; --p-left: {{ item.left }}%;">
+                        <div class="pitch-player-circle {% if item.player.is_captain %}captain-circle{% endif %}">
+                            {{ item.player.shirt_number|default:"" }}
+                        </div>
+                        <div class="pitch-player-name">
+                            {{ item.player.player_name|truncatewords:2 }}
+                        </div>
+                        {% if item.player.avg_rating %}
+                        <div class="pitch-rating {{ item.rating_class }}">
+                            {{ item.player.avg_rating }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if not pitch_home and not pitch_away %}
+                    <div class="pitch-empty-state">
+                        <div class="pitch-empty-icon">
+                            <i class="fa-solid fa-people-group"></i>
+                        </div>
+                        <div class="pitch-empty-text">
+                            Składy na boisku niedostępne
+                        </div>
+                    </div>
+                    {% endif %}
+
                 </div>
+            </div>
 
-                {# --- GOŚCIE --- #}
-                <div class="lineup-side">
-                    <div class="side-label">{{ match.away_team.name }}</div>
-
-                    <div class="lineup-section-header">Pierwszy skład</div>
-                    {% for player in lineups.away_xi %}
-                    <div class="player-row {% if player.is_captain %}captain-row{% endif %}">
-                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
-                        <span class="p-name">
-                            {{ player.player_name }}
-                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
-                            {% if player.is_goalkeeper %}<span class="gk-badge">GK</span>{% endif %}
-                        </span>
-                        {% if player.position_label and not player.is_goalkeeper %}
-                        <span class="p-position">{{ player.position_label }}</span>
-                        {% endif %}
-                        {% if player.avg_rating %}
-                        <span class="p-rating">{{ player.avg_rating }}</span>
-                        {% endif %}
+            {# ══════ REZERWA ══════ #}
+            <div class="subs-section">
+                <div class="subs-half">
+                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa – {{match.home_team.name }}</div>
+                    <div class="subs-grid">
+                        {% for player in lineups.home_subs %}
+                        <div class="sub-card">
+                            <span class="sub-num">{{ player.shirt_number|default:"–" }}</span>
+                            <span class="sub-name">{{ player.player_name }}</span>
+                            <span class="sub-pos">{{ player.position_label }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="no-data">Brak danych.</p>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <p class="no-data">Brak danych.</p>
-                    {% endfor %}
-
-                    {% if lineups.away_subs %}
-                    <div class="lineup-section-header subs-header">Rezerwa</div>
-                    {% for player in lineups.away_subs %}
-                    <div class="player-row sub-player {% if player.is_captain %}captain-row{% endif %}">
-                        <span class="p-num">{{ player.shirt_number|default:"" }}</span>
-                        <span class="p-name">
-                            {{ player.player_name }}
-                            {% if player.is_captain %}<span class="captain-badge">C</span>{% endif %}
-                        </span>
-                        {% if player.position_label %}
-                        <span class="p-position">{{ player.position_label }}</span>
-                        {% endif %}
-                        {% if player.avg_rating %}
-                        <span class="p-rating">{{ player.avg_rating }}</span>
-                        {% endif %}
+                </div>
+                <div class="subs-half">
+                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i>Rezerwa - {{match.away_team.name }}</div>
+                    <div class="subs-grid">
+                        {% for player in lineups.away_subs %}
+                        <div class="sub-card">
+                            <span class="sub-num">{{ player.shirt_number|default:"–" }}</span>
+                            <span class="sub-name">{{ player.player_name }}</span>
+                            <span class="sub-pos">{{ player.position_label }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="no-data">Brak danych.</p>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                </div>
+            </div>
+
+            {# ══════ BRAKUJĄCY / NIEPEWNI ══════ #}
+            {% if missing_home or missing_away %}
+            <div class="subs-section missing-section">
+                <div class="subs-half">
+                    {% if missing_home %}
+                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{ match.home_team.name}}</div>
+                    <div class="subs-grid">
+                        {% for player in missing_home %}
+                        <div class="sub-card missing-card">
+                            <span class="sub-num"><i class="fa-solid fa-ban"></i></span>
+                            <span class="sub-name">{{ player.player_name }}</span>
+                            <span class="sub-pos status-{{ player.type }}">{{ player.type|upper }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="subs-half">
+                    {% if missing_away %}
+                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{ match.away_team.name}}</div>
+                    <div class="subs-grid">
+                        {% for player in missing_away %}
+                        <div class="sub-card missing-card">
+                            <span class="sub-num"><i class="fa-solid fa-ban"></i></span>
+                            <span class="sub-name">{{ player.player_name }}</span>
+                            <span class="sub-pos status-{{ player.type }}">{{ player.type|upper }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <div id="stats-tab" class="tab-content" style="display: none;">

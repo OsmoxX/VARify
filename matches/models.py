@@ -31,6 +31,8 @@ class LiveMatch(models.Model):
     away_score = models.IntegerField(default=0)
     status = models.CharField(max_length=50)
     match_time = models.CharField(max_length=20, blank=True, null=True)
+    home_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gospodarzy, np. '4-3-3'")
+    away_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gości, np. '4-4-2'")
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team}"
@@ -237,3 +239,21 @@ class MatchLineup(models.Model):
     def __str__(self):
         team = "Home" if self.is_home_team else "Away"
         return f"{self.player_name} ({team}) - {self.match}"
+
+
+class MissingPlayer(models.Model):
+    match = models.ForeignKey(LiveMatch, on_delete=models.CASCADE, related_name='missing_players')
+    player_name = models.CharField(max_length=100)
+    
+    # "missing" or "doubtful"
+    type = models.CharField(max_length=50)
+    
+    # Reason code from API (e.g. 1) or description if available
+    reason = models.CharField(max_length=255, blank=True, null=True)
+    
+    is_home_team = models.BooleanField(default=True)
+
+    def __str__(self):
+        team = "Home" if self.is_home_team else "Away"
+        status = "Missing" if self.type == 'missing' else "Doubtful"
+        return f"{self.player_name} ({team}) - {status}"
