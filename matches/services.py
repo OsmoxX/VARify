@@ -85,6 +85,11 @@ def sync_live_matches():
                 changes = event.get('changes', {})
                 match_minute = changes.get('time', 0) or 0
 
+            # Data meczu z startTimestamp
+            from datetime import datetime
+            start_ts = event.get('startTimestamp')
+            match_date = datetime.fromtimestamp(start_ts).date() if start_ts else None
+
             LiveMatch.objects.update_or_create(
                 api_id=event['id'],
                 defaults={
@@ -95,6 +100,7 @@ def sync_live_matches():
                     'away_score': event['awayScore'].get('current', 0),
                     'status': status_data.get('description', ''),
                     'minute': match_minute,
+                    'match_date': match_date,
                     'country_name': country_name,
                 }
             )

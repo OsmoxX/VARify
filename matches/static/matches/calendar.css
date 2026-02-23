@@ -1,0 +1,50 @@
+/* =========================================
+   KALENDARZ
+========================================= */
+
+.calendar-icon-title {
+    color: var(--accent);
+    font-size: 1.4rem;
+    margin-left: 10px;
+}
+
+/* --- Sekcja dnia --- */
+.day-section {
+    margin-bottom: 28px;
+}
+
+.day-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 14px 20px;
+    margin-bottom: 12px;
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.12);
+    border-radius: 12px;
+    letter-spacing: 0.3px;
+}
+
+.day-header i {
+    font-size: 1.2rem;
+}
+
+/* --- Status zakończenia --- */
+.match-status-ended {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* --- Responsywność --- */
+@media (max-width: 600px) {
+    .day-header {
+        font-size: 0.95rem;
+        padding: 10px 14px;
+    }
+}

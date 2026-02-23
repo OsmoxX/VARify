@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from django.db import models
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
@@ -181,18 +181,15 @@ class HomeView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Pobieramy mecze z "dociągnięciem" relacji (select_related), żeby nie zamulić bazy
-        all_matches = LiveMatch.objects.select_related('league', 'home_team', 'away_team').all()
-        
+
+        # Tylko mecze NIE zakończone (zakończone idą do Kalendarza)
+        all_matches = LiveMatch.objects.select_related('league', 'home_team', 'away_team').exclude(status='Ended')
+
         raw_data = defaultdict(lambda: defaultdict(list))
-        
+
         for match in all_matches:
             country = match.country_name or (match.league.country if match.league else None) or 'Inne'
-            
-            # --- POPRAWKA TUTAJ ---
-            # Stare: league = match.league_name
-            # Nowe: Pobieramy nazwę z obiektu League (jeśli istnieje)
+
             if match.league:
                 league = match.league.name
             else:
@@ -219,6 +216,59 @@ class HomeView(ListView):
         # Flat list of unique league names for the filter search
         all_league_names = sorted(set(
             ln for item in structured_data for league in item['leagues'] for ln in [league['name']]
+        ))
+        context['all_league_names'] = all_league_names
+
+        return context
+
+
+class CalendarView(ListView):
+    model = LiveMatch
+    template_name = 'matches/calendar.html'
+    context_object_name = 'matches'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        ended_matches = LiveMatch.objects.select_related(
+            'league', 'home_team', 'away_team'
+        ).filter(status='Ended').order_by('-match_date', 'league__name')
+
+        # Grupowanie: data → kraj → liga → mecze
+        days_data = OrderedDict()
+        for match in ended_matches:
+            day = match.match_date or 'Brak daty'
+            country = match.country_name or (match.league.country if match.league else None) or 'Inne'
+            league_name = match.league.name if match.league else 'Nieznana Liga'
+
+            if day not in days_data:
+                days_data[day] = defaultdict(lambda: defaultdict(list))
+            days_data[day][country][league_name].append(match)
+
+        # Przekształcenie na strukturę do szablonu
+        structured_days = []
+        for day, countries in days_data.items():
+            leagues_list = []
+            all_league_names_set = set()
+            for country, leagues in countries.items():
+                for league_name, matches in leagues.items():
+                    leagues_list.append({
+                        'name': league_name,
+                        'country': country,
+                        'matches': matches,
+                    })
+                    all_league_names_set.add(league_name)
+            structured_days.append({
+                'date': day,
+                'leagues': leagues_list,
+                'league_names': sorted(all_league_names_set),
+            })
+
+        context['structured_days'] = structured_days
+
+        # Flat list of unique league names for the filter
+        all_league_names = sorted(set(
+            ln for day in structured_days for league in day['leagues'] for ln in [league['name']]
         ))
         context['all_league_names'] = all_league_names
 

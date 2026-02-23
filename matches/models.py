@@ -36,6 +36,7 @@ class LiveMatch(models.Model):
     away_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gości, np. '4-4-2'")
     stats_json = models.JSONField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
+    match_date = models.DateField(null=True, blank=True, help_text="Data meczu (z API startTimestamp)")
 
     @property
     def updated_at_timestamp(self):
