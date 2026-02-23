@@ -21,9 +21,12 @@
             </div>
             <div class="score-center">
                 <div class="main-score">{{ match.home_score }} - {{ match.away_score }}</div>
-                <div class="status-badge">
+                <div class="status-badge" id="match-clock"
+                     data-minute="{{ match.minute }}"
+                     data-status="{{ match.status }}"
+                     data-updated="{{ match.updated_at_timestamp }}">
                     <span class="pulse-icon"></span>
-                    {{ match.status }} {% if match.time_elapsed %}/ {{ match.time_elapsed }}'{% endif %}
+                    <span id="clock-text">{{ match.status }}{% if match.minute %} / {{ match.minute }}'{% endif %}</span>
                 </div>
             </div>
             <div class="team-block">
@@ -431,5 +434,50 @@
         document.getElementById(periodId).style.display = "block";
         evt.currentTarget.className += " active";
     }
+
+    function startLiveClock() {
+        var el = document.getElementById('match-clock');
+        if (!el) return;
+
+        var baseMinute = parseInt(el.getAttribute('data-minute')) || 0;
+        var status = (el.getAttribute('data-status') || '').toLowerCase();
+        var updatedTs = parseInt(el.getAttribute('data-updated')) || 0;
+        var clockText = document.getElementById('clock-text');
+        if (!clockText) return;
+
+        // Statusy, przy których zegar tyka
+        var liveStatuses = ['1st half', '2nd half', 'extra 1st half', 'extra 2nd half'];
+        var isLive = false;
+        for (var i = 0; i < liveStatuses.length; i++) {
+            if (status.indexOf(liveStatuses[i]) !== -1) {
+                isLive = true;
+                break;
+            }
+        }
+
+        if (!isLive || !updatedTs || !baseMinute) return;
+
+        // Ukryj pulse-icon jeśli mecz zakończony
+        var statusLabel = el.getAttribute('data-status');
+
+        setInterval(function () {
+            var nowTs = Math.floor(Date.now() / 1000);
+            var elapsed = Math.floor((nowTs - updatedTs) / 60);
+            var currentMinute = baseMinute + elapsed;
+
+            var display;
+            if (status.indexOf('2nd half') !== -1 && currentMinute > 90) {
+                display = "90+" + (currentMinute - 90) + "'";
+            } else if (status.indexOf('1st half') !== -1 && currentMinute > 45) {
+                display = "45+" + (currentMinute - 45) + "'";
+            } else {
+                display = currentMinute + "'";
+            }
+
+            clockText.textContent = statusLabel + " / " + display;
+        }, 1000);
+    }
+
+    startLiveClock();
 </script>
 {% endblock %}

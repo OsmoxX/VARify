@@ -77,6 +77,14 @@ def sync_live_matches():
             )
 
             # 3. Mecz
+            # Próbujemy wyciągnąć minutę z odpowiedzi (bez dodatkowych requestów)
+            status_data = event.get('status', {})
+            match_minute = status_data.get('time', {}).get('played', 0) if isinstance(status_data.get('time'), dict) else 0
+            # Fallback: spróbuj z 'changes'
+            if not match_minute:
+                changes = event.get('changes', {})
+                match_minute = changes.get('time', 0) or 0
+
             LiveMatch.objects.update_or_create(
                 api_id=event['id'],
                 defaults={
@@ -85,7 +93,8 @@ def sync_live_matches():
                     'away_team': away_team,
                     'home_score': event['homeScore'].get('current', 0),
                     'away_score': event['awayScore'].get('current', 0),
-                    'status': event['status']['description'],
+                    'status': status_data.get('description', ''),
+                    'minute': match_minute,
                     'country_name': country_name,
                 }
             )

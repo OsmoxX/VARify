@@ -30,10 +30,19 @@ class LiveMatch(models.Model):
     home_score = models.IntegerField(default=0)
     away_score = models.IntegerField(default=0)
     status = models.CharField(max_length=50)
+    minute = models.IntegerField(default=0, help_text="Minuta meczu z ostatniej synchronizacji")
     match_time = models.CharField(max_length=20, blank=True, null=True)
     home_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gospodarzy, np. '4-3-3'")
     away_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gości, np. '4-4-2'")
     stats_json = models.JSONField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def updated_at_timestamp(self):
+        """Unix timestamp (sekundy) dla JS."""
+        if self.updated_at:
+            return int(self.updated_at.timestamp())
+        return 0
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team}"
