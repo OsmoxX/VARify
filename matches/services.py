@@ -324,12 +324,12 @@ def fetch_match_details(local_match_id, api_match_id):
                 count = 0
                 if not missing_list:
                     return 0
-                
+
                 for item in missing_list:
                     player_info = item.get('player', {})
                     if not player_info:
                         continue
-                        
+
                     MissingPlayer.objects.get_or_create(
                         match=match,
                         player_name=player_info.get('name', 'Nieznany'),
@@ -346,7 +346,7 @@ def fetch_match_details(local_match_id, api_match_id):
             home_data = data.get('home', {})
             home_players = home_data.get('players', [])
             home_missing = home_data.get('missingPlayers', [])
-            
+
             home_count = _save_players(home_players, is_home=True)
             home_missing_count = _save_missing_players(home_missing, is_home=True)
 
@@ -354,7 +354,7 @@ def fetch_match_details(local_match_id, api_match_id):
             away_data = data.get('away', {})
             away_players = away_data.get('players', [])
             away_missing = away_data.get('missingPlayers', [])
-            
+
             away_count = _save_players(away_players, is_home=False)
             away_missing_count = _save_missing_players(away_missing, is_home=False)
 
@@ -363,5 +363,24 @@ def fetch_match_details(local_match_id, api_match_id):
 
     except Exception as e:
         print(f"Wyjątek przy pobieraniu składów: {e}")
+
+    # ==========================================
+    # 3. POBIERANIE STATYSTYK
+    # ==========================================
+    url_stats = f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/statistics"
+
+    try:
+        response_stats = requests.get(url_stats, headers=headers, timeout=10)
+
+        if response_stats.status_code == 200:
+            stats_data = response_stats.json().get('statistics', [])
+            match.stats_json = stats_data
+            match.save()
+            print("Zapisano statystyki meczowe.")
+        else:
+            print(f"Błąd API Statistics: {response_stats.status_code}")
+
+    except Exception as e:
+        print(f"Wyjątek przy pobieraniu statystyk: {e}")
 
     return True

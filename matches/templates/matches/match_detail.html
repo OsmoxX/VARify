@@ -3,6 +3,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/match_detail.css' %}">
+<link rel="stylesheet" href="{% static 'matches/match_timeline.css' %}">
+<link rel="stylesheet" href="{% static 'matches/match_lineups.css' %}">
+<link rel="stylesheet" href="{% static 'matches/match_stats.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -47,7 +50,8 @@
                     {# ---------- PERIOD (HT / FT) ---------- #}
                     {% if event.is_period_marker %}
                     <div class="feed-badge period-badge">
-                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{% else%}FT{% endif %}
+                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{%
+                        else%}FT{% endif %}
                     </div>
                     <div class="feed-info period-info">
                         {% if event.text == 'HT' or event.time == 45 %}
@@ -295,7 +299,8 @@
             {# ══════ REZERWA ══════ #}
             <div class="subs-section">
                 <div class="subs-half">
-                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa – {{match.home_team.name }}</div>
+                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa –
+                        {{match.home_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in lineups.home_subs %}
                         <div class="sub-card">
@@ -309,7 +314,8 @@
                     </div>
                 </div>
                 <div class="subs-half">
-                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i>Rezerwa - {{match.away_team.name }}</div>
+                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i>Rezerwa -
+                        {{match.away_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in lineups.away_subs %}
                         <div class="sub-card">
@@ -329,7 +335,7 @@
             <div class="subs-section missing-section">
                 <div class="subs-half">
                     {% if missing_home %}
-                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{ match.home_team.name}}</div>
+                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{match.home_team.name}}</div>
                     <div class="subs-grid">
                         {% for player in missing_home %}
                         <div class="sub-card missing-card">
@@ -343,7 +349,7 @@
                 </div>
                 <div class="subs-half">
                     {% if missing_away %}
-                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{ match.away_team.name}}</div>
+                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia - {{match.away_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in missing_away %}
                         <div class="sub-card missing-card">
@@ -360,7 +366,39 @@
         </div>
 
         <div id="stats-tab" class="tab-content" style="display: none;">
-            <p class="no-data">Statystyki niedostępne.</p>
+            {% if stats_periods %}
+            <div class="stats-container">
+                <div class="stats-period-tabs">
+                    {% for period in stats_periods %}
+                    <button class="period-btn{% if forloop.first %} active{% endif %}" onclick="openPeriod(event, 'period-{{ forloop.counter }}')">
+                        {% if period.period == 'ALL' %}Cały mecz{% elif period.period == '1ST' %}1. połowa{% elif period.period == '2ND' %}2. połowa{% else %}{{ period.period }}{% endif %}
+                    </button>
+                    {% endfor %}
+                </div>
+
+                {% for period in stats_periods %}
+                <div id="period-{{ forloop.counter }}" class="stats-period-panel" style="{% if not forloop.first %}display:none;{% endif %}">
+                    {% for item in period.items %}
+                    <div class="stat-row{% if item.is_possession %} stat-highlight{% endif %}">
+                        <div class="stat-value stat-home-val">{{ item.home }}</div>
+                        <div class="stat-bar-wrapper">
+                            <div class="stat-label">{{ item.name }}</div>
+                            <div class="stat-bar-dual">
+                                <div class="stat-bar-home" style="width:{{ item.h_pct }}%;"></div>
+                                <div class="stat-bar-away" style="width:{{ item.a_pct }}%;"></div>
+                            </div>
+                        </div>
+                        <div class="stat-value stat-away-val">{{ item.away }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="stats-empty">
+                <i class="fa-solid fa-chart-bar"></i> Statystyki niedostępne
+            </div>
+            {% endif %}
         </div>
 
     </div>
@@ -378,6 +416,19 @@
             tablinks[i].className = tablinks[i].className.replace(" active", "");
         }
         document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    function openPeriod(evt, periodId) {
+        var panels = document.getElementsByClassName("stats-period-panel");
+        for (var i = 0; i < panels.length; i++) {
+            panels[i].style.display = "none";
+        }
+        var btns = document.getElementsByClassName("period-btn");
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].className = btns[i].className.replace(" active", "");
+        }
+        document.getElementById(periodId).style.display = "block";
         evt.currentTarget.className += " active";
     }
 </script>

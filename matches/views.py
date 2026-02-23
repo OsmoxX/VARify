@@ -134,6 +134,31 @@ def match_detail_view(request, match_id):
     missing_home = MissingPlayer.objects.filter(match=match, is_home_team=True)
     missing_away = MissingPlayer.objects.filter(match=match, is_home_team=False)
 
+    # 5. Statystyki – parsujemy JSON → lista do szablonu
+    stats_periods = []
+    if match.stats_json:
+        for period in match.stats_json:
+            items = []
+            for group in period.get('groups', []):
+                for item in group.get('statisticsItems', []):
+                    hv = float(item.get('homeValue', 0) or 0)
+                    av = float(item.get('awayValue', 0) or 0)
+                    total = hv + av
+                    h_pct = round((hv / total) * 100) if total > 0 else 50
+                    a_pct = 100 - h_pct
+                    items.append({
+                        'name': item.get('name', ''),
+                        'home': item.get('home', hv),
+                        'away': item.get('away', av),
+                        'h_pct': h_pct,
+                        'a_pct': a_pct,
+                        'is_possession': item.get('name') == 'Ball possession',
+                    })
+            stats_periods.append({
+                'period': period.get('period', 'ALL'),
+                'items': items,
+            })
+
     return render(request, 'matches/match_detail.html', {
         'match': match,
         'events': events,
@@ -142,6 +167,7 @@ def match_detail_view(request, match_id):
         'pitch_away': pitch_away,
         'missing_home': missing_home,
         'missing_away': missing_away,
+        'stats_periods': stats_periods,
     })
 
 

@@ -33,6 +33,7 @@ class LiveMatch(models.Model):
     match_time = models.CharField(max_length=20, blank=True, null=True)
     home_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gospodarzy, np. '4-3-3'")
     away_formation = models.CharField(max_length=20, blank=True, null=True, help_text="Formacja gości, np. '4-4-2'")
+    stats_json = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team}"
