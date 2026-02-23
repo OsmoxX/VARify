@@ -26,7 +26,7 @@
                      data-status="{{ match.status }}"
                      data-updated="{{ match.updated_at_timestamp }}">
                     <span class="pulse-icon"></span>
-                    <span id="clock-text">{{ match.status }}{% if match.minute %} / {{ match.minute }}'{% endif %}</span>
+                    <span id="clock-text">{% if match.status == 'Halftime' %}Halftime{% elif match.status == 'Ended' %}Ended{% elif match.minute %}{{ match.minute }}:00{% else %}{{ match.status }}{% endif %}</span>
                 </div>
             </div>
             <div class="team-block">
@@ -457,24 +457,24 @@
 
         if (!isLive || !updatedTs || !baseMinute) return;
 
-        // Ukryj pulse-icon jeśli mecz zakończony
-        var statusLabel = el.getAttribute('data-status');
-
         setInterval(function () {
-            var nowTs = Math.floor(Date.now() / 1000);
-            var elapsed = Math.floor((nowTs - updatedTs) / 60);
-            var currentMinute = baseMinute + elapsed;
+            var nowTs = Date.now() / 1000;
+            var totalElapsedSec = Math.floor(nowTs - updatedTs);
+            var elapsedMin = Math.floor(totalElapsedSec / 60);
+            var elapsedSec = totalElapsedSec % 60;
+            var currentMinute = baseMinute + elapsedMin;
+            var sec = elapsedSec < 10 ? '0' + elapsedSec : '' + elapsedSec;
 
             var display;
             if (status.indexOf('2nd half') !== -1 && currentMinute > 90) {
-                display = "90+" + (currentMinute - 90) + "'";
+                display = "90+" + (currentMinute - 90) + ":" + sec;
             } else if (status.indexOf('1st half') !== -1 && currentMinute > 45) {
-                display = "45+" + (currentMinute - 45) + "'";
+                display = "45+" + (currentMinute - 45) + ":" + sec;
             } else {
-                display = currentMinute + "'";
+                display = currentMinute + ":" + sec;
             }
 
-            clockText.textContent = statusLabel + " / " + display;
+            clockText.textContent = display;
         }, 1000);
     }
 
