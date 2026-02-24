@@ -76,10 +76,24 @@ WSGI_APPLICATION = 'my_football_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'varify_db',             # Zgadza się z docker-compose
+        'USER': 'root',                  # Domyślny użytkownik
+        'PASSWORD': 'supertajnehaslo',   # Zgadza się z docker-compose
+        'HOST': 'db',                    # Magia Dockera! Szukamy kontenera o nazwie "db"
+        'PORT': '3306',
     }
 }
 
@@ -127,11 +141,9 @@ STATICFILES_DIRS = [
 # CELERY & REDIS SETTINGS
 # ==========================================
 # Gdzie Celery ma szukać nowych zadań (nasz lokalny Redis)
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-
+CELERY_BROKER_URL = 'redis://redis:6379/0'
 # Gdzie Celery ma zapisywać wyniki zakończonych zadań
-CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
-
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 # Bezpieczeństwo - format danych do komunikacji to JSON
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -149,7 +161,7 @@ CELERY_BEAT_SCHEDULE = {
     'pobieraj-mecze-co-5-minut': {
         'task': 'matches.tasks.sync_football_data',
         # Wykonuj co 5 minut (zmień na '*/1' jeśli chcesz co minutę do testów)
-        'schedule': crontab(minute='*/10'),
+        'schedule': crontab(minute='*/5'),
     },
 }
 

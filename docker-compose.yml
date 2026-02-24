@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. Twoja aplikacja Django
+  web:
+    build: .
+    # Mapujemy port z kontenera (8000) na port Twojego Maca (8000)
+    ports:
+      - "8000:8000"
+    # To sprawia, że jak zmienisz kod na Macu, od razu zaktualizuje się w kontenerze
+    volumes:
+      - .:/app
+    # Mówimy Django: "Zanim wstaniesz, upewnij się, że Redis już działa"
+    depends_on:
+      - db
+      - redis
+
+  # 2. Baza Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # 3. Twój robot do zadań w tle (Celery)
+  celery:
+    build: .
+    # UWAGA: Zamień 'my_football_app' na nazwę głównego folderu Twojego projektu (tam gdzie jest settings.py), jeśli jest inna!
+    command: celery -A my_football_app worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - web
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: varify_db
+      MYSQL_ROOT_PASSWORD: supertajnehaslo
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

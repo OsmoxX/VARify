@@ -15,3 +15,7 @@ __pycache__/
 
 # Foldery systemowe
 .DS_Store
+db.sqlite3
+stare_mecze.json
+__pycache__/
+*.pyc
