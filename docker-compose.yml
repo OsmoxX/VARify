@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # 1. Twoja aplikacja Django
@@ -12,8 +11,10 @@ services:
       - .:/app
     # Mówimy Django: "Zanim wstaniesz, upewnij się, że Redis już działa"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   # 2. Baza Redis
   redis:
@@ -21,16 +22,29 @@ services:
     ports:
       - "6379:6379"
 
-  # 3. Twój robot do zadań w tle (Celery)
+  # 3. Twój robot do zadań w tle (Celery Worker)
   celery:
     build: .
-    # UWAGA: Zamień 'my_football_app' na nazwę głównego folderu Twojego projektu (tam gdzie jest settings.py), jeśli jest inna!
     command: celery -A my_football_app worker -l info
     volumes:
       - .:/app
     depends_on:
-      - redis
-      - web
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # 4. Celery Beat – HARMONOGRAM (uruchamia zadania cykliczne, np. co 3 minuty)
+  celery-beat:
+    build: .
+    command: celery -A my_football_app beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
   db:
     image: mysql:8.0
     ports:
@@ -40,6 +54,11 @@ services:
       MYSQL_ROOT_PASSWORD: supertajnehaslo
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db_data:

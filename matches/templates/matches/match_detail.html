@@ -22,11 +22,12 @@
             <div class="score-center">
                 <div class="main-score">{{ match.home_score }} - {{ match.away_score }}</div>
                 <div class="status-badge" id="match-clock"
-                     data-minute="{{ match.minute }}"
+                     data-period-start="{{ match.match_time }}"
+                     data-initial-min="{{ match.minute }}"
                      data-status="{{ match.status }}"
-                     data-updated="{{ match.updated_at_timestamp }}">
+                     data-minute="{{ match.minute }}">
                     <span class="pulse-icon"></span>
-                    <span id="clock-text">{% if match.status == 'Halftime' %}Halftime{% elif match.status == 'Ended' %}Ended{% elif match.minute %}{{ match.minute }}:00{% else %}{{ match.status }}{% endif %}</span>
+                    <span id="clock-text">{% if match.status == 'Halftime' %}HT{% elif match.status == 'Ended' %}FT{% elif match.minute %}{{ match.minute }}:00{% else %}{{ match.status }}{% endif %}</span>
                 </div>
             </div>
             <div class="team-block">
@@ -53,12 +54,11 @@
                     {# ---------- PERIOD (HT / FT) ---------- #}
                     {% if event.is_period_marker %}
                     <div class="feed-badge period-badge">
-                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{%
-                        else%}FT{% endif %}
+                        {% if event.text == 'HT' %}HT{% elif event.text == 'FT' %}FT{% elif event.time == 45 %}HT{% else %}FT{% endif %}
                     </div>
                     <div class="feed-info period-info">
                         {% if event.text == 'HT' or event.time == 45 %}
-                        Koniec pierwszej połowy
+                        Koniec pierwszej połowy 
                         {% elif event.text == 'FT' or event.time == 90 %}
                         Koniec meczu
                         {% elif event.text %}
@@ -435,49 +435,54 @@
         evt.currentTarget.className += " active";
     }
 
-    function startLiveClock() {
-        var el = document.getElementById('match-clock');
+    // ========================================================
+    // ZEGAR MECZU – liczy minuty na stronie szczegółów
+    // ========================================================
+    const LIVE_KW = ['half', 'live', 'progress', 'period', '1st', '2nd', 'extra', 'overtime'];
+
+    function updateMatchClock() {
+        const el = document.getElementById('match-clock');
         if (!el) return;
 
-        var baseMinute = parseInt(el.getAttribute('data-minute')) || 0;
-        var status = (el.getAttribute('data-status') || '').toLowerCase();
-        var updatedTs = parseInt(el.getAttribute('data-updated')) || 0;
-        var clockText = document.getElementById('clock-text');
-        if (!clockText) return;
+        const periodStart = parseInt(el.dataset.periodStart, 10) || 0;  // Unix ts startu okresu
+        const initialMin  = parseInt(el.dataset.initialMin, 10) || 0;   // 0 lub 45 (lub 90)
+        const baseMins    = parseInt(el.dataset.minute, 10) || 0;         // fallback
+        const status      = (el.dataset.status || '').toLowerCase();
+        const clockText   = document.getElementById('clock-text');
 
-        // Statusy, przy których zegar tyka
-        var liveStatuses = ['1st half', '2nd half', 'extra 1st half', 'extra 2nd half'];
-        var isLive = false;
-        for (var i = 0; i < liveStatuses.length; i++) {
-            if (status.indexOf(liveStatuses[i]) !== -1) {
-                isLive = true;
-                break;
-            }
+        // Sprawdzamy czy mecz jest live
+        const isLive = LIVE_KW.some(kw => status.includes(kw));
+
+        if (!isLive) {
+            return;
         }
 
-        if (!isLive || !updatedTs || !baseMinute) return;
+        const nowSec = Math.floor(Date.now() / 1000);
 
-        setInterval(function () {
-            var nowTs = Date.now() / 1000;
-            var totalElapsedSec = Math.floor(nowTs - updatedTs);
-            var elapsedMin = Math.floor(totalElapsedSec / 60);
-            var elapsedSec = totalElapsedSec % 60;
-            var currentMinute = baseMinute + elapsedMin;
-            var sec = elapsedSec < 10 ? '0' + elapsedSec : '' + elapsedSec;
+        let currentMin;
+        if (periodStart > 0) {
+            // Dokładna metoda: tak samo jak API
+            const elapsedSecs = nowSec - periodStart;
+            currentMin = initialMin + Math.floor(elapsedSecs / 60);
+            const secs = elapsedSecs % 60;
 
-            var display;
-            if (status.indexOf('2nd half') !== -1 && currentMinute > 90) {
-                display = "90+" + (currentMinute - 90) + ":" + sec;
-            } else if (status.indexOf('1st half') !== -1 && currentMinute > 45) {
-                display = "45+" + (currentMinute - 45) + ":" + sec;
+            if (currentMin > 90 && !status.includes('extra')) {
+                const injuryMin = currentMin - 90;
+                clockText.textContent = `90+${injuryMin}:${String(secs).padStart(2, '0')}`;
+            } else if (currentMin > 45 && initialMin === 0) {
+                // Doliczony czas 1. połowy
+                const injuryMin = currentMin - 45;
+                clockText.textContent = `45+${injuryMin}:${String(secs).padStart(2, '0')}`;
             } else {
-                display = currentMinute + ":" + sec;
+                clockText.textContent = currentMin + ':' + String(secs).padStart(2, '0');
             }
-
-            clockText.textContent = display;
-        }, 1000);
+        } else {
+            // Fallback: baseMins bez sekundomierza
+            clockText.textContent = baseMins + ':00';
+        }
     }
 
-    startLiveClock();
+    updateMatchClock();
+    setInterval(updateMatchClock, 1000);
 </script>
 {% endblock %}

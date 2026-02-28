@@ -158,14 +158,13 @@ from celery.schedules import crontab
 # CELERY BEAT (Harmonogram zadań)
 # ==========================================
 CELERY_BEAT_SCHEDULE = {
-    'pobieraj-mecze-co-5-minut': {
-        'task': 'matches.tasks.sync_football_data',
-        # Wykonuj co 5 minut (zmień na '*/1' jeśli chcesz co minutę do testów)
-        'schedule': crontab(minute='*/5'),
+    'aktualizuj-live-mecze-co-3-minuty': {
+        'task': 'matches.tasks.sync_live_matches', # ścieżka do Twojej funkcji
+        'schedule': crontab(minute='*/3'), # Wykonuj co 3 minuty
     },
 }
 
-CACHES = {
+CACHES = {  
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',

@@ -383,3 +383,37 @@ input:checked+.slider:before {
     display: block;
     color: #444;
 }
+
+/* =========================================
+   TOP LIGI – wyróżnienie i separator
+========================================= */
+
+/* Subtelne złote obramowanie dla top lig */
+.league-section.top-league {
+    border-color: rgba(250, 189, 0, 0.2);
+}
+
+/* Złota gwiazdka przy top ligach */
+.top-icon {
+    color: #fabd00 !important;
+}
+
+/* Separator "Inne ligi" między top ligami a resztą */
+.other-leagues-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.other-leagues-divider::before,
+.other-leagues-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #333;
+}

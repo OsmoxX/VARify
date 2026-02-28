@@ -4,18 +4,22 @@
 # Środowisko wirtualne
 venv/
 ENV/
+.venv/
 
 # Pliki tymczasowe Pythona
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Baza danych (lokalna, jeśli jej używasz)
-*.sqlite3
-
-# Foldery systemowe
-.DS_Store
-db.sqlite3
-stare_mecze.json
-__pycache__/
 *.pyc
+
+# Baza danych i pliki eksportu
+db.sqlite3
+*.sqlite3
+stare_mecze.json
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Statyczne pliki (opcjonalnie, jeśli używasz collectstatic)
+staticfiles/

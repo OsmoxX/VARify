@@ -66,11 +66,25 @@
 
 <div class="leagues-container">
     {% for item in structured_data %}
+
+    {# Separator "Inne ligi" – pojawia się raz przy pierwszej lidze spoza Top 10 #}
+    {% if not item.is_top %}
+    {% ifchanged item.is_top %}
+    <div class="other-leagues-divider">
+        <span>Inne ligi</span>
+    </div>
+    {% endifchanged %}
+    {% endif %}
+
     {% for league in item.leagues %}
-    <div class="league-section" data-league-name="{{ league.name }}">
+    <div class="league-section{% if item.is_top %} top-league{% endif %}" data-league-name="{{ league.name }}" data-is-top="{% if item.is_top %}1{% else %}0{% endif %}">
         <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
             <div class="league-info">
+                {% if item.is_top %}
+                <i class="fa-solid fa-star league-icon top-icon"></i>
+                {% else %}
                 <i class="fa-solid fa-trophy league-icon"></i>
+                {% endif %}
                 <span class="league-title">{{ league.name }}</span>
                 <span class="country-tag">• {{ item.country }}</span>
             </div>
@@ -83,7 +97,13 @@
                 <div class="team team-home">{{ match.home_team.name }}</div>
                 <div class="score-container">
                     <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
-                    <div class="match-time-live">{{ match.time_elapsed|default:"0" }}'</div>
+                    <div class="match-time-live"
+                         data-minute="{{ match.minute|default:0 }}"
+                         data-period-start="{{ match.match_time|default:'' }}"
+                         data-initial-min="{{ match.minute|default:0 }}"
+                         data-status="{{ match.status }}">
+                        {{ match.minute|default:"0" }}'
+                    </div>
                 </div>
                 <div class="team team-away">{{ match.away_team }}</div>
             </a>
@@ -184,6 +204,53 @@
             menu.style.display = 'none';
         }
     });
+
+    // ========================================================
+    // LIVE TIMER – liczy czas meczu co sekundę po stronie JS.
+    //   data-period-start = Unix timestamp startu aktualnego okresu (z API)
+    //   data-initial-min  = minuta na starcie okresu (0 lub 45)
+    // ========================================================
+    const LIVE_KEYWORDS = ['half', 'live', 'progress', 'period', '1st', '2nd', 'extra', 'overtime'];
+
+    function isLive(status) {
+        const s = (status || '').toLowerCase();
+        return LIVE_KEYWORDS.some(kw => s.includes(kw));
+    }
+
+    function updateTimers() {
+        const nowSec = Math.floor(Date.now() / 1000);
+        document.querySelectorAll('.match-time-live').forEach(el => {
+            const periodStart = parseInt(el.dataset.periodStart, 10) || 0;
+            const initialMin  = parseInt(el.dataset.initialMin, 10) || 0;
+            const baseMins    = parseInt(el.dataset.minute, 10) || 0;
+            const status      = el.dataset.status || '';
+
+            if (!isLive(status)) {
+                el.textContent = status || '-';
+                return;
+            }
+
+            if (periodStart > 0) {
+                // Dokładna metoda: identyczna z API
+                const elapsedSecs = nowSec - periodStart;
+                const currentMin = initialMin + Math.floor(elapsedSecs / 60);
+
+                if (currentMin > 90 && !status.toLowerCase().includes('extra')) {
+                    el.textContent = `90+${currentMin - 90}'`;
+                } else if (currentMin > 45 && initialMin === 0) {
+                    el.textContent = `45+${currentMin - 45}'`;
+                } else {
+                    el.textContent = currentMin + "'";
+                }
+            } else {
+                // Fallback: brak period_start – pokaż statyczną minutę
+                el.textContent = baseMins + "'";
+            }
+        });
+    }
+
+    updateTimers();
+    setInterval(updateTimers, 1000);
 </script>
 
 {% endblock %}

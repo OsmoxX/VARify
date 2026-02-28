@@ -22,7 +22,7 @@
 
         <div class="nav-search-container">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="live-search-input" class="nav-search-input" placeholder="Szukaj w VARify"
+            <input type="text" id="live-search-input" class="nav-search-input" placeholder="Szukaj drużyny (Enter)"
                 autocomplete="off">
 
             <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
@@ -48,39 +48,45 @@
     <script>
         const searchInput = document.getElementById('live-search-input');
         const dropdown = document.getElementById('search-results-dropdown');
-        let searchTimeout;
 
-        searchInput.addEventListener('input', function () {
+        // Wyszukiwanie TYLKO po naciśnięciu Enter
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+
             const query = this.value.trim();
-
-            clearTimeout(searchTimeout);
 
             if (query.length < 2) {
                 dropdown.style.display = 'none';
                 return;
             }
 
-            // Debounce — 200ms delay
-            searchTimeout = setTimeout(() => {
-                fetch(`/search-api/?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        dropdown.innerHTML = '';
+            // Pokaż "Szukam..." feedback
+            dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-spinner fa-spin" style="color:#666;margin-right:8px;"></i>Szukam...</div>';
+            dropdown.style.display = 'block';
 
-                        if (data.results.length === 0) {
-                            dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-circle-exclamation" style="color:#666;margin-right:8px;"></i>Brak wyników...</div>';
-                        } else {
-                            data.results.forEach(team => {
-                                const item = document.createElement('a');
-                                item.className = 'search-item';
-                                item.href = `/team/${team.id}/`;
-                                item.innerHTML = `<i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 10px;"></i> ${team.name}`;
-                                dropdown.appendChild(item);
-                            });
-                        }
-                        dropdown.style.display = 'block';
-                    });
-            }, 200);
+            fetch(`/search-api/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    dropdown.innerHTML = '';
+
+                    if (data.results.length === 0) {
+                        dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-circle-exclamation" style="color:#666;margin-right:8px;"></i>Brak wyników...</div>';
+                    } else {
+                        data.results.forEach(team => {
+                            const item = document.createElement('a');
+                            item.className = 'search-item';
+                            item.href = `/team/${team.id}/`;
+                            item.innerHTML = `<i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 10px;"></i> ${team.name}`;
+                            dropdown.appendChild(item);
+                        });
+                    }
+                    dropdown.style.display = 'block';
+                })
+                .catch(() => {
+                    dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:8px;"></i>Błąd wyszukiwania</div>';
+                    dropdown.style.display = 'block';
+                });
         });
 
         // Ukrywamy listę, jeśli klikniesz gdziekolwiek indziej na ekranie

@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.generic import ListView
 from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer
-from .services import fetch_match_details
+from .services import fetch_match_details, fetch_last_matches_for_team, search_teams_from_api
 
 # Create your views here.
 
@@ -111,6 +111,32 @@ def _build_pitch_data(xi_players, formation_str, is_home=True):
 def match_detail_view(request, match_id):
     # 1. Pobieramy mecz
     match = get_object_or_404(LiveMatch, id=match_id)
+
+    # MECHANIZM 3 – WYDOBYWCA (ulepszony)
+    # Jeżeli mecz NADAL TRWA (nie zakończony) → ZAWSZE odśwież dane z API.
+    # Dzięki temu: wynik, zdarzenia (gole, kartki), minuta – wszystko jest aktualne.
+    # Jeżeli mecz ZAKOŃCZONY → serwuj z bazy (0 zapytań do API).
+    ENDED_STATUSES = ['ended', 'finished', 'canceled', 'cancelled', 'postponed',
+                      'abandoned', 'awarded', 'after penalties', 'after extra time',
+                      'ap', 'aet']
+    is_ended = match.status.lower().strip() in ENDED_STATUSES
+
+    if is_ended and (match.events.exists() or match.stats_json):
+        # Mecz zakończony i dane już w bazie → serwujemy natychmiast
+        print(f"Wydobywca: Mecz {match} zakończony – serwuję z bazy (0 API).")
+    else:
+        # Mecz live LUB brak danych → (od)śwież zdarzenia z API
+        if not is_ended:
+            print(f"Wydobywca: Mecz {match} TRWA – odświeżam dane z API...")
+            # Czyścimy stare zdarzenia żeby uniknąć duplikatów i nieaktualnych markerów (FT itp.)
+            match.events.all().delete()
+        else:
+            print(f"Wydobywca: Mecz {match} – brak danych, pobieram po raz pierwszy...")
+
+        fetch_match_details(local_match_id=match.id, api_match_id=match.api_id)
+        match.refresh_from_db()
+
+
     events = MatchEvent.objects.filter(match=match).order_by('time', 'added_time', 'id')
 
     # 2. Pobieramy składy – podział na XI i rezerwę
@@ -211,13 +237,58 @@ class HomeView(ListView):
                 'leagues': league_list
             })
 
-        context['structured_data'] = structured_data
+        # -------------------------------------------------------
+        # Priorytet top lig – każda reguła: (fragment nazwy ligi, kraj, priorytet)
+        # Obie wartości muszą pasować, żeby uniknąć fałszywych trafień
+        # (np. "Queensland Premier League" ≠ angielska Premier League).
+        # Pusty string dla kraju = nie sprawdzamy kraju (np. Champions League).
+        # -------------------------------------------------------
+        TOP_LEAGUES = [
+            ('premier league',  'england',     0),
+            ('la liga',         'spain',       1),
+            ('serie a',         'italy',       2),
+            ('bundesliga',      'germany',     3),
+            ('ligue 1',         'france',      4),
+            ('champions league','',            5),   # UEFA – brak jednego kraju
+            ('europa league',   '',            6),   # UEFA – brak jednego kraju
+            ('primeira liga',   'portugal',    7),
+            ('eredivisie',      'netherlands', 8),
+            ('championship',    'england',     9),
+        ]
+
+        def _is_top(entry):
+            """Czy ten blok kraj/liga należy do top 10?"""
+            country_lower = entry['country'].lower()
+            for league_kw, country_kw, idx in TOP_LEAGUES:
+                for league in entry['leagues']:
+                    if league_kw not in league['name'].lower():
+                        continue
+                    # Jeśli reguła wymaga konkretnego kraju – sprawdź go
+                    if country_kw and country_kw not in country_lower:
+                        continue
+                    return True, idx
+            return False, 999
+
+        def league_priority(entry):
+            is_t, idx = _is_top(entry)
+            if is_t:
+                return (0, idx, entry['country'])
+            return (1, 999, entry['country'])
+
+        structured_data.sort(key=league_priority)
+
+        # Oznacz każdy blok flagą is_top dla szablonu
+        for entry in structured_data:
+            entry['is_top'], _ = _is_top(entry)
+
 
         # Flat list of unique league names for the filter search
         all_league_names = sorted(set(
             ln for item in structured_data for league in item['leagues'] for ln in [league['name']]
         ))
         context['all_league_names'] = all_league_names
+
+        context['structured_data'] = structured_data
 
         return context
 
@@ -276,14 +347,32 @@ class CalendarView(ListView):
 
 
 def search_api_view(request):
-    """Wyszukiwanie drużyn w lokalnej bazie (bez API)."""
+    """
+    WYSZUKIWARKA – działa w dwóch krokach:
+
+    Krok 1: szukamy w LOKALNEJ bazie (szybkie, bez API)
+    Krok 2: gdy baz  nie zna tej drużyny → szukamy w zewnętrznym API
+            i zapisujemy znalezione drużyny do lokalnej tabeli Team
+            (tylko id + name, BEZ meczów)
+
+    UWAGA: Zwiadowca (pobieranie 3 ostatnich meczów) działa teraz dopiero
+    przy wejściu na stronę drużyny (team_detail_view), nie przy każdym użyciu wyszukiwarki.
+    """
     query = request.GET.get('q', '').strip()
 
     if len(query) < 2:
         return JsonResponse({'results': []})
 
-    from .models import Team
-    teams = Team.objects.filter(name__icontains=query)[:10]
+    # KROK 1: lokalna baza
+    teams = list(Team.objects.filter(name__icontains=query)[:10])
+
+    # KROK 2: jeżeli nic nie ma w bazie → zapytaj zewnętrzne API
+    if not teams:
+        print(f"Wyszukiwarka: '{query}' nie ma w bazie – szukam w API...")
+        try:
+            teams = search_teams_from_api(query)
+        except Exception as e:
+            print(f"Wyszukiwarka API Search błąd: {e}")
 
     results = [
         {'id': t.id, 'name': t.name, 'logo_url': t.logo_url or ''}
@@ -299,23 +388,39 @@ def team_detail_view(request, team_id):
 
     team = get_object_or_404(Team, id=team_id)
 
-    # Ostatnie mecze (max 20)
-    recent_matches = LiveMatch.objects.filter(
+    # MECHANIZM 2 – ZWIADOWCA
+    # Jeżeli drużyna nie ma żadnych meczów w bazie (np. właśnie odkryta przez wyszukiwarkę API)
+    # → pobieramy 3 ostatnie mecze (tylko podstawowe dane, BEZ zdarzeń/składów/statystyk)
+    has_matches = LiveMatch.objects.filter(
         models.Q(home_team=team) | models.Q(away_team=team)
-    ).select_related('home_team', 'away_team', 'league').order_by('-id')[:20]
+    ).exists()
 
-    # Skład – unikalni gracze z najnowszego meczu
-    latest_match = recent_matches.first() if recent_matches.exists() else None
+    if not has_matches and team.api_id:
+        print(f"Zwiadowca: {team.name} nie ma meczów w bazie – pobieram z API...")
+        try:
+            fetch_last_matches_for_team(team_api_id=team.api_id, n=3)
+        except Exception as e:
+            print(f"Zwiadowca błąd: {e}")
+
+    # Ostatnie mecze (max 20), posortowane od najnowszego
+    all_team_matches = LiveMatch.objects.filter(
+        models.Q(home_team=team) | models.Q(away_team=team)
+    ).select_related('home_team', 'away_team', 'league').order_by('-match_date', '-id')
+
+    recent_matches = all_team_matches[:20]
+
+    # Skład – unikalni gracze z najnowszego meczu który ma skład
+    latest_match_with_lineup = all_team_matches.filter(lineups__isnull=False).first()
     squad = []
-    if latest_match:
+    if latest_match_with_lineup:
         squad = MatchLineup.objects.filter(
-            match=latest_match,
-            is_home_team=(latest_match.home_team == team)
+            match=latest_match_with_lineup,
+            is_home_team=(latest_match_with_lineup.home_team == team)
         ).order_by('-is_starting_xi', 'shirt_number')
 
     return render(request, 'matches/team_detail.html', {
         'team': team,
         'recent_matches': recent_matches,
         'squad': squad,
-        'latest_match': latest_match,
+        'latest_match': all_team_matches.first(),
     })
