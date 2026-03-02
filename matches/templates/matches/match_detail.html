@@ -255,7 +255,13 @@
                             {{ item.player.shirt_number|default:"" }}
                         </div>
                         <div class="pitch-player-name">
-                            {{ item.player.player_name|truncatewords:2 }}
+                            {% if item.player.player_api_id %}
+                                <a href="{% url 'player_detail' item.player.player_api_id %}" style="color: inherit; text-decoration: none;">
+                                    {{ item.player.player_name|truncatewords:2 }}
+                                </a>
+                            {% else %}
+                                {{ item.player.player_name|truncatewords:2 }}
+                            {% endif %}
                         </div>
                         {% if item.player.avg_rating %}
                         <div class="pitch-rating {{ item.rating_class }}">
@@ -274,7 +280,13 @@
                             {{ item.player.shirt_number|default:"" }}
                         </div>
                         <div class="pitch-player-name">
-                            {{ item.player.player_name|truncatewords:2 }}
+                            {% if item.player.player_api_id %}
+                                <a href="{% url 'player_detail' item.player.player_api_id %}" style="color: inherit; text-decoration: none;">
+                                    {{ item.player.player_name|truncatewords:2 }}
+                                </a>
+                            {% else %}
+                                {{ item.player.player_name|truncatewords:2 }}
+                            {% endif %}
                         </div>
                         {% if item.player.avg_rating %}
                         <div class="pitch-rating {{ item.rating_class }}">
@@ -308,7 +320,13 @@
                         {% for player in lineups.home_subs %}
                         <div class="sub-card">
                             <span class="sub-num">{{ player.shirt_number|default:"–" }}</span>
-                            <span class="sub-name">{{ player.player_name }}</span>
+                            <span class="sub-name">
+                                {% if player.player_api_id %}
+                                    <a href="{% url 'player_detail' player.player_api_id %}" style="color: inherit; text-decoration: none;">{{ player.player_name }}</a>
+                                {% else %}
+                                    {{ player.player_name }}
+                                {% endif %}
+                            </span>
                             <span class="sub-pos">{{ player.position_label }}</span>
                         </div>
                         {% empty %}
@@ -323,7 +341,13 @@
                         {% for player in lineups.away_subs %}
                         <div class="sub-card">
                             <span class="sub-num">{{ player.shirt_number|default:"–" }}</span>
-                            <span class="sub-name">{{ player.player_name }}</span>
+                            <span class="sub-name">
+                                {% if player.player_api_id %}
+                                    <a href="{% url 'player_detail' player.player_api_id %}" style="color: inherit; text-decoration: none;">{{ player.player_name }}</a>
+                                {% else %}
+                                    {{ player.player_name }}
+                                {% endif %}
+                            </span>
                             <span class="sub-pos">{{ player.position_label }}</span>
                         </div>
                         {% empty %}

@@ -14,13 +14,12 @@
 
     {# ── NAGŁÓWEK DRUŻYNY ── #}
     <div class="team-header">
-        {% if team.logo_url %}
-        <img class="team-logo" src="{{ team.logo_url }}" alt="{{ team.name }}">
-        {% else %}
-        <div class="team-logo-placeholder">
+        <img class="team-logo" src="{% url 'proxy_image' 'team' team.api_id %}" alt="{{ team.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        
+        <div class="team-logo-placeholder" style="display: none;">
             <i class="fa-solid fa-shield-halved"></i>
         </div>
-        {% endif %}
+        
         <div class="team-name-section">
             <h1>{{ team.name }}</h1>
             <div class="team-meta">
@@ -41,9 +40,13 @@
             <div class="match-teams">
                 <span class="match-team-name home {% if match.home_team == team %}highlight{% endif %}">
                     {{ match.home_team.name }}
+                    <img src="{% url 'proxy_image' 'team' match.home_team.api_id %}" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">
                 </span>
+                
                 <span class="match-score-box">{{ match.home_score }} - {{ match.away_score }}</span>
+                
                 <span class="match-team-name away {% if match.away_team == team %}highlight{% endif %}">
+                    <img src="{% url 'proxy_image' 'team' match.away_team.api_id %}" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">
                     {{ match.away_team.name }}
                 </span>
             </div>

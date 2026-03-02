@@ -5,7 +5,14 @@ from django.http import JsonResponse
 from django.views.generic import ListView
 from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer
 from .services import fetch_match_details, fetch_last_matches_for_team, search_teams_from_api
-from .models import UpcomingMatch
+from .models import UpcomingMatch, Player
+from .services import fetch_player
+from datetime import date
+import os
+import requests
+from django.http import HttpResponse, Http404
+from django.core.cache import cache 
+
 
 
 # Create your views here.
@@ -372,39 +379,39 @@ class CalendarView(ListView):
 
 
 def search_api_view(request):
-    """
-    WYSZUKIWARKA – działa w dwóch krokach:
-
-    Krok 1: szukamy w LOKALNEJ bazie (szybkie, bez API)
-    Krok 2: gdy baz  nie zna tej drużyny → szukamy w zewnętrznym API
-            i zapisujemy znalezione drużyny do lokalnej tabeli Team
-            (tylko id + name, BEZ meczów)
-
-    UWAGA: Zwiadowca (pobieranie 3 ostatnich meczów) działa teraz dopiero
-    przy wejściu na stronę drużyny (team_detail_view), nie przy każdym użyciu wyszukiwarki.
-    """
     query = request.GET.get('q', '').strip()
+    
+    if not query:
+        return render(request, 'matches/search_results.html', {'error': 'Wpisz zapytanie do wyszukiwarki.'})
 
-    if len(query) < 2:
-        return JsonResponse({'results': []})
+    from .models import Team, Player
+    local_teams = Team.objects.filter(name__icontains=query)
+    local_players = Player.objects.filter(name__icontains=query)
 
-    # KROK 1: lokalna baza
-    teams = list(Team.objects.filter(name__icontains=query)[:10])
+    if not local_teams.exists() and not local_players.exists():
+        print(f"Brak wyników lokalnie dla '{query}'. Szukam w zewnętrznym API...")
+        
+        from .services import search_teams_from_api, search_players_from_api
+        
+        # Dopiero teraz uderzamy do API (raz dla drużyn, raz dla zawodników)
+        api_teams = search_teams_from_api(query)
+        api_players = search_players_from_api(query)
+        
+        teams_to_show = api_teams
+        players_to_show = api_players
+    else:
+        print(f"Znaleziono lokalnie '{query}'. Pomijam API!")
+        teams_to_show = local_teams
+        players_to_show = local_players
 
-    # KROK 2: jeżeli nic nie ma w bazie → zapytaj zewnętrzne API
-    if not teams:
-        print(f"Wyszukiwarka: '{query}' nie ma w bazie – szukam w API...")
-        try:
-            teams = search_teams_from_api(query)
-        except Exception as e:
-            print(f"Wyszukiwarka API Search błąd: {e}")
-
-    results = [
-        {'id': t.id, 'name': t.name, 'logo_url': t.logo_url or ''}
-        for t in teams
-    ]
-
-    return JsonResponse({'results': results})
+    # 3. Zwracamy połączone wyniki do szablonu
+    context = {
+        'teams': teams_to_show,
+        'players': players_to_show,
+        'query': query,
+    }
+    
+    return render(request, 'matches/search_results.html', context)
 
 
 def team_detail_view(request, team_id):
@@ -523,3 +530,88 @@ def upcoming_matches_view(request):
         'grouped_leagues': grouped_leagues,
         'all_league_names': all_league_names,
     })
+
+
+
+def player_detail(request, api_id):
+    """Dedykowany widok profilu zawodnika. Pobiera/aktualizuje z API w locie."""
+    
+    player = Player.objects.filter(api_id=api_id).first()
+    
+    if not player or not player.nationality or not player.date_of_birth:
+        player = fetch_player(api_id)
+        
+    if not player:
+        return render(request, 'matches/player_detail.html', {'error': 'Nie znaleziono danych o zawodniku'})
+        
+    # Wyliczanie wieku
+    age = None
+    if player.date_of_birth:
+        today = date.today()
+        dob = player.date_of_birth
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    
+    # Ładne formatowanie wartości rynkowej (np. 45000000 -> 45.0 mln €)
+    formatted_market_value = None
+    if player.market_value:
+        formatted_market_value = f"{player.market_value / 1000000:.1f} mln €"
+        
+    context = {
+        'player': player,
+        'age': age,
+        'formatted_market_value': formatted_market_value,
+    }
+    
+    return render(request, 'matches/player_detail.html', context)
+
+
+
+
+
+def proxy_image_view(request, entity_type, api_id):
+    """
+    Pobiera zdjęcie zawodnika lub herb z API i buforuje je w pamięci serwera, 
+    aby oszczędzać limity zapytań.
+    """
+    if entity_type not in ['player', 'team']:
+        raise Http404("Nieznany typ obrazka")
+
+    # Tworzymy unikalny klucz dla tego konkretnego obrazka (np. 'image_team_2817')
+    cache_key = f"image_{entity_type}_{api_id}"
+    
+    # 1. SPRAWDZAMY KIESZEŃ (CACHE)
+    # Wewnątrz proxy_image_view, tam gdzie sprawdzamy cache:
+    cached_image_data = cache.get(cache_key)
+    if cached_image_data:
+        print(f"🟢 CACHE HIT: Obrazek {entity_type} {api_id} pobrany z pamięci (0 zapytań!)")
+        return HttpResponse(
+            cached_image_data['content'], 
+            content_type=cached_image_data['content_type']
+        )
+
+    # A tuż przed wykonaniem requests.get(url...):
+    print(f"🔴 API HIT: Pobieram obrazek {entity_type} {api_id} z RapidAPI (-1 z limitu)")
+
+    # 2. OBRAZKA NIE MA W PAMIĘCI - UDERZAMY DO API
+    url = f"https://sportapi7.p.rapidapi.com/api/v1/{entity_type}/{api_id}/image"
+    headers = {
+        "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
+        "x-rapidapi-host": os.getenv("SPORT_API_HOST", "sportapi7.p.rapidapi.com")
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            content_type = response.headers.get('Content-Type', 'image/jpeg')
+            
+            # Zapisujemy pobrany obrazek do cache'a na 30 dni! (60s * 60m * 24h * 30d = 2592000 sekund)
+            cache.set(cache_key, {
+                'content': response.content,
+                'content_type': content_type
+            }, timeout=2592000)
+
+            return HttpResponse(response.content, content_type=content_type)
+        else:
+            return HttpResponse(status=404)
+    except Exception:
+        return HttpResponse(status=404)

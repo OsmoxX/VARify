@@ -1,12 +1,138 @@
 import os
 import requests
 from dotenv import load_dotenv
-from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer, UpcomingMatch
+from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer, UpcomingMatch, Player
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
 # Ładujemy klucze z pliku .env
 load_dotenv()
 
+
+def fetch_player(player_id):
+    """Pobiera i zapisuje/aktualizuje dane konkretnego zawodnika z API."""
+    
+    url = f"https://sportapi7.p.rapidapi.com/api/v1/player/{player_id}"
+    headers = {
+        "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
+        "x-rapidapi-host": os.getenv("SPORT_API_HOST")
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()  # Automatycznie wyrzuci wyjątek dla błędów np. 404, 500
+        
+        data = response.json().get('player')
+        if not data:
+            return None
+
+        team_obj = None
+        team_data = data.get('team')
+        if team_data and team_data.get('id'):
+            team_obj, _ = Team.objects.update_or_create(
+                api_id=team_data['id'],
+                defaults={'name': team_data.get('name', 'Nieznany')}
+            )
+
+        def parse_ts(timestamp):
+            return datetime.fromtimestamp(timestamp).date() if timestamp else None
+
+        defaults = {
+            'name': data.get('name', ''),
+            'first_name': data.get('firstName'),
+            'last_name': data.get('lastName'),
+            'position': data.get('position'),
+            'jersey_number': data.get('jerseyNumber') or data.get('shirtNumber'),
+            'height': data.get('height'),
+            'preferred_foot': data.get('preferredFoot'),
+            'market_value': data.get('marketValue'),
+            'date_of_birth': parse_ts(data.get('dateOfBirthTimestamp')),
+            'contract_until': parse_ts(data.get('contractUntilTimestamp')),
+            'nationality': data.get('country', {}).get('name'), # Bezpieczne wyciąganie z zagnieżdżonego słownika
+            'retired': data.get('retired', False),
+            'team': team_obj
+        }
+
+        player_obj, created = Player.objects.update_or_create(
+            api_id=player_id,
+            defaults=defaults
+        )
+        
+        return player_obj
+
+    except requests.exceptions.RequestException as e:
+        print(f"Błąd połączenia API dla zawodnika {player_id}: {e}")
+        return None
+    except Exception as e:
+        print(f"Niespodziewany błąd przy fetch_player {player_id}: {e}")
+        return None
+
+# =============================================================================
+#  WYSZUKIWARKA ZAWODNIKÓW W API
+# =============================================================================
+
+def search_players_from_api(query: str) -> list:
+    """
+    Szuka zawodników w zewnętrznym API po nazwie, używając dedykowanego endpointu.
+    Zapisuje podstawowe dane do lokalnej tabeli Player.
+    """
+    import os
+    import requests
+    from .models import Player
+
+    # Używamy dokładnie tego endpointu, który znalazłeś (zabezpieczony w .env)
+    url = f"https://sportapi7.p.rapidapi.com/api/v1/search/players/{query}/more"
+
+    headers = {
+        "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
+        "x-rapidapi-host": os.getenv("SPORT_API_HOST", "sportapi7.p.rapidapi.com"),
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        # Jeśli API z jakiegoś powodu nie wspiera "/more" dla tego zapytania, 
+        # próbujemy uderzyć w podstawowy endpoint szukania zawodników
+        if response.status_code != 200:
+            url = f"https://sportapi7.p.rapidapi.com/api/v1/search/players/{query}"
+            response = requests.get(url, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            data = response.json()
+            # Zależnie od odpowiedzi, API może to ułożyć w kluczu 'results' lub 'players'
+            results = data.get('results', []) or data.get('players', []) or []
+        else:
+            print(f"Błąd wyszukiwania zawodnika API: {response.status_code}")
+            return []
+
+    except Exception as e:
+        print(f"Wyjątek wyszukiwania zawodnika API: {e}")
+        return []
+
+    players = []
+    for row in results:
+        # Endpointy dedykowane potrafią zwracać gracza od razu na najwyższym poziomie,
+        # lub chować go w słowniku 'entity'. Sprawdzamy oba scenariusze:
+        entity = row.get('entity') if 'entity' in row else row
+        
+        api_id = entity.get('id')
+        name = entity.get('name', '').strip()
+
+        if not api_id or not name:
+            continue
+
+        # Zapisujemy do bazy tylko "wizytówkę"
+        player_obj, created = Player.objects.get_or_create(
+            api_id=api_id,
+            defaults={
+                'name': name,
+                'first_name': entity.get('firstName'),
+                'last_name': entity.get('lastName'),
+                'position': entity.get('position')
+            }
+        )
+        players.append(player_obj)
+
+    return players
 
 def fetch_live_matches():
     """KROK 1: Pobiera listę meczów na żywo"""

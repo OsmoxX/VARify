@@ -16,14 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from matches.views import match_detail_view, live_matches_view, HomeView, search_api_view, team_detail_view, upcoming_matches_view
+from matches.views import match_detail_view, live_matches_view, HomeView, search_api_view, team_detail_view, upcoming_matches_view, player_detail
+from matches import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('live/', live_matches_view, name='live_matches'),
     path('match/<int:match_id>/', match_detail_view, name='match_detail'),
     path('team/<int:team_id>/', team_detail_view, name='team_detail'),
+    path('player/<int:api_id>/', player_detail, name='player_detail'),
     path('', HomeView.as_view(), name='home'),
     path('calendar/', upcoming_matches_view, name='calendar'),
     path('search-api/', search_api_view, name='search_api'),
+    path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),
 ]

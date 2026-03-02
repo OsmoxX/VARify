@@ -46,56 +46,22 @@
     {% block extra_js %}{% endblock %}
 
     <script>
-        const searchInput = document.getElementById('live-search-input');
-        const dropdown = document.getElementById('search-results-dropdown');
+    const searchInput = document.getElementById('live-search-input');
 
-        // Wyszukiwanie TYLKO po naciśnięciu Enter
-        searchInput.addEventListener('keydown', function (e) {
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
+    // Wyszukiwanie po naciśnięciu Enter
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
 
-            const query = this.value.trim();
+        const query = this.value.trim();
 
-            if (query.length < 2) {
-                dropdown.style.display = 'none';
-                return;
-            }
+        if (query.length < 2) {
+            return;
+        }
 
-            // Pokaż "Szukam..." feedback
-            dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-spinner fa-spin" style="color:#666;margin-right:8px;"></i>Szukam...</div>';
-            dropdown.style.display = 'block';
-
-            fetch(`/search-api/?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    dropdown.innerHTML = '';
-
-                    if (data.results.length === 0) {
-                        dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-circle-exclamation" style="color:#666;margin-right:8px;"></i>Brak wyników...</div>';
-                    } else {
-                        data.results.forEach(team => {
-                            const item = document.createElement('a');
-                            item.className = 'search-item';
-                            item.href = `/team/${team.id}/`;
-                            item.innerHTML = `<i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 10px;"></i> ${team.name}`;
-                            dropdown.appendChild(item);
-                        });
-                    }
-                    dropdown.style.display = 'block';
-                })
-                .catch(() => {
-                    dropdown.innerHTML = '<div class="search-item no-result"><i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:8px;"></i>Błąd wyszukiwania</div>';
-                    dropdown.style.display = 'block';
-                });
-        });
-
-        // Ukrywamy listę, jeśli klikniesz gdziekolwiek indziej na ekranie
-        document.addEventListener('click', function (e) {
-            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = 'none';
-            }
-        });
-    </script>
+        window.location.href = `/search-api/?q=${encodeURIComponent(query)}`;
+    });
+</script>
 </body>
 
 </html>

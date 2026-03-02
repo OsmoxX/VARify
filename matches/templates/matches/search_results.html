@@ -1,0 +1,64 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/search_results.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container search-container">
+    <div class="header-section search-header">
+        <h1 class="page-title">
+            <i class="fa-solid fa-magnifying-glass"></i> Wyniki dla: "{{ query }}"
+        </h1>
+        <a href="javascript:history.back()" class="back-btn-modern">
+            <i class="fa-solid fa-arrow-left"></i> Wróć
+        </a>
+    </div>
+
+    {# ── SEKCJA DRUŻYN ── #}
+    <h2 class="search-section-title">Drużyny</h2>
+    {% if teams %}
+        <div class="search-results-list">
+            {% for team in teams %}
+            <a href="{% url 'team_detail' team.id %}" class="search-result-card">
+                <div class="search-result-image-wrapper">
+                    <i class="fa-solid fa-shield-halved team-fallback" style="color: var(--text-muted); font-size: 2rem; display: block;"></i>
+                </div>
+                <span class="search-result-name">{{ team.name }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="search-empty-state">Brak drużyn pasujących do zapytania.</p>
+    {% endif %}
+
+    {# ── SEKCJA ZAWODNIKÓW ── #}
+    <h2 class="search-section-title">Zawodnicy</h2>
+    {% if players %}
+        <div class="search-results-list">
+            {% for player in players %}
+            <a href="{% url 'player_detail' player.api_id %}" class="search-result-card">
+                <div class="search-result-image-wrapper player-wrapper">
+                    <i class="fa-solid fa-user player-fallback" style="color: var(--text-muted); font-size: 1.5rem; display: block;"></i>
+                </div>
+                <div class="search-result-info">
+                    <div class="search-result-name">
+                        {% if player.first_name or player.last_name %}
+                            {{ player.first_name|default:"" }} {{ player.last_name|default:"" }}
+                        {% else %}
+                            {{ player.name }}
+                        {% endif %}
+                    </div>
+                    {% if player.position %}
+                        <div class="search-result-subtitle">{{ player.position }}</div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="search-empty-state">Brak zawodników pasujących do zapytania.</p>
+    {% endif %}
+</div>
+{% endblock %}
