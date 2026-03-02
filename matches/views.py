@@ -5,6 +5,8 @@ from django.http import JsonResponse
 from django.views.generic import ListView
 from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer
 from .services import fetch_match_details, fetch_last_matches_for_team, search_teams_from_api
+from .models import UpcomingMatch
+
 
 # Create your views here.
 
@@ -139,6 +141,41 @@ def match_detail_view(request, match_id):
 
     events = MatchEvent.objects.filter(match=match).order_by('time', 'added_time', 'id')
 
+    # Filtruj "przyszłe" markery (HT/FT) dla meczów live
+    # API incidents zwraca HT/FT z wyprzedzeniem, zanim mecz tam dotrze
+    if not is_ended:
+        import time as _time
+        # Oblicz aktualną minutę meczu
+        if match.match_time:
+            try:
+                period_start = int(match.match_time)
+                elapsed = int((_time.time() - period_start) / 60)
+                current_minute = match.minute + elapsed
+            except (ValueError, TypeError):
+                current_minute = match.minute or 0
+        else:
+            current_minute = match.minute or 0
+
+        status_lower = match.status.lower().strip()
+        is_first_half = '1st' in status_lower or 'first' in status_lower
+        is_second_half = '2nd' in status_lower or 'second' in status_lower
+        is_halftime = 'half' in status_lower and 'time' in status_lower
+
+        def should_show_period(e):
+            if not e.is_period_marker:
+                return True
+            # HT marker
+            if e.text == 'HT' or e.time == 45:
+                if is_first_half:
+                    return False
+            # FT marker
+            if e.text == 'FT' or e.time == 90:
+                if is_first_half or is_halftime or is_second_half:
+                    return False
+            return e.time <= current_minute
+
+        events = [e for e in events if should_show_period(e)]
+
     # 2. Pobieramy składy – podział na XI i rezerwę
     lineups_query = MatchLineup.objects.filter(match=match)
 
@@ -211,84 +248,72 @@ class HomeView(ListView):
         # Tylko mecze NIE zakończone (zakończone idą do Kalendarza)
         all_matches = LiveMatch.objects.select_related('league', 'home_team', 'away_team').exclude(status='Ended')
 
-        raw_data = defaultdict(lambda: defaultdict(list))
+        # Top 12 lig wg rankingu UEFA (api_id, nazwa, kraj)
+        TOP_12_LEAGUES = [
+            ('1',    'Premier League',           'England'),
+            ('33',   'Serie A',                  'Italy'),
+            ('36',   'LaLiga',                   'Spain'),
+            ('42',   'Bundesliga',               'Germany'),
+            ('4',    'Ligue 1',                  'France'),
+            ('52',   'Liga Portugal Betclic',    'Portugal'),
+            ('39',   'VriendenLoterij Eredivisie','Netherlands'),
+            ('38',   'Pro League',               'Belgium'),
+            ('62',   'Trendyol Süper Lig',       'Turkey'),
+            ('49',   'Czech First League',       'Czech Republic'),
+            ('127',  'Stoiximan Super League',   'Greece'),
+            ('64',   'Ekstraklasa',              'Poland'),
+        ]
+        top_api_ids = {t[0] for t in TOP_12_LEAGUES}
 
+        # Pogrupuj mecze wg league.api_id
+        matches_by_api_id = {}
         for match in all_matches:
-            country = match.country_name or (match.league.country if match.league else None) or 'Inne'
+            league = match.league
+            if not league:
+                continue
+            api_id = league.api_id
+            if api_id not in matches_by_api_id:
+                matches_by_api_id[api_id] = {
+                    'name': league.name,
+                    'country': league.country or '',
+                    'matches': [],
+                }
+            matches_by_api_id[api_id]['matches'].append(match)
 
-            if match.league:
-                league = match.league.name
-            else:
-                league = "Nieznana Liga"
-            # ----------------------
-
-            raw_data[country][league].append(match)
-
-        structured_data = []
-        for country, leagues in raw_data.items():
-            league_list = []
-            for league_name, matches in leagues.items():
-                league_list.append({
-                    'name': league_name,
-                    'matches': matches
+        # Buduj listę top 12 (tylko te, które mają aktualnie mecze live)
+        grouped_leagues = []
+        for api_id, name, country in TOP_12_LEAGUES:
+            data = matches_by_api_id.pop(api_id, None)
+            if data:
+                display_name = f"{name} • {country}" if country else name
+                grouped_leagues.append({
+                    'name': name,
+                    'country': country,
+                    'display_name': display_name,
+                    'matches': data['matches'],
+                    'is_top': True,
+                    'has_matches': True,
                 })
-            structured_data.append({
+
+        # Reszta lig — posortowane alfabetycznie
+        other_leagues = sorted(matches_by_api_id.values(), key=lambda x: x['name'])
+        for data in other_leagues:
+            country = data['country']
+            display_name = f"{data['name']} • {country}" if country else data['name']
+            grouped_leagues.append({
+                'name': data['name'],
                 'country': country,
-                'leagues': league_list
+                'display_name': display_name,
+                'matches': data['matches'],
+                'is_top': False,
+                'has_matches': True,
             })
 
-        # -------------------------------------------------------
-        # Priorytet top lig – każda reguła: (fragment nazwy ligi, kraj, priorytet)
-        # Obie wartości muszą pasować, żeby uniknąć fałszywych trafień
-        # (np. "Queensland Premier League" ≠ angielska Premier League).
-        # Pusty string dla kraju = nie sprawdzamy kraju (np. Champions League).
-        # -------------------------------------------------------
-        TOP_LEAGUES = [
-            ('premier league',  'england',     0),
-            ('la liga',         'spain',       1),
-            ('serie a',         'italy',       2),
-            ('bundesliga',      'germany',     3),
-            ('ligue 1',         'france',      4),
-            ('champions league','',            5),   # UEFA – brak jednego kraju
-            ('europa league',   '',            6),   # UEFA – brak jednego kraju
-            ('primeira liga',   'portugal',    7),
-            ('eredivisie',      'netherlands', 8),
-            ('championship',    'england',     9),
-        ]
+        # Do filtrów - unikalne nazwy lig
+        all_league_names = [l['display_name'] for l in grouped_leagues]
 
-        def _is_top(entry):
-            """Czy ten blok kraj/liga należy do top 10?"""
-            country_lower = entry['country'].lower()
-            for league_kw, country_kw, idx in TOP_LEAGUES:
-                for league in entry['leagues']:
-                    if league_kw not in league['name'].lower():
-                        continue
-                    # Jeśli reguła wymaga konkretnego kraju – sprawdź go
-                    if country_kw and country_kw not in country_lower:
-                        continue
-                    return True, idx
-            return False, 999
-
-        def league_priority(entry):
-            is_t, idx = _is_top(entry)
-            if is_t:
-                return (0, idx, entry['country'])
-            return (1, 999, entry['country'])
-
-        structured_data.sort(key=league_priority)
-
-        # Oznacz każdy blok flagą is_top dla szablonu
-        for entry in structured_data:
-            entry['is_top'], _ = _is_top(entry)
-
-
-        # Flat list of unique league names for the filter search
-        all_league_names = sorted(set(
-            ln for item in structured_data for league in item['leagues'] for ln in [league['name']]
-        ))
         context['all_league_names'] = all_league_names
-
-        context['structured_data'] = structured_data
+        context['structured_data'] = grouped_leagues
 
         return context
 
@@ -423,4 +448,78 @@ def team_detail_view(request, team_id):
         'recent_matches': recent_matches,
         'squad': squad,
         'latest_match': all_team_matches.first(),
+    })
+
+
+def upcoming_matches_view(request):
+    """Widok nadchodzących meczów — pogrupowane wg ligi, top 12 wg rankingu UEFA."""
+    upcoming_matches = UpcomingMatch.objects.select_related(
+        'home_team', 'away_team', 'league'
+    ).order_by('start_datetime', 'id')
+
+    # Top 12 lig wg rankingu UEFA (api_id jako string — bo tak trzyma je baza, nazwa, kraj)
+    TOP_12_LEAGUES = [
+        ('1',    'Premier League',           'England'),
+        ('33',   'Serie A',                  'Italy'),
+        ('36',   'LaLiga',                   'Spain'),
+        ('42',   'Bundesliga',               'Germany'),
+        ('4',    'Ligue 1',                  'France'),
+        ('52',   'Liga Portugal Betclic',    'Portugal'),
+        ('39',   'VriendenLoterij Eredivisie','Netherlands'),
+        ('38',   'Pro League',               'Belgium'),
+        ('62',   'Trendyol Süper Lig',       'Turkey'),
+        ('49',   'Czech First League',       'Czech Republic'),
+        ('127',  'Stoiximan Super League',   'Greece'),
+        ('64',   'Ekstraklasa',              'Poland'),
+    ]
+    top_api_ids = {t[0] for t in TOP_12_LEAGUES}
+
+    # Pogrupuj mecze wg league.api_id
+    matches_by_api_id = {}
+    for match in upcoming_matches:
+        league = match.league
+        if not league:
+            continue
+        api_id = league.api_id
+        if api_id not in matches_by_api_id:
+            matches_by_api_id[api_id] = {
+                'name': league.name,
+                'country': league.country or '',
+                'matches': [],
+            }
+        matches_by_api_id[api_id]['matches'].append(match)
+
+    # Buduj listę top 12 (zawsze widoczne, nawet bez meczów)
+    grouped_leagues = []
+    for api_id, name, country in TOP_12_LEAGUES:
+        data = matches_by_api_id.pop(api_id, None)
+        display_name = f"{name} • {country}" if country else name
+        grouped_leagues.append({
+            'name': name,
+            'country': country,
+            'display_name': display_name,
+            'matches': data['matches'] if data else [],
+            'is_top': True,
+            'has_matches': bool(data),
+        })
+
+    # Reszta lig — posortowane alfabetycznie
+    other_leagues = sorted(matches_by_api_id.values(), key=lambda x: x['name'])
+    for data in other_leagues:
+        country = data['country']
+        display_name = f"{data['name']} • {country}" if country else data['name']
+        grouped_leagues.append({
+            'name': data['name'],
+            'country': country,
+            'display_name': display_name,
+            'matches': data['matches'],
+            'is_top': False,
+            'has_matches': True,
+        })
+
+    all_league_names = [l['display_name'] for l in grouped_leagues]
+
+    return render(request, 'matches/calendar.html', {
+        'grouped_leagues': grouped_leagues,
+        'all_league_names': all_league_names,
     })

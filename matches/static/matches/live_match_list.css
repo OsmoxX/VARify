@@ -149,10 +149,23 @@
     margin: 0;
 }
 
-.match-time-live {
-    color: var(--danger);
+.match-status-label {
     font-weight: bold;
     font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.match-status-label.status-live {
+    color: #22c55e;
+}
+
+.match-status-label.status-break {
+    color: #f59e0b;
+}
+
+.match-status-label.status-ended {
+    color: var(--text-muted);
 }
 
 /* =========================================

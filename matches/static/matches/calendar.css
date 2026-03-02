@@ -41,6 +41,42 @@
     margin-top: 2px;
 }
 
+/* --- Godzina rozpoczęcia meczu --- */
+.kickoff-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+}
+
+.kickoff-time i {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.upcoming-match-row {
+    cursor: default;
+}
+
+/* --- Brak meczów w lidze --- */
+.no-matches-msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.no-matches-msg i {
+    font-size: 0.9rem;
+}
+
 /* --- Responsywność --- */
 @media (max-width: 600px) {
     .day-header {

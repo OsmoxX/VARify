@@ -1,7 +1,7 @@
 {% extends 'matches/base.html' %}
 {% load static %}
 
-{% block title %}VARify - Kalendarz{% endblock %}
+{% block title %}VARify - Nadchodzące mecze{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/live_match_list.css' %}">
@@ -11,7 +11,7 @@
 {% block content %}
 <div class="controls-wrapper">
     <div class="title-section">
-        <h1 class="main-title">Kalendarz wyników</h1>
+        <h1 class="main-title">Nadchodzące mecze</h1>
         <i class="fa-solid fa-calendar-days calendar-icon-title"></i>
     </div>
 
@@ -66,49 +66,49 @@
 </div>
 
 <div class="calendar-container">
-    {% for day in structured_days %}
-    <div class="day-section">
-        <div class="day-header">
-            <i class="fa-regular fa-calendar"></i>
-            {% if day.date == 'Brak daty' %}
-                Brak daty
-            {% else %}
-                {{ day.date|date:"l, d E Y" }}
-            {% endif %}
+    {% for league in grouped_leagues %}
+    <div class="league-section{% if league.is_top %} top-league{% endif %}" data-league-name="{{ league.display_name }}">
+        <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
+            <div class="league-info">
+                {% if league.is_top %}
+                <i class="fa-solid fa-star league-icon" style="color: var(--accent);"></i>
+                {% else %}
+                <i class="fa-solid fa-trophy league-icon"></i>
+                {% endif %}
+                <span class="league-title">{{ league.name }}</span>
+                {% if league.country %}
+                <span class="country-tag">• {{ league.country }}</span>
+                {% endif %}
+            </div>
+            <i class="fa-solid fa-chevron-down chevron-icon"></i>
         </div>
 
-        <div class="leagues-container">
-            {% for league in day.leagues %}
-            <div class="league-section" data-league-name="{{ league.name }}">
-                <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
-                    <div class="league-info">
-                        <i class="fa-solid fa-trophy league-icon"></i>
-                        <span class="league-title">{{ league.name }}</span>
-                        <span class="country-tag">• {{ league.country }}</span>
-                    </div>
-                    <i class="fa-solid fa-chevron-down chevron-icon"></i>
-                </div>
-
-                <div class="league-matches">
-                    {% for match in league.matches %}
-                    <a href="{% url 'match_detail' match.id %}" class="match-row">
-                        <div class="team team-home">{{ match.home_team.name }}</div>
-                        <div class="score-container">
-                            <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
-                            <div class="match-status-ended">Ended</div>
+        <div class="league-matches">
+            {% if league.matches %}
+                {% for match in league.matches %}
+                <div class="match-row upcoming-match-row">
+                    <div class="team team-home">{{ match.home_team.name }}</div>
+                    <div class="score-container">
+                        <div class="kickoff-time">
+                            <i class="fa-regular fa-clock"></i>
+                            {{ match.start_datetime|date:"H:i" }}
                         </div>
-                        <div class="team team-away">{{ match.away_team }}</div>
-                    </a>
-                    {% endfor %}
+                    </div>
+                    <div class="team team-away">{{ match.away_team.name }}</div>
                 </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div class="no-matches-msg">
+                    <i class="fa-regular fa-calendar-xmark"></i>
+                    Brak meczów na dziś
+                </div>
+            {% endif %}
         </div>
     </div>
     {% empty %}
     <div class="empty-state">
         <i class="fa-solid fa-calendar-xmark"></i>
-        <p>Brak zakończonych meczów w bazie danych.</p>
+        <p>Brak nadchodzących meczów. Uruchom synchronizację.</p>
     </div>
     {% endfor %}
 </div>

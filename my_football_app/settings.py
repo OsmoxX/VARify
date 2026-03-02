@@ -162,6 +162,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'matches.tasks.sync_live_matches', # ścieżka do Twojej funkcji
         'schedule': crontab(minute='*/3'), # Wykonuj co 3 minuty
     },
+    'pobierz-jutrzejsze-mecze': {
+        'task': 'matches.tasks.fetch_upcoming_matches',
+        'schedule': crontab(hour=10, minute=0), # Wykonuj o 10 rano
+    },
 }
 
 CACHES = {  

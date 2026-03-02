@@ -65,28 +65,29 @@
 </div>
 
 <div class="leagues-container">
-    {% for item in structured_data %}
+    {% for league in structured_data %}
 
-    {# Separator "Inne ligi" – pojawia się raz przy pierwszej lidze spoza Top 10 #}
-    {% if not item.is_top %}
-    {% ifchanged item.is_top %}
+    {# Separator "Inne ligi" – pojawia się raz przy pierwszej lidze spoza Top 12 #}
+    {% if not league.is_top %}
+    {% ifchanged league.is_top %}
     <div class="other-leagues-divider">
         <span>Inne ligi</span>
     </div>
     {% endifchanged %}
     {% endif %}
 
-    {% for league in item.leagues %}
-    <div class="league-section{% if item.is_top %} top-league{% endif %}" data-league-name="{{ league.name }}" data-is-top="{% if item.is_top %}1{% else %}0{% endif %}">
+    <div class="league-section{% if league.is_top %} top-league{% endif %}" data-league-name="{{ league.display_name }}" data-is-top="{% if league.is_top %}1{% else %}0{% endif %}">
         <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
             <div class="league-info">
-                {% if item.is_top %}
+                {% if league.is_top %}
                 <i class="fa-solid fa-star league-icon top-icon"></i>
                 {% else %}
                 <i class="fa-solid fa-trophy league-icon"></i>
                 {% endif %}
                 <span class="league-title">{{ league.name }}</span>
-                <span class="country-tag">• {{ item.country }}</span>
+                {% if league.country %}
+                <span class="country-tag">• {{ league.country }}</span>
+                {% endif %}
             </div>
             <i class="fa-solid fa-chevron-down chevron-icon"></i>
         </div>
@@ -97,12 +98,8 @@
                 <div class="team team-home">{{ match.home_team.name }}</div>
                 <div class="score-container">
                     <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
-                    <div class="match-time-live"
-                         data-minute="{{ match.minute|default:0 }}"
-                         data-period-start="{{ match.match_time|default:'' }}"
-                         data-initial-min="{{ match.minute|default:0 }}"
-                         data-status="{{ match.status }}">
-                        {{ match.minute|default:"0" }}'
+                    <div class="match-status-label" data-status="{{ match.status }}">
+                        {{ match.status }}
                     </div>
                 </div>
                 <div class="team team-away">{{ match.away_team }}</div>
@@ -110,7 +107,6 @@
             {% endfor %}
         </div>
     </div>
-    {% endfor %}
     {% empty %}
     <div class="empty-state">
         <i class="fa-solid fa-circle-nodes"></i>
@@ -206,51 +202,44 @@
     });
 
     // ========================================================
-    // LIVE TIMER – liczy czas meczu co sekundę po stronie JS.
-    //   data-period-start = Unix timestamp startu aktualnego okresu (z API)
-    //   data-initial-min  = minuta na starcie okresu (0 lub 45)
+    // STATUS LABELS – zamienia surowe statusy API na czytelne
+    // etykiety z kolorami (bez live timera JS!)
     // ========================================================
-    const LIVE_KEYWORDS = ['half', 'live', 'progress', 'period', '1st', '2nd', 'extra', 'overtime'];
+    const STATUS_MAP = {
+        '1st half':              '1. połowa',
+        '2nd half':              '2. połowa',
+        'halftime':              'Przerwa',
+        'ended':                 'Zakończony',
+        'not started':           'Nie rozpoczęty',
+        'extra time 1st half':   'Dogrywka 1H',
+        'extra time 2nd half':   'Dogrywka 2H',
+        'extra time halftime':   'Przerwa dogrywki',
+        'after extra time':      'Po dogrywce',
+        'after penalties':       'Po karnych',
+        'penalties':             'Karne',
+        'postponed':             'Przełożony',
+        'canceled':              'Odwołany',
+        'cancelled':             'Odwołany',
+        'abandoned':             'Przerwany',
+        'awarded':               'Walkower',
+    };
 
-    function isLive(status) {
-        const s = (status || '').toLowerCase();
-        return LIVE_KEYWORDS.some(kw => s.includes(kw));
-    }
+    // Klasyfikacja statusów do kolorowania
+    const LIVE_STATUSES = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', 'penalties'];
+    const BREAK_STATUSES = ['halftime', 'extra time halftime'];
 
-    function updateTimers() {
-        const nowSec = Math.floor(Date.now() / 1000);
-        document.querySelectorAll('.match-time-live').forEach(el => {
-            const periodStart = parseInt(el.dataset.periodStart, 10) || 0;
-            const initialMin  = parseInt(el.dataset.initialMin, 10) || 0;
-            const baseMins    = parseInt(el.dataset.minute, 10) || 0;
-            const status      = el.dataset.status || '';
+    document.querySelectorAll('.match-status-label').forEach(el => {
+        const raw = (el.dataset.status || '').toLowerCase().trim();
+        el.textContent = STATUS_MAP[raw] || el.dataset.status;
 
-            if (!isLive(status)) {
-                el.textContent = status || '-';
-                return;
-            }
-
-            if (periodStart > 0) {
-                // Dokładna metoda: identyczna z API
-                const elapsedSecs = nowSec - periodStart;
-                const currentMin = initialMin + Math.floor(elapsedSecs / 60);
-
-                if (currentMin > 90 && !status.toLowerCase().includes('extra')) {
-                    el.textContent = `90+${currentMin - 90}'`;
-                } else if (currentMin > 45 && initialMin === 0) {
-                    el.textContent = `45+${currentMin - 45}'`;
-                } else {
-                    el.textContent = currentMin + "'";
-                }
-            } else {
-                // Fallback: brak period_start – pokaż statyczną minutę
-                el.textContent = baseMins + "'";
-            }
-        });
-    }
-
-    updateTimers();
-    setInterval(updateTimers, 1000);
+        if (LIVE_STATUSES.includes(raw)) {
+            el.classList.add('status-live');
+        } else if (BREAK_STATUSES.includes(raw)) {
+            el.classList.add('status-break');
+        } else {
+            el.classList.add('status-ended');
+        }
+    });
 </script>
 
 {% endblock %}

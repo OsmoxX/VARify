@@ -48,6 +48,24 @@ class LiveMatch(models.Model):
     def __str__(self):
         return f"{self.home_team} vs {self.away_team}"
 
+class UpcomingMatch(models.Model):
+    api_id = models.IntegerField(unique=True, help_text="ID meczu z RapidAPI")
+    home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='upcoming_home_matches', null=True, blank=True)
+    away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='upcoming_away_matches', null=True, blank=True)
+    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='upcoming_matches', null=True, blank=True)
+    start_datetime = models.DateTimeField(null=True, blank=True, help_text="Dokładna data i czas rozpoczęcia (z startTimestamp)")
+    updated_at = models.DateTimeField(auto_now=True) 
+    is_top = models.BooleanField(default=False, help_text="Czy mecz jest w top-competitions (z API eventFilters)")   
+
+    @property
+    def updated_at_timestamp(self):
+        """Unix timestamp (sekundy) dla JS."""
+        if self.updated_at:
+            return int(self.updated_at.timestamp())
+        return 0
+
+    def __str__(self):
+        return f"{self.home_team} vs {self.away_team}"
 
 class MatchEvent(models.Model):
     match = models.ForeignKey(LiveMatch, on_delete=models.CASCADE, related_name='events')

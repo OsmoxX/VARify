@@ -1,9 +1,9 @@
 import os
 import requests
 from dotenv import load_dotenv
-from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer
-from datetime import datetime
-
+from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer, UpcomingMatch
+from datetime import datetime, timedelta
+from django.utils.timezone import make_aware
 # Ładujemy klucze z pliku .env
 load_dotenv()
 
@@ -42,16 +42,56 @@ def fetch_upcoming_matches():
     if response.status_code == 200:
         data = response.json()
         events = data.get('events', [])
+        
+        # Wyczyść poprzednie nadchodzące mecze, żeby nie gromadziły się z poprzednich dni
+        UpcomingMatch.objects.all().delete()
+        print("Wyczyszczono stare nadchodzące mecze.")
+        
         upcoming_top_matches = []   
         print("Nadchodzące hity dzisiejszego dnia:")
         for event in events:
-            # Sprawdzamy, czy mecz się jeszcze nie zaczął i czy to topowa liga
-            if event['status']['description'] == 'notstarted' and 'top-competitions' in event['eventFilters']['level']:
-                upcoming_top_matches.append(event)
-                print(f"⚽ {event['homeTeam']['name']} vs {event['awayTeam']['name']}")
-        
-        return upcoming_top_matches
+            status_type = event['status']['type']
+            filters = event.get('eventFilters', {})
+            levels = filters.get('level', [])
+            # Sprawdzamy, czy mecz się jeszcze nie zaczął
+            if status_type == 'notstarted':
+                is_top = 'top-competitions' in levels
+                api_id = event['id']
+                start_timestamp = event['startTimestamp']
+                start_datetime = make_aware(datetime.fromtimestamp(start_timestamp) + timedelta(hours=1))
+               
+                league_data = event['tournament']
+                league_obj, _ = League.objects.get_or_create(
+                    api_id=league_data['id'],
+                    defaults={'name': league_data['name']}
+                )
 
+                home_team_data = event['homeTeam']
+                home_team_obj, _ = Team.objects.get_or_create(
+                    api_id=home_team_data['id'],
+                    defaults={'name': home_team_data['name']}
+                )
+                
+                away_team_data = event['awayTeam']
+                away_team_obj, _ = Team.objects.get_or_create(
+                    api_id=away_team_data['id'],
+                    defaults={'name': away_team_data['name']}
+                )
+                
+                match, created = UpcomingMatch.objects.update_or_create(
+                    api_id=api_id,
+                    defaults={
+                        'home_team': home_team_obj,
+                        'away_team': away_team_obj,
+                        'league': league_obj,
+                        'start_datetime': start_datetime,
+                        'is_top': is_top,
+                    }
+                )
+                if created:
+                    print(f"{'⭐' if is_top else '  '} DODANO: {home_team_obj.name} vs {away_team_obj.name}")
+                else:
+                    print(f"{'⭐' if is_top else '  '} ZAKTUALIZOWANO: {home_team_obj.name} vs {away_team_obj.name}")
 
 def sync_live_matches():
     """KROK 2: Zapisuje mecze do bazy (bez zmian w logice)"""
@@ -103,12 +143,12 @@ def sync_live_matches():
             )
 
             # 3. Mecz – czas z API
-            from datetime import datetime
+            from datetime import datetime, timedelta
 
             status_data = event.get('status', {})
             status_desc = status_data.get('description', '')
             start_ts = event.get('startTimestamp')
-            match_date = datetime.fromtimestamp(start_ts).date() if start_ts else None
+            match_date = (datetime.fromtimestamp(start_ts) + timedelta(hours=1)).date() if start_ts else None
 
             # CZAS MECZU – prosto z API
             # event['time'] zawiera currentPeriodStartTimestamp + initial
@@ -128,8 +168,6 @@ def sync_live_matches():
             else:
                 minute_to_save = 0
                 match_time_to_save = ''
-
-            print(f"  → mecz {event.get('id')}: period_start={period_start_ts}, initial={initial_min}, status={status_desc}")
 
             defaults = {
                 'league': league,
@@ -154,6 +192,21 @@ def sync_live_matches():
             continue
 
     print(f"Zakończono! Zsynchronizowano {count} meczów.")
+
+    # ==========================================
+    # AUTO-ZAKOŃCZENIE – mecze których API już nie zwraca
+    # ==========================================
+    # Zbieramy api_id wszystkich meczów które API nadal zwraca jako live
+    live_api_ids = {event['id'] for event in data['events']}
+
+    # Mecze w bazie z "live" statusem, ale NIE obecne w API → zakończone
+    stale_matches = LiveMatch.objects.filter(
+        status__iregex=r'(half|halftime|extra|break|live|progress|period)'
+    ).exclude(api_id__in=live_api_ids)
+
+    ended_count = stale_matches.update(status='Ended')
+    if ended_count:
+        print(f"Auto-zakończono {ended_count} meczów (nie ma ich już w API live).")
 
 
 # =============================================================================
@@ -575,7 +628,7 @@ def fetch_last_matches_for_team(team_api_id: int, n: int = 3) -> list:
 
             # --- Data meczu ---
             start_ts = event.get('startTimestamp')
-            match_date = datetime.fromtimestamp(start_ts).date() if start_ts else None
+            match_date = (datetime.fromtimestamp(start_ts) + timedelta(hours=1)).date() if start_ts else None
 
             # --- Status i wynik ---
             status_data = event.get('status', {})

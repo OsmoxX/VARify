@@ -1,6 +1,6 @@
 from celery import shared_task
 from .services import sync_live_matches as sync_live_matches_service
-from .services import fetch_match_details
+from .services import fetch_match_details, fetch_upcoming_matches
 
 
 @shared_task(name='matches.tasks.sync_live_matches')
@@ -25,3 +25,15 @@ def fetch_match_details_task(local_match_id: int, api_match_id: int):
     print(f"Celery: Pobieram szczegóły meczu local_id={local_match_id}, api_id={api_match_id}...")
     fetch_match_details(local_match_id=local_match_id, api_match_id=api_match_id)
     return f"Details fetched for match {local_match_id}"
+
+
+@shared_task(name='matches.tasks.fetch_upcoming_matches')
+def fetch_upcoming_matches_task():
+    """
+    MECHANIZM 2 – PRZEWIDYWANIE (wersja asynchroniczna)
+    Pobiera nadchodzące mecze na dany dzień.
+    Wywoływany raz dziennie o północy przez Celery Beat.
+    """
+    print("Celery Beat: Rozpoczynam pobieranie nadchodzących meczów...")
+    fetch_upcoming_matches()
+    return "Upcoming matches fetched!"
