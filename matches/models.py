@@ -307,3 +307,15 @@ class MissingPlayer(models.Model):
         team = "Home" if self.is_home_team else "Away"
         status = "Missing" if self.type == 'missing' else "Doubtful"
         return f"{self.player_name} ({team}) - {status}"
+
+
+class MatchSubscription(models.Model):
+    session_key = models.CharField(max_length=100)
+    match = models.ForeignKey(LiveMatch, on_delete=models.CASCADE, related_name='subscriptions')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('session_key', 'match')
+
+    def __str__(self):
+        return f"{self.session_key} - {self.match}"

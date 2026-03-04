@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer, UpcomingMatch, Player
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 # Ładujemy klucze z pliku .env
 load_dotenv()
 
@@ -219,6 +221,98 @@ def fetch_upcoming_matches():
                 else:
                     print(f"{'⭐' if is_top else '  '} ZAKTUALIZOWANO: {home_team_obj.name} vs {away_team_obj.name}")
 
+def _check_new_incidents(match_obj, api_match_id, home_team, away_team, channel_layer, room_group_name):
+    """
+    Pobiera zdarzenia (incidents) z API dla obserwowanego meczu.
+    Porównuje event_id z tymi już w DB → nowe kartki/zmiany → wysyła WS notification.
+    Wywoływana TYLKO dla meczów z aktywnymi subskrypcjami.
+    """
+    from .models import MatchEvent
+
+    incidents_url = f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/incidents"
+    headers = {
+        "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
+        "x-rapidapi-host": os.getenv("SPORT_API_HOST")
+    }
+
+    try:
+        resp = requests.get(incidents_url, headers=headers, timeout=10)
+        if resp.status_code != 200:
+            return
+        incidents = resp.json().get('incidents', [])
+    except Exception as e:
+        print(f"Błąd pobierania incidentów dla meczu {api_match_id}: {e}")
+        return
+
+    # ID zdarzeń już w bazie
+    existing_ids = set(
+        MatchEvent.objects.filter(match=match_obj)
+        .exclude(event_id__isnull=True)
+        .values_list('event_id', flat=True)
+    )
+
+    for inc in incidents:
+        inc_id = str(inc.get('id', ''))
+        if not inc_id or inc_id in existing_ids:
+            continue
+
+        inc_type = inc.get('incidentType', '')
+        inc_class = inc.get('incidentClass', '')
+        is_home = inc.get('isHome', True)
+        team_name = home_team.name if is_home else away_team.name
+        player = inc.get('player', {}).get('name', '')
+        minute = inc.get('time', '')
+
+        # Kartki
+        if inc_type == 'card':
+            if inc_class == 'yellow':
+                icon, label = '🟨', 'Żółta kartka'
+            elif inc_class == 'red':
+                icon, label = '🟥', 'Czerwona kartka'
+            elif inc_class == 'yellowRed':
+                icon, label = '🟨🟥', 'Druga żółta → czerwona'
+            else:
+                continue
+
+            async_to_sync(channel_layer.group_send)(
+                room_group_name,
+                {
+                    'type': 'match_event',
+                    'event_type': 'card',
+                    'icon': icon,
+                    'message': f"{label}: {player} ({team_name}) {minute}'",
+                }
+            )
+
+        # Zmiany zawodników
+        elif inc_type == 'substitution':
+            player_in = inc.get('playerIn', {}).get('name', '?')
+            player_out = inc.get('playerOut', {}).get('name', '?')
+
+            async_to_sync(channel_layer.group_send)(
+                room_group_name,
+                {
+                    'type': 'match_event',
+                    'event_type': 'substitution',
+                    'icon': '🔄',
+                    'message': f"Zmiana ({team_name}) {minute}': ⬆️ {player_in}  ⬇️ {player_out}",
+                }
+            )
+
+        # Zapisujemy event do DB żeby nie wysyłać go ponownie
+        MatchEvent.objects.get_or_create(
+            match=match_obj,
+            event_id=inc_id,
+            defaults={
+                'incident_type': inc_type,
+                'incident_class': inc_class,
+                'time': minute if isinstance(minute, int) else 0,
+                'is_home_team': is_home,
+                'player_name': player,
+            }
+        )
+
+
 def sync_live_matches():
     """KROK 2: Zapisuje mecze do bazy (bez zmian w logice)"""
     data = fetch_live_matches()
@@ -295,18 +389,82 @@ def sync_live_matches():
                 minute_to_save = 0
                 match_time_to_save = ''
 
+            home_score = event['homeScore'].get('current', 0)
+            away_score = event['awayScore'].get('current', 0)
+
             defaults = {
                 'league': league,
                 'home_team': home_team,
                 'away_team': away_team,
-                'home_score': event['homeScore'].get('current', 0),
-                'away_score': event['awayScore'].get('current', 0),
+                'home_score': home_score,
+                'away_score': away_score,
                 'status': status_desc,
                 'minute': minute_to_save,
                 'match_time': match_time_to_save,
                 'match_date': match_date,
                 'country_name': country_name,
             }
+            try:
+                old_match = LiveMatch.objects.get(api_id=event['id'])
+                
+                channel_layer = get_channel_layer()
+                room_group_name = f'match_{event["id"]}'
+
+                # ── BRAMKI ── (wykrywane przez porównanie wyniku — zero dodatkowych API calls)
+                if old_match.home_score < home_score or old_match.away_score < away_score:
+                    print(f"🔔 BRAMKA WYKRYTA! {home_team.name} {old_match.home_score}→{home_score} - {old_match.away_score}→{away_score} {away_team.name}")
+                    try:
+                        async_to_sync(channel_layer.group_send)(
+                            room_group_name,
+                            {
+                                'type': 'match_event',
+                                'event_type': 'goal',
+                                'icon': '⚽',
+                                'message': f'GOOOOL! {home_team.name} {home_score} - {away_score} {away_team.name}',
+                                'home_score': home_score,
+                                'away_score': away_score,
+                                'status': status_desc,
+                            }
+                        )
+                        print(f"  ✅ Wysłano WS do grupy {room_group_name}")
+                    except Exception as ws_err:
+                        print(f"  ❌ Błąd wysyłki WS: {ws_err}")
+
+                # ── ZMIANA STATUSU / OKRESU ── (np. Przerwa, Koniec meczu)
+                if old_match.status != status_desc and status_desc:
+                    period_icons = {
+                        'Halftime': '⏸️', 'Ended': '🏁',
+                        '2nd Half': '▶️', 'Extra Time 1st Half': '⏱️',
+                        'Penalties': '🎯',
+                    }
+                    icon = period_icons.get(status_desc, '⏱️')
+                    print(f"⏱️ ZMIANA STATUSU: {home_team.name} vs {away_team.name} — {old_match.status} → {status_desc}")
+                    try:
+                        async_to_sync(channel_layer.group_send)(
+                            room_group_name,
+                            {
+                                'type': 'match_event',
+                                'event_type': 'period',
+                                'icon': icon,
+                                'message': f'{home_team.name} vs {away_team.name} — {status_desc}',
+                                'home_score': home_score,
+                                'away_score': away_score,
+                                'status': status_desc,
+                            }
+                        )
+                        print(f"  ✅ Wysłano WS status do grupy {room_group_name}")
+                    except Exception as ws_err:
+                        print(f"  ❌ Błąd wysyłki WS status: {ws_err}")
+
+                # ── KARTKI I ZMIANY ── (dodatkowe API call, ALE tylko dla obserwowanych meczów!)
+                from .models import MatchSubscription
+                has_subscribers = MatchSubscription.objects.filter(match=old_match).exists()
+                
+                if has_subscribers:
+                    _check_new_incidents(old_match, event['id'], home_team, away_team, channel_layer, room_group_name)
+
+            except LiveMatch.DoesNotExist:
+                pass  # Meczu nie było w bazie, nie wysyłamy powiadomienia
 
             LiveMatch.objects.update_or_create(
                 api_id=event['id'],

@@ -35,6 +35,28 @@
             <a href="{% url 'calendar' %}" class="nav-link">
                 <i class="fa-solid fa-calendar-days"></i> Kalendarz
             </a>
+
+            <!-- ========== PANEL POWIADOMIEŃ ========== -->
+            <div class="notif-wrapper" id="notif-wrapper">
+                <button class="notif-bell-btn" id="notif-bell-btn" title="Powiadomienia" aria-label="Powiadomienia">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notif-badge" id="notif-badge" style="display:none;"></span>
+                </button>
+                <div class="notif-panel" id="notif-panel">
+                    <div class="notif-panel-header">
+                        <span>Powiadomienia</span>
+                        <button class="notif-clear-btn" id="notif-clear-btn" title="Wyczyść wszystkie">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                    <div class="notif-panel-body" id="notif-panel-body">
+                        <div class="notif-empty" id="notif-empty">
+                            <i class="fa-solid fa-bell-slash"></i>
+                            <p>Brak powiadomień</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -45,23 +67,155 @@
 
     {% block extra_js %}{% endblock %}
 
+    <!-- Dźwięk powiadomienia (krótki ping wygenerowany programowo) -->
     <script>
-    const searchInput = document.getElementById('live-search-input');
+    // ========================================================
+    // NOTIFICATION PANEL — globalny system powiadomień
+    // ========================================================
 
-    // Wyszukiwanie po naciśnięciu Enter
+    // --- Audio: generujemy dźwięk programowo (bez pliku mp3) ---
+    const NotifSound = {
+        _ctx: null,
+        play() {
+            try {
+                if (!this._ctx) this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = this._ctx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);        // A5
+                osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1); // C#6
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.4);
+            } catch(e) { /* brak audio — bez problemu */ }
+        }
+    };
+
+    // --- localStorage: persistent notifications ---
+    const NOTIF_KEY = 'varify_notifications';
+    const UNREAD_KEY = 'varify_unread_count';
+
+    function getNotifications() {
+        try { return JSON.parse(localStorage.getItem(NOTIF_KEY)) || []; }
+        catch { return []; }
+    }
+
+    function saveNotifications(list) {
+        // Max 50 powiadomień
+        if (list.length > 50) list = list.slice(0, 50);
+        localStorage.setItem(NOTIF_KEY, JSON.stringify(list));
+    }
+
+    function getUnreadCount() {
+        return parseInt(localStorage.getItem(UNREAD_KEY) || '0', 10);
+    }
+
+    function setUnreadCount(n) {
+        localStorage.setItem(UNREAD_KEY, String(Math.max(0, n)));
+        renderBadge();
+    }
+
+    // --- Badge (czerwona kropka z liczbą) ---
+    function renderBadge() {
+        const badge = document.getElementById('notif-badge');
+        const count = getUnreadCount();
+        if (count > 0) {
+            badge.textContent = count > 9 ? '9+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // --- Render listy powiadomień ---
+    function renderNotifications() {
+        const body = document.getElementById('notif-panel-body');
+        const empty = document.getElementById('notif-empty');
+        const notifs = getNotifications();
+
+        // Usuń stare elementy (ale zachowaj "empty" div)
+        body.querySelectorAll('.notif-item').forEach(el => el.remove());
+
+        if (notifs.length === 0) {
+            empty.style.display = 'flex';
+            return;
+        }
+        empty.style.display = 'none';
+
+        notifs.forEach((n, i) => {
+            const item = document.createElement('div');
+            item.className = 'notif-item' + (i < getUnreadCount() ? ' notif-unread' : '');
+            item.innerHTML = `
+                <span class="notif-icon">${n.icon || 'ℹ️'}</span>
+                <div class="notif-content">
+                    <div class="notif-text">${n.message}</div>
+                    <div class="notif-time">${n.time || ''}</div>
+                </div>
+            `;
+            body.appendChild(item);
+        });
+    }
+
+    // --- API publiczne: dodawanie powiadomień (wywoływane z live_match_list.html) ---
+    window.VarifyNotif = {
+        add(icon, message, eventType) {
+            const notifs = getNotifications();
+            const now = new Date();
+            const time = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+            notifs.unshift({ icon, message, eventType, time });
+            saveNotifications(notifs);
+            setUnreadCount(getUnreadCount() + 1);
+            renderNotifications();
+            NotifSound.play();
+        }
+    };
+
+    // --- Toggle panelu ---
+    const bellBtn = document.getElementById('notif-bell-btn');
+    const panel = document.getElementById('notif-panel');
+
+    bellBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = panel.classList.toggle('notif-panel-open');
+        if (isOpen) {
+            setUnreadCount(0);
+            renderNotifications();
+        }
+    });
+
+    // Zamknij panel kliknięciem poza nim
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('notif-wrapper');
+        if (!wrapper.contains(e.target)) {
+            panel.classList.remove('notif-panel-open');
+        }
+    });
+
+    // Wyczyść wszystkie
+    document.getElementById('notif-clear-btn').addEventListener('click', function() {
+        localStorage.removeItem(NOTIF_KEY);
+        setUnreadCount(0);
+        renderNotifications();
+    });
+
+    // Init
+    renderBadge();
+    renderNotifications();
+
+    // --- Wyszukiwarka (Enter) ---
+    const searchInput = document.getElementById('live-search-input');
     searchInput.addEventListener('keydown', function (e) {
         if (e.key !== 'Enter') return;
         e.preventDefault();
-
         const query = this.value.trim();
-
-        if (query.length < 2) {
-            return;
-        }
-
+        if (query.length < 2) return;
         window.location.href = `/search-api/?q=${encodeURIComponent(query)}`;
     });
-</script>
+    </script>
 </body>
 
 </html>

@@ -94,16 +94,26 @@
 
         <div class="league-matches">
             {% for match in league.matches %}
-            <a href="{% url 'match_detail' match.id %}" class="match-row">
-                <div class="team team-home">{{ match.home_team.name }}</div>
-                <div class="score-container">
-                    <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
-                    <div class="match-status-label" data-status="{{ match.status }}">
-                        {{ match.status }}
+            <div class="match-row-wrapper" data-match-id="{{ match.api_id }}">
+                <a href="{% url 'match_detail' match.id %}" class="match-row">
+                    <div class="team team-home">{{ match.home_team.name }}</div>
+                    <div class="score-container">
+                        <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
+                        <div class="match-status-label" data-status="{{ match.status }}">
+                            {{ match.status }}
+                        </div>
                     </div>
-                </div>
-                <div class="team team-away">{{ match.away_team }}</div>
-            </a>
+                    <div class="team team-away">{{ match.away_team }}</div>
+                </a>
+                <button
+                    class="bell-btn"
+                    data-match-id="{{ match.api_id }}"
+                    title="Powiadomienia o meczu"
+                    aria-label="Włącz powiadomienia"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -118,6 +128,22 @@
 
 {% block extra_js %}
 <script>
+    // CSRF helper — Django's recommended way to get the CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     // 1. Toggle filter menu
     function toggleFilterMenu() {
         const menu = document.getElementById('filter-menu');
@@ -240,6 +266,241 @@
             el.classList.add('status-ended');
         }
     });
+
+    // ========================================================
+    // WEBSOCKET + BELL BUTTON — pełne powiadomienia real-time
+    // ========================================================
+    const activeWebSockets = {};
+    const subscribedIds = {{ subscribed_ids_json|safe }};
+    console.log('🔔 VARify: subscribedIds =', subscribedIds);
+
+    // 1. Przywróć stan dzwoneczków z serwera
+    subscribedIds.forEach(function(apiId) {
+        console.log('🔔 Restoring bell + WS for match:', apiId);
+        const btn = document.querySelector('.bell-btn[data-match-id="' + apiId + '"]');
+        if (btn) {
+            btn.classList.add('bell-active');
+            btn.title = 'Wyłącz powiadomienia';
+        }
+        connectToMatchWS(apiId);
+    });
+
+    // 2. Aktualizacja wiersza meczu na stronie (live DOM update)
+    function updateMatchRow(matchId, data) {
+        const wrapper = document.querySelector('.match-row-wrapper[data-match-id="' + matchId + '"]');
+        if (!wrapper) return;
+
+        // Aktualizuj wynik jeśli przekazano
+        if (data.home_score !== undefined && data.away_score !== undefined) {
+            const scoreEl = wrapper.querySelector('.score-display');
+            if (scoreEl) {
+                scoreEl.textContent = data.home_score + ' - ' + data.away_score;
+                // Animacja flashowania wyniku
+                scoreEl.style.transition = 'color 0.3s, transform 0.3s';
+                scoreEl.style.color = '#10b981';
+                scoreEl.style.transform = 'scale(1.3)';
+                setTimeout(function() {
+                    scoreEl.style.color = '';
+                    scoreEl.style.transform = '';
+                }, 1500);
+            }
+        }
+
+        // Aktualizuj status jeśli przekazano
+        if (data.status) {
+            const statusEl = wrapper.querySelector('.match-status-label');
+            if (statusEl) {
+                const STATUS_MAP = {
+                    '1st half': '1. połowa', '2nd half': '2. połowa',
+                    'halftime': 'Przerwa', 'ended': 'Zakończony',
+                    'not started': 'Nie rozpoczęty',
+                    'extra time 1st half': 'Dogrywka 1H',
+                    'extra time 2nd half': 'Dogrywka 2H',
+                    'penalties': 'Karne',
+                };
+                const raw = data.status.toLowerCase().trim();
+                statusEl.textContent = STATUS_MAP[raw] || data.status;
+                statusEl.dataset.status = data.status;
+
+                // Aktualizuj klasę kolorowania
+                const LIVE = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', 'penalties'];
+                const BREAK = ['halftime', 'extra time halftime'];
+                statusEl.classList.remove('status-live', 'status-break', 'status-ended');
+                if (LIVE.includes(raw)) {
+                    statusEl.classList.add('status-live');
+                } else if (BREAK.includes(raw)) {
+                    statusEl.classList.add('status-break');
+                } else {
+                    statusEl.classList.add('status-ended');
+                }
+            }
+        }
+    }
+
+    // 3. Funkcja łączenia WebSocket
+    function connectToMatchWS(matchId) {
+        if (activeWebSockets[matchId]) return;
+
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${wsScheme}://${window.location.host}/ws/matches/${matchId}/`;
+
+        const socket = new WebSocket(wsUrl);
+
+        socket.onopen = function() {
+            console.log(`🟢 WS connected: match ${matchId}`);
+        };
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log('📨 WS message:', data);
+            showMatchToast(data.icon, data.message, data.event_type);
+            // Dodaj do globalnego panelu powiadomień
+            if (window.VarifyNotif) {
+                window.VarifyNotif.add(data.icon, data.message, data.event_type);
+            }
+            // Aktualizuj wynik i status na stronie w czasie rzeczywistym
+            updateMatchRow(matchId, data);
+        };
+
+        socket.onclose = function() {
+            console.log(`🔴 WS closed: match ${matchId}`);
+            delete activeWebSockets[matchId];
+        };
+
+        socket.onerror = function(err) {
+            console.error(`WS error: match ${matchId}`, err);
+        };
+
+        activeWebSockets[matchId] = socket;
+    }
+
+    function disconnectFromMatchWS(matchId) {
+        if (activeWebSockets[matchId]) {
+            activeWebSockets[matchId].close();
+            delete activeWebSockets[matchId];
+        }
+    }
+
+    // 3. Bell toggle
+    document.querySelectorAll('.bell-btn').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const matchId = button.dataset.matchId;
+
+            fetch('/toggle-notifications/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ match_id: matchId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'added') {
+                    button.classList.add('bell-active');
+                    button.title = 'Wyłącz powiadomienia';
+                    showMatchToast('🔔', 'Powiadomienia włączone', 'info');
+                    connectToMatchWS(matchId);
+                } else if (data.status === 'removed') {
+                    button.classList.remove('bell-active');
+                    button.title = 'Włącz powiadomienia';
+                    showMatchToast('🔕', 'Powiadomienia wyłączone', 'info');
+                    disconnectFromMatchWS(matchId);
+                } else {
+                    showMatchToast('❌', data.message || 'Błąd', 'error');
+                }
+            })
+            .catch(() => {
+                showMatchToast('❌', 'Błąd połączenia. Spróbuj ponownie.', 'error');
+            });
+        });
+    });
+
+    // 4. Stylowe powiadomienie toast z ikoną
+    function showMatchToast(icon, msg, eventType) {
+        const bgColors = {
+            goal: '#22c55e',
+            card: '#eab308',
+            substitution: '#3b82f6',
+            period: '#8b5cf6',
+            info: '#6366f1',
+            error: '#ef4444',
+        };
+        const bg = bgColors[eventType] || '#333';
+
+        // Usuwamy stary toast (max 1 na ekranie)
+        const existing = document.querySelector('.varify-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'varify-toast';
+        toast.innerHTML = `<span style="font-size:1.3rem;margin-right:8px;">${icon}</span> ${msg}`;
+        toast.style.cssText = `
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: ${bg}; color: #fff;
+            padding: 14px 28px; border-radius: 12px; font-weight: 600;
+            font-size: 0.95rem; z-index: 9999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            animation: toastIn 0.3s ease;
+            display: flex; align-items: center;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; }, 4000);
+        setTimeout(() => toast.remove(), 4500);
+    }
 </script>
+
+<style>
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(15px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.match-row-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px;
+}
+
+.match-row-wrapper .match-row {
+    flex: 1;
+}
+
+.bell-btn {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border-color, #444);
+    color: var(--text-muted, #aaa);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    font-size: 0.85rem;
+}
+
+.bell-btn:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-color, #6366f1);
+    color: var(--primary-color, #6366f1);
+    transform: scale(1.1);
+}
+
+.bell-btn.bell-active {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.bell-btn.bell-active:hover {
+    background: rgba(34, 197, 94, 0.25);
+}
+</style>
 
 {% endblock %}

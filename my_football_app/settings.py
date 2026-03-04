@@ -33,6 +33,8 @@ ALLOWED_HOSTS = ['13.62.58.123', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'matches',
     'django_celery_beat',
     'django.contrib.admin',
@@ -71,6 +73,10 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'my_football_app.wsgi.application'
+ASGI_APPLICATION = 'my_football_app.asgi.application'
+
+# Silence W042: use BigAutoField as the default primary key type for all models
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Database
@@ -149,7 +155,6 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
-# Strefa czasowa dla zadań automatycznych (np. żeby o 15:00 znaczyło 15:00 w Polsce)
 CELERY_TIMEZONE = 'Europe/Warsaw'
 
 
@@ -159,12 +164,12 @@ from celery.schedules import crontab
 # ==========================================
 CELERY_BEAT_SCHEDULE = {
     'aktualizuj-live-mecze-co-3-minuty': {
-        'task': 'matches.tasks.sync_live_matches', # ścieżka do Twojej funkcji
-        'schedule': crontab(minute='*/3'), # Wykonuj co 3 minuty
+        'task': 'matches.tasks.sync_live_matches',
+        'schedule': crontab(minute='*/1'), # Wykonuj co 3 minuty
     },
     'pobierz-jutrzejsze-mecze': {
         'task': 'matches.tasks.fetch_upcoming_matches',
-        'schedule': crontab(hour=10, minute=0), # Wykonuj o 10 rano
+        'schedule': crontab(hour=10, minute=00), # Wykonuj o 10 rano
     },
 }
 
@@ -173,4 +178,13 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
     }
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [("redis", 6379)],
+        },
+    },
 }

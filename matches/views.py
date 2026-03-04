@@ -3,15 +3,17 @@ from django.db import models
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.generic import ListView
-from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer
+from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer, UpcomingMatch, Player, MatchSubscription
 from .services import fetch_match_details, fetch_last_matches_for_team, search_teams_from_api
-from .models import UpcomingMatch, Player
 from .services import fetch_player
 from datetime import date
 import os
 import requests
 from django.http import HttpResponse, Http404
 from django.core.cache import cache 
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 
 
@@ -19,7 +21,19 @@ from django.core.cache import cache
 
 def live_matches_view(request):
     live_matches = LiveMatch.objects.filter(status__icontains='half').select_related('home_team', 'away_team', 'league')
-    return render(request, 'matches/live_match_list.html', {'matches': live_matches})
+    
+    # Pobierz listę obserwowanych meczów dla tej sesji (do przywrócenia stanu dzwoneczków)
+    subscribed_ids = []
+    if request.session.session_key:
+        subscribed_ids = list(
+            MatchSubscription.objects.filter(session_key=request.session.session_key)
+            .values_list('match__api_id', flat=True)
+        )
+    
+    return render(request, 'matches/live_match_list.html', {
+        'matches': live_matches,
+        'subscribed_ids_json': json.dumps(subscribed_ids),
+    })
 
 
 def _build_pitch_data(xi_players, formation_str, is_home=True):
@@ -322,6 +336,15 @@ class HomeView(ListView):
         context['all_league_names'] = all_league_names
         context['structured_data'] = grouped_leagues
 
+        # Obserwowane mecze dla tej sesji (przywracanie stanu dzwoneczków + auto-connect WS)
+        subscribed_ids = []
+        if self.request.session.session_key:
+            subscribed_ids = list(
+                MatchSubscription.objects.filter(session_key=self.request.session.session_key)
+                .values_list('match__api_id', flat=True)
+            )
+        context['subscribed_ids_json'] = json.dumps(subscribed_ids)
+
         return context
 
 
@@ -580,7 +603,6 @@ def proxy_image_view(request, entity_type, api_id):
     cache_key = f"image_{entity_type}_{api_id}"
     
     # 1. SPRAWDZAMY KIESZEŃ (CACHE)
-    # Wewnątrz proxy_image_view, tam gdzie sprawdzamy cache:
     cached_image_data = cache.get(cache_key)
     if cached_image_data:
         print(f"🟢 CACHE HIT: Obrazek {entity_type} {api_id} pobrany z pamięci (0 zapytań!)")
@@ -615,3 +637,32 @@ def proxy_image_view(request, entity_type, api_id):
             return HttpResponse(status=404)
     except Exception:
         return HttpResponse(status=404)
+
+
+@csrf_exempt
+@require_POST
+def toggle_notifications(request):
+    
+    if not request.session.session_key:
+        request.session.create()
+
+
+    data = json.loads(request.body)
+    match_api_id = data.get('match_id')
+
+    try:
+        match = LiveMatch.objects.get(api_id=match_api_id)
+
+        subscription, created = MatchSubscription.objects.get_or_create(
+            match=match,
+            session_key=request.session.session_key
+        )
+
+        if not created:
+            subscription.delete()
+            return JsonResponse({'status' : 'removed', 'message': 'Powiadomienia wyłączone 🔕'})
+        
+        return JsonResponse({'status' : 'added', 'message': 'Powiadomienia włączone 🔔'})
+
+    except LiveMatch.DoesNotExist:
+        return JsonResponse({'status' : 'error', 'message': 'Mecz nie istnieje'})
