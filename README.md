@@ -3,21 +3,23 @@
 </p>
 
 <p align="center">
-  <strong>Real-time football match tracker with live scores, timelines, and team pages.</strong><br/>
-  <em>Built with Django · Celery · Redis · SportAPI</em>
+  <strong>Real-time football match tracker with live scores, WebSocket notifications, and team pages.</strong><br/>
+  <em>Built with Django · Django Channels · Celery · Redis · WebSockets · SportAPI</em>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Django-5.2-092E20?style=flat-square&logo=django&logoColor=white" />
+  <img src="https://img.shields.io/badge/Channels-4.x-092E20?style=flat-square&logo=django&logoColor=white" />
   <img src="https://img.shields.io/badge/Celery-5.6-37814A?style=flat-square&logo=celery&logoColor=white" />
   <img src="https://img.shields.io/badge/Redis-7.2-DC382D?style=flat-square&logo=redis&logoColor=white" />
-  <img src="https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" />
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Active_Development-10b981?style=flat-square" />
   <img src="https://img.shields.io/badge/UI-Premium_Dark_Mode-1e1e1e?style=flat-square" />
+  <img src="https://img.shields.io/badge/WebSockets-Real--Time-6366f1?style=flat-square" />
 </p>
 
 ---
@@ -26,12 +28,12 @@
 
 - [About](#-about)
 - [Features](#-features)
+- [Real-Time Architecture](#-real-time-architecture)
 - [Tech Stack](#%EF%B8%8F-tech-stack)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [Configuration](#%EF%B8%8F-configuration)
 - [Usage](#-usage)
-- [Management Commands](#-management-commands)
 - [Data Models](#-data-models)
 - [API Integration](#-api-integration)
 - [CSS Architecture](#-css-architecture)
@@ -41,9 +43,9 @@
 
 ## 🎯 About
 
-**VARify** is a real-time football match tracking application that brings live scores, detailed match timelines, and team profiles into a sleek dark-mode interface. It fetches data from the [SportAPI](https://rapidapi.com/) and presents it in a way that's both informative and visually stunning.
+**VARify** is a real-time football match tracking application that brings live scores, detailed match timelines, and team profiles into a sleek dark-mode interface. It fetches data from the [SportAPI](https://rapidapi.com/) and delivers instant notifications via WebSockets whenever a goal is scored, a card is given, or a substitution is made.
 
-Whether you're tracking goals, cards, substitutions, or just browsing team stats — VARify has you covered.
+Whether you're tracking goals, cards, substitutions, or browsing team stats — VARify has you covered, **even when you're on a different page**.
 
 ---
 
@@ -54,7 +56,34 @@ Whether you're tracking goals, cards, substitutions, or just browsing team stats
 
 - **Searchable league filter** — quickly find and toggle leagues by name
 - **Collapsible league sections** — expand/collapse all or individually
-- **Live score updates** — powered by Celery Beat every 10 minutes
+- **Live score updates** — Celery Beat syncs every 2 minutes via a single API call
+- **Live DOM updates** — scores and match statuses update instantly via WebSocket, no page refresh needed
+
+### 🔔 Real-Time Notifications
+> Subscribe to any match by clicking the bell icon and receive instant notifications.
+
+- **Per-match subscriptions** — click the 🔔 bell on any live match to subscribe
+- **WebSocket delivery** — notifications pushed server → browser in under a second
+- **Persistent across pages** — connections survive navigation (managed globally in base.html)
+- **Auto-reconnect** — WebSocket reconnects automatically after 3s if disconnected
+- **Smart API usage** — detailed incidents (cards, subs) fetched **only** for subscribed matches
+
+| Event Type | Icon | Description |
+|------------|------|-------------|
+| ⚽ Goal | Green football | Full score update with team names |
+| 🟨 Yellow Card | Yellow card | Player name + minute |
+| 🟥 Red Card | Red card | Player name + minute |
+| 🔁 Substitution | Arrows | Player in ↑ / Player out ↓ + minute |
+| ⏸️ Period Change | Clock/Pause | Halftime, 2nd half, extra time… |
+
+### 🔔 Notification Panel
+> A global notification bell in the navbar stores all received notifications.
+
+- **Red badge** with unread count — pops in with animation
+- **Dropdown panel** — shows all notifications with timestamp and icon
+- **Persistent history** — stored in `localStorage`, survives page refresh (max 50 entries)
+- **Notification sound** — a short programmatic audio ping via Web Audio API (no mp3 needed)
+- **Mark all read** — opens panel to clear the badge; trash button wipes all notifications
 
 ### ⚽ Match Detail & Timeline
 > Every match has a detailed timeline showing play-by-play events in a split Home vs Away layout.
@@ -72,35 +101,84 @@ Whether you're tracking goals, cards, substitutions, or just browsing team stats
 - **Smart detection** — handles both old and new API data formats
 - **Formatted time** — `45+2'` instead of raw addedTime values
 - **Lineup tab** — starting XI + substitutes with shirt numbers and ratings
+- **Match statistics tab** — possession, shots, corners and more
 
-### 🔍 Local Team Search
-> Type any team name in the navbar search bar — results come instantly from the local database.
+### 🔍 Team & Player Search
+> Type any team or player name in the navbar search bar.
 
-- **No API calls** — zero quota usage, works offline
-- **Debounced input** — waits 200ms before querying
-- **Clickable results** — each result links to the Team Detail page
+- **Local team search** — zero API calls, works offline
+- **Live player search** — fetches from SportAPI with debounced input
+- **Clickable results** — links to Team or Player detail pages
 
-### 📊 Team Detail Page
-> A dedicated page for every team in the database.
+### 📊 Team & Player Pages
 
-- **Team header** with name and logo
-- **Recent matches** — list of all tracked matches with scores
-- **Squad** — players from the latest match lineup (position, number, captain badge, rating)
+- **Team detail** — recent matches, squad with ratings
+- **Player detail** — personal info, position, current club
+
+---
+
+## 🏗 Real-Time Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    CELERY BEAT (every 2 min)                  │
+│                                                              │
+│  1 × API call → all live matches ──► compare with DB         │
+│                                                              │
+│  Goal detected?  ──► group_send ──► Redis Channel Layer      │
+│  Status changed? ──► group_send ──► Redis Channel Layer      │
+│  Subscribed?     ──► fetch incidents ──► 1 extra API call     │
+│                  └──► card/sub detected ──► group_send        │
+└────────────────────────────┬───────────────────────────────-─┘
+                             │ Redis pub/sub
+                             ▼
+┌──────────────────────────────────────────────────────────────┐
+│               DAPHNE / DJANGO CHANNELS (ASGI)                │
+│                                                              │
+│  MatchConsumer ──► WebSocket /ws/matches/{api_id}/           │
+│                    Forwards: event_type, icon, message,      │
+│                              home_score, away_score, status  │
+└────────────────────────────┬─────────────────────────────────┘
+                             │ WebSocket frame
+                             ▼
+┌──────────────────────────────────────────────────────────────┐
+│                BROWSER (JavaScript in base.html)             │
+│                                                              │
+│  window.VarifyWS  ──► manages WS connections per match       │
+│                        reads/writes to localStorage          │
+│                        auto-reconnects on close              │
+│                                                              │
+│  on message:                                                 │
+│    VarifyNotif.add() ──► panel + sound + badge               │
+│    showMatchToast()  ──► toast overlay (live page only)      │
+│    updateMatchRow()  ──► live score/status DOM update        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### API Request Budget
+
+| Operation | Requests per cycle |
+|-----------|-------------------|
+| Sync all live matches | **1** (always) |
+| Goal / status detection | 0 extra (from the same response) |
+| Incidents (cards, subs) | **1 per subscribed match** only |
 
 ---
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology | Purpose |
-|-------|-----------|---------|
+|-------|-----------|---------| 
 | **Backend** | Django 5.2 | Web framework, ORM, templating |
+| **WebSockets** | Django Channels 4 + Daphne | Async real-time communication |
 | **Task Queue** | Celery 5.6 | Async background tasks |
-| **Broker** | Redis 7.2 | Message broker for Celery |
-| **Scheduler** | Celery Beat | Periodic task scheduling |
-| **Database** | SQLite3 | Development database |
+| **Broker / Layer** | Redis 7.2 | Celery broker + Channel Layer |
+| **Scheduler** | Celery Beat | Periodic sync (2 min) |
+| **Database** | MySQL | Production database |
 | **API** | SportAPI (RapidAPI) | Live match data source |
-| **Frontend** | HTML5 + CSS3 + JS | Dark mode UI with vanilla stack |
+| **Frontend** | HTML5 + CSS3 + Vanilla JS | Dark mode UI, Web Audio API |
 | **Icons** | Font Awesome 6.4 | UI iconography |
+| **Deployment** | Docker Compose | Container orchestration |
 
 ---
 
@@ -109,40 +187,41 @@ Whether you're tracking goals, cards, substitutions, or just browsing team stats
 ```
 VARify/
 ├── 📂 matches/                     # Main Django app
-│   ├── 📂 management/commands/     # Custom CLI commands
-│   │   ├── sync_matches.py         #   Sync live matches from API
-│   │   └── reimport_events.py      #   Re-fetch events for existing matches
-│   │
-│   ├── 📂 migrations/              # Database migrations (0001–0009)
+│   ├── 📂 migrations/              # Database migrations (0001–0019)
 │   │
 │   ├── 📂 static/matches/          # CSS architecture (modular)
-│   │   ├── base.css                #   🌍 Global: variables, navbar, search
-│   │   ├── live_match_list.css     #   🏠 Home: leagues, match rows, filters
-│   │   ├── match_detail.css        #   ⚽ Match: timeline, lineups, events
+│   │   ├── base.css                #   🌍 Global: variables, navbar, notif panel
+│   │   ├── live_match_list.css     #   🏠 Home: leagues, match rows, filters, bells
+│   │   ├── match_detail.css        #   ⚽ Match: timeline, lineups, stats, events
 │   │   └── team_detail.css         #   👥 Team: header, matches, squad grid
 │   │
 │   ├── 📂 templates/matches/       # Django templates
-│   │   ├── base.html               #   🧱 Base layout (navbar + search)
-│   │   ├── live_match_list.html    #   🏠 Home page
-│   │   ├── match_detail.html       #   ⚽ Match detail + timeline
-│   │   └── team_detail.html        #   👥 Team page
+│   │   ├── base.html               #   🧱 Base layout: navbar, notif panel, VarifyWS
+│   │   ├── live_match_list.html    #   🏠 Home page: bells, toasts, DOM updates
+│   │   ├── match_detail.html       #   ⚽ Match detail + timeline + stats
+│   │   ├── team_detail.html        #   👥 Team page
+│   │   └── player_detail.html      #   👤 Player page
 │   │
-│   ├── models.py                   # League, Team, LiveMatch, MatchEvent, MatchLineup
-│   ├── views.py                    # HomeView, match_detail, team_detail, search
-│   ├── services.py                 # API fetching + incident mapping
-│   ├── tasks.py                    # Celery tasks
+│   ├── models.py                   # League, Team, LiveMatch, MatchEvent, MatchLineup,
+│   │                               #   MatchSubscription, Player
+│   ├── views.py                    # HomeView, match_detail, team_detail, toggle_notifications…
+│   ├── services.py                 # API fetching, goal/incident detection, WS dispatch
+│   ├── consumers.py                # MatchConsumer (WebSocket handler)
+│   ├── routing.py                  # WebSocket URL routing
+│   ├── tasks.py                    # Celery tasks (sync_live_matches)
 │   └── admin.py                    # Django admin config
 │
 ├── 📂 my_football_app/             # Django project config
-│   ├── settings.py                 # Celery, Redis, database settings
+│   ├── settings.py                 # Celery, Redis, Channels, database settings
+│   ├── asgi.py                     # ASGI entry point (HTTP + WebSocket)
 │   ├── urls.py                     # URL routing
-│   ├── celery.py                   # Celery app config
-│   └── wsgi.py                     # WSGI entry point
+│   └── celery.py                   # Celery app config
 │
+├── docker-compose.yml              # 🐳 web + celery + redis + db containers
+├── Dockerfile                      # App image definition
 ├── .env                            # 🔑 API keys (not committed)
 ├── requirements.txt                # Python dependencies
-├── manage.py                       # Django CLI
-└── db.sqlite3                      # Development database
+└── manage.py                       # Django CLI
 ```
 
 ---
@@ -151,48 +230,52 @@ VARify/
 
 ### Prerequisites
 
-- Python 3.12+
-- Redis server (for Celery)
+- Docker & Docker Compose
 - SportAPI key from [RapidAPI](https://rapidapi.com/)
 
-### Installation
+### Installation (Docker)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/OsmoxX/VARify.git
 cd VARify
 
-# 2. Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-# venv\Scripts\activate   # Windows
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Set up environment variables
+# 2. Set up environment variables
 cp .env.example .env
-# Edit .env with your API keys (see Configuration below)
+# Edit .env with your API keys and DB credentials
 
-# 5. Run migrations
-python manage.py migrate
+# 3. Build and start all services
+docker compose up --build
 
-# 6. Start the development server
-python manage.py runserver
+# 4. Run migrations (first time only)
+docker compose exec web python manage.py migrate
 ```
 
-### Starting Celery (for automatic sync)
+The app will be available at `http://localhost:8000`.  
+Celery Beat will automatically start syncing live matches every **2 minutes**.
+
+### Manual Installation (without Docker)
 
 ```bash
-# Terminal 1: Redis (if not running as a service)
-redis-server
+# 1. Create virtual environment
+python -m venv venv
+source venv/bin/activate
 
-# Terminal 2: Celery Worker
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Configure .env, then migrate
+python manage.py migrate
+
+# 4. Start Daphne (ASGI — required for WebSockets)
+daphne -b 0.0.0.0 -p 8000 my_football_app.asgi:application
+
+# 5. In separate terminals: Celery Worker + Beat
 celery -A my_football_app worker --loglevel=info
-
-# Terminal 3: Celery Beat (scheduler)
 celery -A my_football_app beat --loglevel=info
 ```
+
+> ⚠️ **`python manage.py runserver` does NOT support WebSockets.** You must use `daphne`.
 
 ---
 
@@ -203,17 +286,23 @@ Create a `.env` file in the project root:
 ```env
 SPORT_API_KEY=your_rapidapi_key_here
 SPORT_API_HOST=sportapi7.p.rapidapi.com
+
+DB_NAME=varify
+DB_USER=varify_user
+DB_PASSWORD=your_db_password
+DB_HOST=db
+DB_PORT=3306
 ```
 
-### Celery Beat Schedule
+### Sync Interval
 
-By default, matches sync every **10 minutes**. To change the interval, edit `settings.py`:
+Edit `settings.py` to change how often matches are synced:
 
 ```python
 CELERY_BEAT_SCHEDULE = {
-    'pobieraj-mecze-co-5-minut': {
-        'task': 'matches.tasks.sync_football_data',
-        'schedule': crontab(minute='*/10'),  # Change to '*/1' for every minute
+    'aktualizuj-live-mecze': {
+        'task': 'matches.tasks.sync_live_matches',
+        'schedule': crontab(minute='*/2'),  # every 2 minutes
     },
 }
 ```
@@ -224,122 +313,84 @@ CELERY_BEAT_SCHEDULE = {
 
 | Page | URL | Description |
 |------|-----|-------------|
-| 🏠 **Home** | `/` | Live match dashboard with league filters |
-| ⚽ **Match Detail** | `/match/<id>/` | Match timeline + lineups |
+| 🏠 **Home** | `/` | Live match dashboard with league filters + bell subscriptions |
+| ⚽ **Match Detail** | `/match/<id>/` | Timeline + lineups + statistics |
 | 👥 **Team Page** | `/team/<id>/` | Recent matches + squad |
-| 🔍 **Search API** | `/search-api/?q=<query>` | JSON endpoint for team search |
+| 👤 **Player Page** | `/player/<api_id>/` | Player info, position, club |
+| 🔍 **Search** | `/search-api/?q=<query>` | Team/player search |
 | 🔧 **Admin** | `/admin/` | Django admin panel |
-
----
-
-## 🔧 Management Commands
-
-```bash
-# Sync all live matches from the API
-python manage.py sync_matches
-
-# Re-import events for all matches (clears old data first)
-python manage.py reimport_events
-
-# Re-import events for a specific match
-python manage.py reimport_events 5
-```
+| 🔔 **Toggle Notification** | `POST /toggle-notifications/` | Subscribe / unsubscribe to match |
 
 ---
 
 ## 🗄️ Data Models
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   League     │     │  LiveMatch   │     │    Team     │
-├─────────────┤     ├──────────────┤     ├─────────────┤
-│ api_id      │◄────│ league (FK)  │     │ api_id      │
-│ name        │     │ home_team ───│────►│ name        │
-│ country     │     │ away_team ───│────►│ logo_url    │
-└─────────────┘     │ home_score   │     └─────────────┘
-                    │ away_score   │
-                    │ status       │
-                    │ country_name │
-                    └──────┬───────┘
-                           │ 1:N
-               ┌───────────┼───────────┐
-               ▼                       ▼
-      ┌────────────────┐     ┌────────────────┐
-      │  MatchEvent    │     │  MatchLineup   │
-      ├────────────────┤     ├────────────────┤
-      │ incident_type  │     │ player_name    │
-      │ player_name    │     │ shirt_number   │
-      │ time           │     │ position       │
-      │ is_home_team   │     │ is_starting_xi │
-      │ incident_class │     │ is_captain     │
-      │ home_score     │     │ avg_rating     │
-      │ away_score     │     │ is_home_team   │
-      └────────────────┘     └────────────────┘
+┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
+│   League     │     │    LiveMatch     │     │    Team     │
+├─────────────┤     ├──────────────────┤     ├─────────────┤
+│ api_id      │◄────│ league (FK)      │     │ api_id      │
+│ name        │     │ home_team ───────│────►│ name        │
+│ country     │     │ away_team ───────│────►│ logo_url    │
+│ is_top      │     │ home_score       │     └─────────────┘
+└─────────────┘     │ away_score       │
+                    │ status / minute  │
+                    └────────┬─────────┘
+                             │ 1:N
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+    ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
+    │  MatchEvent  │  │ MatchLineup  │  │ MatchSubscription│
+    ├──────────────┤  ├──────────────┤  ├──────────────────┤
+    │ incident_id  │  │ player_name  │  │ session_key      │
+    │ incident_type│  │ shirt_number │  │ match (FK)       │
+    │ player_name  │  │ position     │  │ created_at       │
+    │ time         │  │ is_starting  │  └──────────────────┘
+    │ home_score   │  │ is_captain   │
+    │ away_score   │  │ avg_rating   │
+    └──────────────┘  └──────────────┘
 ```
-
-### Smart Model Properties
-
-The `MatchEvent` model includes **smart detection properties** that handle both old and new API data formats:
-
-| Property | Logic |
-|----------|-------|
-| `is_goal` | `incident_type == 'goal'` OR `incidentClass ∈ {regular, penalty, ownGoal}` |
-| `is_card` | `incident_type == 'card'` OR `incidentClass ∈ {yellow, yellowRed, red}` |
-| `is_substitution` | `incident_type == 'substitution'` |
-| `is_period_marker` | `incident_type == 'period'` OR `incidentClass == 'Unknown' + addedTime=999` |
-| `formatted_time` | Suppresses `addedTime=999`, formats as `45+2'` |
-| `running_score` | `"{home_score} - {away_score}"` when available |
 
 ---
 
 ## 🔌 API Integration
 
-VARify uses the **SportAPI v7** from RapidAPI with the following endpoints:
+VARify uses **SportAPI v7** from RapidAPI:
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /sport/football/events/live` | Fetch all live matches |
-| `GET /event/{id}/incidents` | Fetch match events (goals, cards, subs...) |
-| `GET /event/{id}/lineups` | Fetch match lineups |
-
-### Incident Type Mapping
-
-```
-API incidentType → MatchEvent mapping:
-┌───────────────┬──────────────────────────────────────────┐
-│ goal          │ player, assists, score, incidentClass    │
-│ card          │ player, color, reason, rescinded         │
-│ substitution  │ playerIn, playerOut, injury              │
-│ period        │ text (HT/FT), score, isLive              │
-│ injuryTime    │ length (added minutes)                   │
-│ varDecision   │ player, confirmed                        │
-└───────────────┴──────────────────────────────────────────┘
-```
+| Endpoint | Purpose | Calls per cycle |
+|----------|---------|-----------------|
+| `GET /sport/football/events/live` | All live matches + scores | **1** always |
+| `GET /event/{id}/incidents` | Cards, subs for a match | **1** per subscribed match only |
+| `GET /event/{id}/lineups` | Match lineups | On match detail page load |
+| `GET /search/players/{name}/more` | Player search | On search input |
+| `GET /player/{id}` | Player detail | On player page load |
 
 ---
 
 ## 🎨 CSS Architecture
-
-The project follows a **modular CSS architecture** — each page has its own stylesheet, with global styles shared via `base.css`:
 
 ```
 base.css                    ← Loaded on EVERY page
  ├── CSS Variables (:root)
  ├── Body & Typography
  ├── Navbar & Search Bar
+ ├── Notification Panel (bell, badge, dropdown, items)
  └── Main Content Layout
 
 live_match_list.css         ← Home page only
  ├── Controls & Filters
  ├── League Sections
  ├── Match Rows
- └── Toggle Switch
+ ├── Bell Buttons (inactive / bell-active states)
+ └── Toast Notifications
 
 match_detail.css            ← Match detail only
+ ├── Tab Navigation
  ├── Timeline Feed
  ├── Event Cards
  ├── Period Markers
- └── Lineup Tables
+ ├── Lineup Tables
+ └── Statistics Bars
 
 team_detail.css             ← Team page only
  ├── Team Header
@@ -367,13 +418,16 @@ team_detail.css             ← Team page only
 
 ## 🗺️ Roadmap
 
+- [x] 🔔 Real-time WebSocket notifications (goals, cards, subs, period changes)
+- [x] 🔔 Global notification panel with unread badge + sound
+- [x] 🔄 Live score & status DOM updates (no page refresh)
+- [x] 🌐 Persistent WS connections across all pages
+- [x] 📊 Match statistics tab
+- [x] 👤 Player detail pages
+- [x] 🐳 Docker Compose deployment
 - [ ] 📱 Responsive mobile layout
-- [ ] 🔔 Push notifications for goals
-- [ ] 📊 Match statistics (possession, shots, etc.)
 - [ ] 🏆 League standings tables
-- [ ] 👤 Player detail pages
 - [ ] 🌍 Multi-language support (PL / EN)
-- [ ] 🐳 Docker compose deployment
 - [ ] ☁️ AWS / Railway deployment
 
 ---
@@ -384,7 +438,7 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 

@@ -65,8 +65,6 @@
         {% endblock %}
     </main>
 
-    {% block extra_js %}{% endblock %}
-
     <!-- Dźwięk powiadomienia (krótki ping wygenerowany programowo) -->
     <script>
     // ========================================================
@@ -206,6 +204,84 @@
     renderBadge();
     renderNotifications();
 
+    // ========================================================
+    // GLOBALNY MENADŻER WEBSOCKETÓW — działa na każdej stronie
+    // Połączenia WS trwają tak długo jak przeglądarka jest otwarta,
+    // niezależnie od nawigacji między podstronami.
+    // ========================================================
+    const WS_SUBS_KEY = 'varify_ws_subs';
+    const _activeWS = {};
+
+    function getSubscribedWsIds() {
+        try { return JSON.parse(localStorage.getItem(WS_SUBS_KEY)) || []; }
+        catch { return []; }
+    }
+
+    function saveSubscribedWsIds(ids) {
+        localStorage.setItem(WS_SUBS_KEY, JSON.stringify(ids));
+    }
+
+    function openMatchWS(matchId) {
+        if (_activeWS[matchId] && _activeWS[matchId].readyState <= 1) return; // already open/connecting
+        const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${scheme}://${location.host}/ws/matches/${matchId}/`);
+        ws.onopen = () => console.log(`🟢 [Global WS] connected: match ${matchId}`);
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            console.log(`📨 [Global WS] match ${matchId}:`, data);
+            // Powiadomienie w panelu + dźwięk
+            if (window.VarifyNotif) window.VarifyNotif.add(data.icon, data.message, data.event_type);
+            // Toast — tylko jeśli funkcja dostępna (strona live)
+            if (window.showMatchToast) window.showMatchToast(data.icon, data.message, data.event_type);
+            // Live DOM update — tylko jeśli strona live
+            if (window.updateMatchRow) window.updateMatchRow(matchId, data);
+        };
+        ws.onclose = () => {
+            console.log(`🔴 [Global WS] closed: match ${matchId}`);
+            delete _activeWS[matchId];
+            // Auto-reconnect po 3s jeśli nadal subskrybowany
+            if (getSubscribedWsIds().includes(matchId)) {
+                setTimeout(() => openMatchWS(matchId), 3000);
+            }
+        };
+        ws.onerror = () => ws.close();
+        _activeWS[matchId] = ws;
+    }
+
+    function closeMatchWS(matchId) {
+        if (_activeWS[matchId]) {
+            _activeWS[matchId].onclose = null; // nie auto-reconnect
+            _activeWS[matchId].close();
+            delete _activeWS[matchId];
+        }
+    }
+
+    // Publiczne API dla live_match_list.html — toggle subskrypcji WS
+    window.VarifyWS = {
+        subscribe(matchId) {
+            const ids = getSubscribedWsIds();
+            if (!ids.includes(matchId)) {
+                ids.push(matchId);
+                saveSubscribedWsIds(ids);
+            }
+            openMatchWS(matchId);
+        },
+        unsubscribe(matchId) {
+            const ids = getSubscribedWsIds().filter(id => id !== matchId);
+            saveSubscribedWsIds(ids);
+            closeMatchWS(matchId);
+        },
+        isSubscribed(matchId) {
+            return getSubscribedWsIds().includes(matchId);
+        },
+        getIds() {
+            return getSubscribedWsIds();
+        }
+    };
+
+    // Otwórz połączenia WS dla wszystkich istniejących subskrypcji przy każdym załadowaniu strony
+    getSubscribedWsIds().forEach(id => openMatchWS(id));
+
     // --- Wyszukiwarka (Enter) ---
     const searchInput = document.getElementById('live-search-input');
     searchInput.addEventListener('keydown', function (e) {
@@ -216,6 +292,8 @@
         window.location.href = `/search-api/?q=${encodeURIComponent(query)}`;
     });
     </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>

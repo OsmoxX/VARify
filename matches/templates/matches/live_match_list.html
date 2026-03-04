@@ -268,24 +268,71 @@
     });
 
     // ========================================================
-    // WEBSOCKET + BELL BUTTON — pełne powiadomienia real-time
+    // WEBSOCKET + BELL BUTTON — delegujemy do globalnego VarifyWS (base.html)
     // ========================================================
-    const activeWebSockets = {};
-    const subscribedIds = {{ subscribed_ids_json|safe }};
-    console.log('🔔 VARify: subscribedIds =', subscribedIds);
 
-    // 1. Przywróć stan dzwoneczków z serwera
-    subscribedIds.forEach(function(apiId) {
-        console.log('🔔 Restoring bell + WS for match:', apiId);
+    // Ekspozycja funkcji jako globalnych — VarifyWS w base.html wywoła je zdalnie
+    window.showMatchToast = showMatchToast;
+    window.updateMatchRow = updateMatchRow;
+
+    // 1. Przywróć stan dzwoneczków — z localStorage (VarifyWS) + z sesji serwera
+    const serverSubscribedIds = {{ subscribed_ids_json|safe }};
+    console.log('🔔 VARify: serverSubscribedIds =', serverSubscribedIds);
+
+    // Połącz subskrypcje z serwera z tymi w localStorage
+    serverSubscribedIds.forEach(function(apiId) {
+        if (!window.VarifyWS.isSubscribed(apiId)) {
+            window.VarifyWS.subscribe(apiId);  // doda do localStorage + otworzy WS
+        }
+    });
+
+    // Przywróć wizualny stan dzwoneczków na podstawie localStorage
+    window.VarifyWS.getIds().forEach(function(apiId) {
         const btn = document.querySelector('.bell-btn[data-match-id="' + apiId + '"]');
         if (btn) {
             btn.classList.add('bell-active');
             btn.title = 'Wyłącz powiadomienia';
         }
-        connectToMatchWS(apiId);
     });
 
-    // 2. Aktualizacja wiersza meczu na stronie (live DOM update)
+    // 2. Bell toggle — używa VarifyWS
+    document.querySelectorAll('.bell-btn').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const matchId = parseInt(button.dataset.matchId, 10);
+
+            fetch('/toggle-notifications/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ match_id: matchId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'added') {
+                    button.classList.add('bell-active');
+                    button.title = 'Wyłącz powiadomienia';
+                    showMatchToast('🔔', 'Powiadomienia włączone', 'info');
+                    window.VarifyWS.subscribe(matchId);
+                } else if (data.status === 'removed') {
+                    button.classList.remove('bell-active');
+                    button.title = 'Włącz powiadomienia';
+                    showMatchToast('🔕', 'Powiadomienia wyłączone', 'info');
+                    window.VarifyWS.unsubscribe(matchId);
+                } else {
+                    showMatchToast('❌', data.message || 'Błąd', 'error');
+                }
+            })
+            .catch(() => {
+                showMatchToast('❌', 'Błąd połączenia. Spróbuj ponownie.', 'error');
+            });
+        });
+    });
+
+    // 3. Aktualizacja wiersza meczu (live DOM) — eksponowana globalnie dla base.html
     function updateMatchRow(matchId, data) {
         const wrapper = document.querySelector('.match-row-wrapper[data-match-id="' + matchId + '"]');
         if (!wrapper) return;
