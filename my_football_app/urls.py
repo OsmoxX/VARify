@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from matches.views import match_detail_view, live_matches_view, HomeView, search_api_view, team_detail_view, upcoming_matches_view, player_detail
 from matches import views
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +32,7 @@ urlpatterns = [
     path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),
     path('toggle-notifications/', views.toggle_notifications, name='toggle_notifications'),
     path('api/active-match-ids/', views.active_match_ids, name='active_match_ids'),
+    path('register/', views.register, name='register'),
+    path('login/', auth_views.LoginView.as_view(template_name='matches/login.html', next_page='home'), name='login'),
+    path('logout/', views.logout_view, name='logout'),
 ]

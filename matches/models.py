@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class League(models.Model):
@@ -326,9 +327,9 @@ class CachedImage(models.Model):
     Trwały cache obrazków (herby drużyn, zdjęcia zawodników) w bazie danych.
     Pobiera z API tylko raz — potem serwuje z bazy (0 zapytań API).
     """
-    entity_type = models.CharField(max_length=20)   # 'team' lub 'player'
+    entity_type = models.CharField(max_length=20) 
     api_id = models.IntegerField()
-    content = models.BinaryField()                  # surowe bajty obrazka
+    content = models.BinaryField()                 
     content_type = models.CharField(max_length=100, default='image/jpeg')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -337,3 +338,4 @@ class CachedImage(models.Model):
 
     def __str__(self):
         return f"CachedImage({self.entity_type}, {self.api_id})"
+

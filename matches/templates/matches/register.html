@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VARify · Create Account</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'matches/register.css' %}">
+</head>
+<body>
+    <div class="pitch-bg"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+
+    <!-- Bouncing football -->
+    <div class="football" id="football">⚽</div>
+
+    <div class="card">
+        <div class="logo">
+            <div class="logo-icon">🏟️</div>
+            <h1>Create Account</h1>
+            <p>Join VARify and follow every match live</p>
+        </div>
+
+        <div class="steps">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">❌ {{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                <div class="input-wrap">
+                    <input type="text" name="username" id="id_username"
+                           value="{{ form.username.value|default:'' }}"
+                           placeholder="e.g. football_fan99" autocomplete="username">
+                    <i class="fa-solid fa-at"></i>
+                </div>
+                {% if form.username.errors %}<ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_email">Email Address</label>
+                <div class="input-wrap">
+                    <input type="email" name="email" id="id_email"
+                           value="{{ form.email.value|default:'' }}"
+                           placeholder="you@example.com" autocomplete="email">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password1">Password</label>
+                <div class="input-wrap">
+                    <input type="password" name="password1" id="id_password1"
+                           placeholder="Min. 8 characters" autocomplete="new-password"
+                           oninput="checkStrength(this.value)">
+                    <i class="fa-solid fa-lock"></i>
+                    <button type="button" class="eye-btn" onclick="togglePass('id_password1', this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+                <div class="strength-label" id="strength-label">Password strength</div>
+                {% if form.password1.errors %}<ul class="errorlist">{% for e in form.password1.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password2">Confirm Password</label>
+                <div class="input-wrap">
+                    <input type="password" name="password2" id="id_password2"
+                           placeholder="Repeat password" autocomplete="new-password">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <button type="button" class="eye-btn" onclick="togglePass('id_password2', this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                {% if form.password2.errors %}<ul class="errorlist">{% for e in form.password2.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-user-plus"></i> Create Account
+            </button>
+        </form>
+
+        <div class="divider">already a member?</div>
+
+        <div class="footer-link">
+            <a href="{% url 'login' %}">← Sign in to your account</a>
+        </div>
+    </div>
+
+    <script>
+        // Password strength meter
+        function checkStrength(pw) {
+            const fill = document.getElementById('strength-fill');
+            const label = document.getElementById('strength-label');
+            let score = 0;
+            if (pw.length >= 8)          score++;
+            if (/[A-Z]/.test(pw))        score++;
+            if (/[0-9]/.test(pw))        score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            const levels = [
+                { pct: '0%',   color: 'transparent', text: 'Password strength' },
+                { pct: '25%',  color: '#ef4444',      text: '⚠ Weak' },
+                { pct: '50%',  color: '#f59e0b',      text: '● Fair' },
+                { pct: '75%',  color: '#3b82f6',      text: '✓ Good' },
+                { pct: '100%', color: '#10b981',       text: '✓✓ Strong' },
+            ];
+            const l = levels[score] || levels[0];
+            fill.style.width      = l.pct;
+            fill.style.background = l.color;
+            label.textContent     = l.text;
+            label.style.color     = l.color === 'transparent' ? '#6b7280' : l.color;
+        }
+
+        // Show/hide password toggle
+        function togglePass(inputId, btn) {
+            const inp  = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                inp.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Bouncing football animation — screensaver style
+        const ball = document.getElementById('football');
+        let x  = Math.random() * (window.innerWidth - 60);
+        let y  = Math.random() * (window.innerHeight - 60);
+        let vx = 2.5 + Math.random() * 1.5;
+        let vy = 2.0 + Math.random() * 1.5;
+        let angle = 0;
+
+        function animateBall() {
+            x += vx;
+            y += vy;
+            angle += 3;
+
+            if (x + 50 >= window.innerWidth  || x <= 0) { vx *= -1; x = Math.max(0, Math.min(x, window.innerWidth  - 50)); }
+            if (y + 50 >= window.innerHeight || y <= 0) { vy *= -1; y = Math.max(0, Math.min(y, window.innerHeight - 50)); }
+
+            ball.style.left      = x + 'px';
+            ball.style.top       = y + 'px';
+            ball.style.transform = `rotate(${angle}deg)`;
+            requestAnimationFrame(animateBall);
+        }
+        animateBall();
+    </script>
+</body>
+</html>

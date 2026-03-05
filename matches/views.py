@@ -14,6 +14,10 @@ from django.core.cache import cache
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.shortcuts import render, redirect
+from .forms import UserRegisterForm
+from django.contrib.auth import login, logout
+from django.contrib import messages
 
 
 
@@ -686,3 +690,23 @@ def active_match_ids(request):
         .values_list('api_id', flat=True)
     )
     return JsonResponse({'active_ids': active_ids})
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}! You can now log in.')
+            return redirect('login')
+    else:
+        form = UserRegisterForm()
+
+    return render(request, 'matches/register.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
+

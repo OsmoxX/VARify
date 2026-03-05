@@ -1,0 +1,201 @@
+/* ===================================================
+   login.css — VARify Login Page
+   =================================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ---- Animated pitch grid ---- */
+.pitch-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(ellipse at 50% 50%, #0d1a12 0%, #0a0a0f 70%);
+}
+.pitch-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 20s linear infinite;
+}
+@keyframes gridMove {
+    0%   { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+}
+
+/* ---- Floating glow orbs ---- */
+.ball {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.15;
+    animation: floatBall var(--dur) ease-in-out infinite alternate;
+}
+@keyframes floatBall {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(var(--tx), var(--ty)) scale(1.2); }
+}
+.ball:nth-child(1){width:300px;height:300px;background:radial-gradient(circle,#10b981,transparent 70%);top:-80px;left:-80px;--dur:8s;--tx:40px;--ty:60px;}
+.ball:nth-child(2){width:200px;height:200px;background:radial-gradient(circle,#6366f1,transparent 70%);bottom:-60px;right:-60px;--dur:11s;--tx:-30px;--ty:-50px;}
+.ball:nth-child(3){width:150px;height:150px;background:radial-gradient(circle,#10b981,transparent 70%);top:40%;right:5%;--dur:7s;--tx:-20px;--ty:30px;}
+
+/* ---- Bouncing football ---- */
+.football {
+    position: fixed;
+    font-size: 2.2rem;
+    line-height: 1;
+    z-index: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 0 12px rgba(16,185,129,0.5));
+    animation: bounceBall 6s linear infinite;
+    /* JS drives left/top */
+}
+@keyframes footballSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ---- Card ---- */
+.card {
+    position: relative;
+    z-index: 10;
+    background: rgba(36, 36, 36, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(16,185,129,0.1);
+    animation: cardIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- Logo ---- */
+.logo { text-align: center; margin-bottom: 36px; }
+.logo-icon {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.35);
+}
+.logo h1 { color: #f3f4f6; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+.logo p  { color: #6b7280; font-size: 0.85rem; margin-top: 4px; }
+
+/* ---- Form ---- */
+.form-group { margin-bottom: 18px; }
+label {
+    display: block;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.input-wrap { position: relative; }
+.input-wrap i {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 14px 12px 40px;
+    color: #f3f4f6;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+input:focus {
+    border-color: #10b981;
+    background: rgba(16,185,129,0.05);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+}
+.input-wrap:focus-within i { color: #10b981; }
+
+/* ---- Errors ---- */
+.errorlist { list-style: none; margin-top: 6px; }
+.errorlist li {
+    color: #f87171;
+    font-size: 0.8rem;
+    display: flex; align-items: center; gap: 5px;
+}
+.errorlist li::before { content: '⚠ '; }
+
+/* ---- Messages ---- */
+.messages { margin-bottom: 20px; }
+.message {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    display: flex; align-items: center; gap: 8px;
+}
+.message.success { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.message.error   { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+
+/* ---- Submit button ---- */
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    box-shadow: 0 4px 20px rgba(16,185,129,0.35);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.45); filter: brightness(1.07); }
+.btn-submit:active { transform: translateY(0); }
+
+/* ---- Footer link ---- */
+.footer-link { text-align: center; margin-top: 24px; color: #6b7280; font-size: 0.85rem; }
+.footer-link a { color: #10b981; text-decoration: none; font-weight: 600; }
+.footer-link a:hover { text-decoration: underline; }
+
+.divider {
+    display: flex; align-items: center; gap: 12px;
+    color: #4b5563; font-size: 0.75rem; margin: 22px 0;
+}
+.divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: rgba(255,255,255,0.08);
+}
