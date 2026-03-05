@@ -450,6 +450,7 @@ def sync_live_matches():
                                 'home_score': home_score,
                                 'away_score': away_score,
                                 'status': status_desc,
+                                'is_ended': status_desc == 'Ended',
                             }
                         )
                         print(f"  ✅ Wysłano WS status do grupy {room_group_name}")

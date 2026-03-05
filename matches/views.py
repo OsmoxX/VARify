@@ -3,7 +3,7 @@ from django.db import models
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.generic import ListView
-from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer, UpcomingMatch, Player, MatchSubscription
+from .models import LiveMatch, MatchEvent, MatchLineup, Team, MissingPlayer, UpcomingMatch, Player, MatchSubscription, CachedImage
 from .services import fetch_match_details, fetch_last_matches_for_team, search_teams_from_api
 from .services import fetch_player
 from datetime import date
@@ -593,28 +593,23 @@ def player_detail(request, api_id):
 
 def proxy_image_view(request, entity_type, api_id):
     """
-    Pobiera zdjęcie zawodnika lub herb z API i buforuje je w pamięci serwera, 
-    aby oszczędzać limity zapytań.
+    Serwuje herb drużyny / zdjęcie zawodnika.
+    1. Szuka w bazie danych (CachedImage) — 0 zapytań API, przeżywa restarty.
+    2. Jeśli brak → pobiera z API, zapisuje do BD na stałe.
     """
     if entity_type not in ['player', 'team']:
         raise Http404("Nieznany typ obrazka")
 
-    # Tworzymy unikalny klucz dla tego konkretnego obrazka (np. 'image_team_2817')
-    cache_key = f"image_{entity_type}_{api_id}"
-    
-    # 1. SPRAWDZAMY KIESZEŃ (CACHE)
-    cached_image_data = cache.get(cache_key)
-    if cached_image_data:
-        print(f"🟢 CACHE HIT: Obrazek {entity_type} {api_id} pobrany z pamięci (0 zapytań!)")
-        return HttpResponse(
-            cached_image_data['content'], 
-            content_type=cached_image_data['content_type']
-        )
+    # 1. Sprawdź trwały cache w bazie danych
+    try:
+        cached = CachedImage.objects.get(entity_type=entity_type, api_id=api_id)
+        print(f"🟢 DB CACHE HIT: Obrazek {entity_type} {api_id} (0 zapytań API)")
+        return HttpResponse(bytes(cached.content), content_type=cached.content_type)
+    except CachedImage.DoesNotExist:
+        pass
 
-    # A tuż przed wykonaniem requests.get(url...):
+    # 2. Brak w bazie — pobierz z API
     print(f"🔴 API HIT: Pobieram obrazek {entity_type} {api_id} z RapidAPI (-1 z limitu)")
-
-    # 2. OBRAZKA NIE MA W PAMIĘCI - UDERZAMY DO API
     url = f"https://sportapi7.p.rapidapi.com/api/v1/{entity_type}/{api_id}/image"
     headers = {
         "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
@@ -625,12 +620,15 @@ def proxy_image_view(request, entity_type, api_id):
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
             content_type = response.headers.get('Content-Type', 'image/jpeg')
-            
-            # Zapisujemy pobrany obrazek do cache'a na 30 dni! (60s * 60m * 24h * 30d = 2592000 sekund)
-            cache.set(cache_key, {
-                'content': response.content,
-                'content_type': content_type
-            }, timeout=2592000)
+
+            # Zapisz w bazie na stałe — przeżywa każdy restart kontenera!
+            CachedImage.objects.create(
+                entity_type=entity_type,
+                api_id=api_id,
+                content=response.content,
+                content_type=content_type,
+            )
+            print(f"💾 Zapisano {entity_type} {api_id} do bazy danych")
 
             return HttpResponse(response.content, content_type=content_type)
         else:
@@ -666,3 +664,25 @@ def toggle_notifications(request):
 
     except LiveMatch.DoesNotExist:
         return JsonResponse({'status' : 'error', 'message': 'Mecz nie istnieje'})
+
+
+def active_match_ids(request):
+    """
+    GET /api/active-match-ids/?ids=123,456,789
+    Returns the subset of the given IDs that are still live (status != 'Ended').
+    Used by the frontend to prune stale WS subscriptions from localStorage.
+    """
+    ids_param = request.GET.get('ids', '')
+    if not ids_param:
+        return JsonResponse({'active_ids': []})
+    try:
+        requested_ids = [int(i) for i in ids_param.split(',') if i.strip()]
+    except ValueError:
+        return JsonResponse({'active_ids': []})
+
+    active_ids = list(
+        LiveMatch.objects.filter(api_id__in=requested_ids)
+        .exclude(status='Ended')
+        .values_list('api_id', flat=True)
+    )
+    return JsonResponse({'active_ids': active_ids})

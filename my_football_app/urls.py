@@ -29,5 +29,6 @@ urlpatterns = [
     path('calendar/', upcoming_matches_view, name='calendar'),
     path('search-api/', search_api_view, name='search_api'),
     path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),
-    path('toggle-notifications/', views.toggle_notifications, name='toggle_notifications')
+    path('toggle-notifications/', views.toggle_notifications, name='toggle_notifications'),
+    path('api/active-match-ids/', views.active_match_ids, name='active_match_ids'),
 ]

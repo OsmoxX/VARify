@@ -165,11 +165,11 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'aktualizuj-live-mecze-co-3-minuty': {
         'task': 'matches.tasks.sync_live_matches',
-        'schedule': crontab(minute='*/2'), # Wykonuj co 3 minuty
+        'schedule': crontab(minute='*/2'), # Wykonuj co
     },
     'pobierz-jutrzejsze-mecze': {
         'task': 'matches.tasks.fetch_upcoming_matches',
-        'schedule': crontab(hour=10, minute=00), # Wykonuj o 10 rano
+        'schedule': crontab(hour=10, minute=00), # Wykonuj o 
     },
 }
 

@@ -235,6 +235,18 @@
             if (window.showMatchToast) window.showMatchToast(data.icon, data.message, data.event_type);
             // Live DOM update — tylko jeśli strona live
             if (window.updateMatchRow) window.updateMatchRow(matchId, data);
+            // Mecz zakończony — automatycznie odsubskrybuj i zamknij WS
+            if (data.is_ended) {
+                console.log(`🏁 [Global WS] mecz ${matchId} zakończony — zamykam subskrypcję`);
+                window.VarifyWS.unsubscribe(matchId);
+                // Usuń wizualnie dzwoneczek (jeśli jesteśmy na stronie live)
+                const btn = document.querySelector('.bell-btn[data-match-id="' + matchId + '"]');
+                if (btn) {
+                    btn.classList.remove('bell-active');
+                    btn.title = 'Mecz zakończony';
+                    btn.disabled = true;
+                }
+            }
         };
         ws.onclose = () => {
             console.log(`🔴 [Global WS] closed: match ${matchId}`);
@@ -279,8 +291,32 @@
         }
     };
 
-    // Otwórz połączenia WS dla wszystkich istniejących subskrypcji przy każdym załadowaniu strony
-    getSubscribedWsIds().forEach(id => openMatchWS(id));
+    // Otwórz połączenia WS — ale najpierw wyczyść zakończone mecze z localStorage
+    (function pruneAndConnect() {
+        const ids = getSubscribedWsIds();
+        if (ids.length === 0) return;
+
+        // Zapytaj backend które z tych meczów są nadal live (nie zakończone)
+        fetch('/api/active-match-ids/?ids=' + ids.join(','))
+            .then(r => r.json())
+            .then(data => {
+                const activeIds = data.active_ids || [];
+                const staleIds = ids.filter(id => !activeIds.includes(id));
+
+                // Usuń zakończone z localStorage
+                if (staleIds.length > 0) {
+                    console.log('🗑️ VarifyWS: usuwam zakończone subskrypcje:', staleIds);
+                    saveSubscribedWsIds(activeIds);
+                }
+
+                // Otwórz WS tylko dla aktywnych
+                activeIds.forEach(id => openMatchWS(id));
+            })
+            .catch(() => {
+                // Sieć niedostępna — otwórz wszystkie (WS same się odepną gdy mecz się skończy)
+                ids.forEach(id => openMatchWS(id));
+            });
+    })();
 
     // --- Wyszukiwarka (Enter) ---
     const searchInput = document.getElementById('live-search-input');
