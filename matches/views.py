@@ -10,7 +10,7 @@ from datetime import date
 import os
 import requests
 from django.http import HttpResponse, Http404
-from django.core.cache import cache 
+from django.core.cache import cache
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -18,6 +18,7 @@ from django.shortcuts import render, redirect
 from .forms import UserRegisterForm
 from django.contrib.auth import login, logout
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 
@@ -259,16 +260,22 @@ def match_detail_view(request, match_id):
     })
 
 
-
-# matches/views.py
-
-class HomeView(ListView):
+class HomeView(LoginRequiredMixin, ListView):
     model = LiveMatch
     template_name = 'matches/live_match_list.html'
     context_object_name = 'matches'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Fetch subscribed matches to initialize bells state
+        subscribed_ids = []
+        if self.request.session.session_key:
+            subscribed_ids = list(
+                MatchSubscription.objects.filter(session_key=self.request.session.session_key)
+                .values_list('match__api_id', flat=True)
+            )
+        context['subscribed_ids_json'] = json.dumps(subscribed_ids)
 
         # Tylko mecze NIE zakończone (zakończone idą do Kalendarza)
         all_matches = LiveMatch.objects.select_related('league', 'home_team', 'away_team').exclude(status='Ended')
@@ -407,7 +414,7 @@ class CalendarView(ListView):
 
 def search_api_view(request):
     query = request.GET.get('q', '').strip()
-    
+
     if not query:
         return render(request, 'matches/search_results.html', {'error': 'Wpisz zapytanie do wyszukiwarki.'})
 
@@ -417,13 +424,12 @@ def search_api_view(request):
 
     if not local_teams.exists() and not local_players.exists():
         print(f"Brak wyników lokalnie dla '{query}'. Szukam w zewnętrznym API...")
-        
+
         from .services import search_teams_from_api, search_players_from_api
-        
         # Dopiero teraz uderzamy do API (raz dla drużyn, raz dla zawodników)
         api_teams = search_teams_from_api(query)
         api_players = search_players_from_api(query)
-        
+
         teams_to_show = api_teams
         players_to_show = api_players
     else:
@@ -437,7 +443,7 @@ def search_api_view(request):
         'players': players_to_show,
         'query': query,
     }
-    
+
     return render(request, 'matches/search_results.html', context)
 
 
@@ -562,33 +568,23 @@ def upcoming_matches_view(request):
 
 def player_detail(request, api_id):
     """Dedykowany widok profilu zawodnika. Pobiera/aktualizuje z API w locie."""
-    
     player = Player.objects.filter(api_id=api_id).first()
-    
     if not player or not player.nationality or not player.date_of_birth:
         player = fetch_player(api_id)
-        
+
     if not player:
         return render(request, 'matches/player_detail.html', {'error': 'Nie znaleziono danych o zawodniku'})
-        
     # Wyliczanie wieku
     age = None
     if player.date_of_birth:
         today = date.today()
         dob = player.date_of_birth
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-    
-    # Ładne formatowanie wartości rynkowej (np. 45000000 -> 45.0 mln €)
-    formatted_market_value = None
-    if player.market_value:
-        formatted_market_value = f"{player.market_value / 1000000:.1f} mln €"
-        
+
     context = {
         'player': player,
         'age': age,
-        'formatted_market_value': formatted_market_value,
     }
-    
     return render(request, 'matches/player_detail.html', context)
 
 

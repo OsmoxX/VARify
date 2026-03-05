@@ -384,86 +384,8 @@
         }
     }
 
-    // 3. Funkcja łączenia WebSocket
-    function connectToMatchWS(matchId) {
-        if (activeWebSockets[matchId]) return;
 
-        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-        const wsUrl = `${wsScheme}://${window.location.host}/ws/matches/${matchId}/`;
 
-        const socket = new WebSocket(wsUrl);
-
-        socket.onopen = function() {
-            console.log(`🟢 WS connected: match ${matchId}`);
-        };
-
-        socket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            console.log('📨 WS message:', data);
-            showMatchToast(data.icon, data.message, data.event_type);
-            // Dodaj do globalnego panelu powiadomień
-            if (window.VarifyNotif) {
-                window.VarifyNotif.add(data.icon, data.message, data.event_type);
-            }
-            // Aktualizuj wynik i status na stronie w czasie rzeczywistym
-            updateMatchRow(matchId, data);
-        };
-
-        socket.onclose = function() {
-            console.log(`🔴 WS closed: match ${matchId}`);
-            delete activeWebSockets[matchId];
-        };
-
-        socket.onerror = function(err) {
-            console.error(`WS error: match ${matchId}`, err);
-        };
-
-        activeWebSockets[matchId] = socket;
-    }
-
-    function disconnectFromMatchWS(matchId) {
-        if (activeWebSockets[matchId]) {
-            activeWebSockets[matchId].close();
-            delete activeWebSockets[matchId];
-        }
-    }
-
-    // 3. Bell toggle
-    document.querySelectorAll('.bell-btn').forEach(function(button) {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const matchId = button.dataset.matchId;
-
-            fetch('/toggle-notifications/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ match_id: matchId })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.status === 'added') {
-                    button.classList.add('bell-active');
-                    button.title = 'Wyłącz powiadomienia';
-                    showMatchToast('🔔', 'Powiadomienia włączone', 'info');
-                    connectToMatchWS(matchId);
-                } else if (data.status === 'removed') {
-                    button.classList.remove('bell-active');
-                    button.title = 'Włącz powiadomienia';
-                    showMatchToast('🔕', 'Powiadomienia wyłączone', 'info');
-                    disconnectFromMatchWS(matchId);
-                } else {
-                    showMatchToast('❌', data.message || 'Błąd', 'error');
-                }
-            })
-            .catch(() => {
-                showMatchToast('❌', 'Błąd połączenia. Spróbuj ponownie.', 'error');
-            });
-        });
-    });
 
     // 4. Stylowe powiadomienie toast z ikoną
     function showMatchToast(icon, msg, eventType) {

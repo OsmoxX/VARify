@@ -77,7 +77,8 @@ ASGI_APPLICATION = 'my_football_app.asgi.application'
 
 # Silence W042: use BigAutoField as the default primary key type for all models
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+# Mówimy Django, jak nazywa się nasz adres logowania
+LOGIN_URL = 'login'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
@@ -142,7 +143,7 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 # ==========================================
 # CELERY & REDIS SETTINGS
 # ==========================================
