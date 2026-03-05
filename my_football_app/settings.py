@@ -35,14 +35,14 @@ ALLOWED_HOSTS = ['13.62.58.123', 'localhost', '127.0.0.1']
 INSTALLED_APPS = [
     'daphne',
     'channels',
-    'matches',
-    'django_celery_beat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
+    'matches',
 ]
 
 MIDDLEWARE = [
