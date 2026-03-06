@@ -19,6 +19,7 @@ from .forms import UserRegisterForm
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_not_required
 
 
 
@@ -687,7 +688,7 @@ def active_match_ids(request):
     )
     return JsonResponse({'active_ids': active_ids})
 
-
+@login_not_required
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
