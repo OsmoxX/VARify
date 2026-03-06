@@ -535,10 +535,17 @@ def _map_card(item):
 
 def _map_substitution(item):
     """Mapuje zdarzenie typu 'substitution'."""
+    
+    player_in = item.get('playerIn', {}) or {}
+    player_out = item.get('playerOut', {}) or {}
+    
+    in_name = player_in.get('name') or item.get('playerNameIn', '')
+    out_name = player_out.get('name') or item.get('playerNameOut', '')
+
     return {
-        'player_in_name': _safe_nested(item, 'playerIn', 'name') or item.get('playerNameIn', ''),
-        'player_out_name': _safe_nested(item, 'playerOut', 'name') or item.get('playerNameOut', ''),
-        'player_name': _safe_nested(item, 'playerIn', 'name') or item.get('playerNameIn', ''),
+        'player_in_name': in_name,
+        'player_out_name': out_name,
+        'player_name': in_name,  # Główny gracz powiązany ze zdarzeniem to ten wchodzący
         'injury': item.get('injury', False) or False,
     }
 
@@ -718,7 +725,7 @@ def fetch_match_details(local_match_id, api_match_id):
                 # Unikanie duplikatów po event_id
                 event_id = mapped.pop('event_id', None)
                 if event_id:
-                    _, created = MatchEvent.objects.get_or_create(
+                    _, created = MatchEvent.objects.update_or_create(
                         match=match,
                         event_id=event_id,
                         defaults=mapped
@@ -765,15 +772,21 @@ def fetch_match_details(local_match_id, api_match_id):
                     player_info = p.get('player', {})
                     statistics = p.get('statistics', {})
 
-                    MatchLineup.objects.get_or_create(
+                    # Sprawdź flagę substitute lub pozycję "S" (Substitute)
+                    is_substitute = p.get('substitute', False)
+                    pos = player_info.get('position', '')
+                    if pos == 'S':
+                        is_substitute = True
+
+                    MatchLineup.objects.update_or_create(
                         match=match,
                         player_name=player_info.get('name', 'Nieznany'),
                         is_home_team=is_home,
                         defaults={
                             'player_api_id': player_info.get('id'),
                             'shirt_number': player_info.get('jerseyNumber') or p.get('shirtNumber'),
-                            'position': player_info.get('position'),
-                            'is_starting_xi': not p.get('substitute', False),
+                            'position': pos,
+                            'is_starting_xi': not is_substitute,
                             'is_captain': p.get('captain', False) or False,
                             'avg_rating': statistics.get('rating'),
                         }
