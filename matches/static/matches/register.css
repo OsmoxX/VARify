@@ -84,6 +84,48 @@ body {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Glowing Border Animation */
+.card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.8), transparent 40%, transparent 60%, rgba(16,185,129,0.8));
+    border-radius: 26px; /* card is 24px + 2px */
+    z-index: -1;
+    animation: borderGlow 6s linear infinite;
+    background-size: 200% 200%;
+}
+@keyframes borderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ---- Floating Particles ---- */
+.particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+.particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255,255,255,1);
+    animation: floatUp var(--duration) linear infinite;
+    bottom: -20px;
+    left: var(--left);
+}
+@keyframes floatUp {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    20% { opacity: 1; transform: translateY(-20vh) scale(1); }
+    80% { opacity: 1; transform: translateY(-80vh) scale(1); }
+    100% { transform: translateY(-105vh) scale(0); opacity: 0; }
+}
+
 /* ---- Logo ---- */
 .logo { text-align: center; margin-bottom: 30px; }
 .logo-icon {
@@ -221,10 +263,10 @@ input:focus {
 
 /* ---- Eye toggle button ---- */
 .eye-btn {
-    position: absolute; right: 12px; top: 50%;
+    position: absolute; right: 38px; top: 50%;
     transform: translateY(-50%);
     background: none; border: none;
     color: #6b7280; cursor: pointer;
-    padding: 4px; font-size: 0.88rem;
+    padding: 2px; font-size: 0.88rem;
 }
 .eye-btn:hover { color: #9ca3af; }
