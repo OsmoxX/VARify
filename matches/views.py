@@ -359,7 +359,7 @@ class HomeView(LoginRequiredMixin, ListView):
         return context
 
 
-class CalendarView(ListView):
+class CalendarView(LoginRequiredMixin, ListView):
     model = LiveMatch
     template_name = 'matches/calendar.html'
     context_object_name = 'matches'
