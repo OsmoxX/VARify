@@ -37,3 +37,14 @@ def fetch_upcoming_matches_task():
     print("Celery Beat: Rozpoczynam pobieranie nadchodzących meczów...")
     fetch_upcoming_matches()
     return "Upcoming matches fetched!"
+
+
+@shared_task(name='matches.tasks.fetch_league_standings_task')
+def fetch_league_standings_task(tournament_id: int, season_id: str):
+    """
+    Pobiera tabelę ligi w tle.
+    Wywoływany np. po dodaniu nowej ligi lub ręcznie.
+    """
+    print(f"Celery: Pobieram tabelę ligi tournament_id={tournament_id}...")
+    fetch_league_standings(tournament_id, season_id)
+    return f"League standings fetched for tournament {tournament_id}"

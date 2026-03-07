@@ -1,7 +1,11 @@
 import os
+import os
 import requests
 from dotenv import load_dotenv
-from .models import LiveMatch, Team, League, MatchEvent, MatchLineup, MissingPlayer, UpcomingMatch, Player
+from matches.models import (
+    League, Team, LiveMatch, MatchEvent, MatchLineup, Player,
+    MissingPlayer, UpcomingMatch, CachedImage, LeagueStandings
+)
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
 from channels.layers import get_channel_layer
@@ -1026,3 +1030,82 @@ def search_teams_from_api(query: str) -> list:
         teams.append(team)
 
     return teams
+
+
+# # =============================================================================
+#  TABELA LIGI
+#  Wywoływana TYLKO gdy brak wyników w lokalnej bazie.
+# =============================================================================
+
+def fetch_league_standings(tournament_id: int, season_id: str) -> list:
+    """
+    Pobiera tabelę ligi z API i aktualizuje lub tworzy wpisy w modelu LeagueStandings.
+    """
+    url = f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}/season/{season_id}/standings/total"
+    headers = {
+        "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
+        "x-rapidapi-host": os.getenv("SPORT_API_HOST", "sportapi7.p.rapidapi.com"),
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=8)
+        if response.status_code != 200:
+            print(f"API League Standings błąd: {response.status_code}")
+            return []
+
+        data = response.json()
+        standings = data.get('standings', [])
+        if not standings:
+            print("API League Standings: brak danych w odpowiedzi")
+            return []
+
+        league, created = League.objects.update_or_create(
+            api_id=tournament_id,
+            defaults={'name': f"Liga {tournament_id}"}
+        )
+        if created:
+            print(f"Utworzono ligę: {league.name}")
+
+        for standing in standings:
+            for row in standing.get('rows', []):
+                team_id = row['team']['id']
+                team_name = row['team']['name']
+                position = row.get('position')
+                points = row.get('points')
+                matches_played = row.get('matches')
+                matches_won = row.get('wins')
+                matches_drawn = row.get('draws')
+                matches_lost = row.get('losses')
+                goals_for = row.get('scoresFor')
+                goals_against = row.get('scoresAgainst')
+                goal_difference = (goals_for or 0) - (goals_against or 0)
+
+                team, team_created = Team.objects.get_or_create(
+                    api_id=team_id, 
+                    defaults={'name': team_name}
+                )
+                if team_created:
+                    print(f"Utworzono drużynę: {team}")
+
+                LeagueStandings.objects.update_or_create(
+                    league=league,
+                    team=team,
+                    defaults={
+                        'position': position,
+                        'points': points,
+                        'matches_played': matches_played,
+                        'matches_won': matches_won,
+                        'matches_drawn': matches_drawn,
+                        'matches_lost': matches_lost,
+                        'goals_for': goals_for,
+                        'goals_against': goals_against,
+                        'goal_difference': goal_difference,
+                    }
+                )
+
+        print(f"Zaktualizowano tabelę ligi: {league}")
+        return LeagueStandings.objects.filter(league=league)
+
+    except Exception as e:
+        print(f"API League Standings wyjątek: {e}")
+        return []

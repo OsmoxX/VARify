@@ -42,7 +42,21 @@
 .team-meta {
     color: var(--text-muted);
     font-size: 0.9rem;
-    margin-top: 4px;
+    margin-top: 10px;
+}
+
+/* ===================================================
+   TABS & STANDINGS TABLE (Shared with league_detail.css)
+   =================================================== */
+
+.highlight-row {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-left: 3px solid #10b981;
+}
+
+.highlight-row td {
+    color: #fff;
+    font-weight: 500;
 }
 
 /* =========================================

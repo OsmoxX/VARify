@@ -13,29 +13,26 @@
         <i class="fa-solid fa-chevron-left"></i> Powrót
     </a>
 
-    {# ── NAGŁÓWEK DRUŻYNY ── #}
+    {# ── NAGŁÓWEK LIGI ── #}
     <div class="team-header">
-        <img class="team-logo" src="{% url 'proxy_image' 'team' team.api_id %}" alt="{{ team.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-        
-        <div class="team-logo-placeholder" style="display: none;">
-            <i class="fa-solid fa-shield-halved"></i>
+        <div class="team-logo-placeholder">
+            <i class="fa-solid fa-trophy"></i>
         </div>
         
         <div class="team-name-section">
-            <h1>{{ team.name }}</h1>
+            <h1>{{ league.name }}</h1>
             <div class="team-meta">
-                {% if league %}
-                {{ league.name|default:"Nieznana Liga" }} &bull; {{ league.country|default:"Świat" }}
-                {% else %}
-                {% if recent_matches %}
-                {{ recent_matches|length }} meczów w bazie
-                {% else %}
-                Brak meczów
-                {% endif %}
-                {% endif %}
+                {{ league.country|default:"Świat" }}
             </div>
         </div>
     </div>
+
+    {% if error %}
+    <div class="team-section" style="border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.1);">
+        <h2 style="color: #fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> Brak Danych</h2>
+        <p style="color: #f87171; padding: 10px;">{{ error }}</p>
+    </div>
+    {% endif %}
 
     {# ── SYSTEM ZAKŁADEK (TABS) ── #}
     <div class="tabs-container">
@@ -49,74 +46,65 @@
 
     {# ── ZAKŁADKA 1: MECZE (Domyślnie widoczna) ── #}
     <div id="tab-matches" class="tab-content active">
-        {# ── OSTATNIE MECZE ── #}
+        
+        {# -- Nadchodzące Mecze -- #}
+        {% if upcoming_matches %}
         <div class="team-section">
-            <h2><i class="fa-solid fa-clock-rotate-left"></i> Ostatnie mecze</h2>
+            <h2><i class="fa-solid fa-calendar"></i> Nadchodzące spotkania</h2>
+            {% for match in upcoming_matches %}
+            <div class="team-match-row">
+                <div class="match-teams">
+                    <span class="match-team-name home">
+                        {{ match.home_team.name }}
+                        <img src="{% url 'proxy_image' 'team' match.home_team.api_id %}" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">
+                    </span>
+                    
+                    <span class="match-score-box upcoming-score">
+                        {{ match.start_datetime|date:"d.m H:i" }}
+                    </span>
+                    
+                    <span class="match-team-name away">
+                        <img src="{% url 'proxy_image' 'team' match.away_team.api_id %}" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">
+                        {{ match.away_team.name }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# -- Ostatnie Mecze -- #}
+        <div class="team-section">
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Ostatnie wyniki</h2>
             {% for match in recent_matches %}
             <a href="{% url 'match_detail' match.id %}" class="team-match-row">
                 <div class="match-teams">
-                    <span class="match-team-name home {% if match.home_team == team %}highlight{% endif %}">
+                    <span class="match-team-name home">
                         {{ match.home_team.name }}
                         <img src="{% url 'proxy_image' 'team' match.home_team.api_id %}" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">
                     </span>
                     
                     <span class="match-score-box">{{ match.home_score }} - {{ match.away_score }}</span>
                     
-                    <span class="match-team-name away {% if match.away_team == team %}highlight{% endif %}">
+                    <span class="match-team-name away">
                         <img src="{% url 'proxy_image' 'team' match.away_team.api_id %}" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">
                         {{ match.away_team.name }}
                     </span>
                 </div>
-                <span class="match-league-tag">
-                    {% if match.league %}{{ match.league.name }}{% endif %}
-                </span>
             </a>
             {% empty %}
             <div class="empty-state-small">
                 <i class="fa-solid fa-circle-info"></i>
-                Brak meczów w bazie danych.
+                Brak rozegranych meczów na ten moment.
             </div>
             {% endfor %}
         </div>
-
-        {# ── SKŁAD ── #}
-        {% if squad %}
-        <div class="team-section">
-            <h2><i class="fa-solid fa-users"></i> Skład (z meczu: {{ latest_match }})</h2>
-            <div class="squad-grid">
-                {% for player in squad %}
-                <div class="squad-player">
-                    <div class="squad-number">{{ player.shirt_number|default:"–" }}</div>
-                    <div class="squad-player-info">
-                        <div class="squad-player-name">
-                            {{ player.player_name }}
-                            {% if player.is_captain %}
-                            <span class="captain-badge">C</span>
-                            {% endif %}
-                        </div>
-                        <div class="squad-player-meta">
-                            {% if player.position %}
-                            <span class="pos-tag">{{ player.position }}</span>
-                            {% endif %}
-                            {% if not player.is_starting_xi %}
-                            <span class="sub-badge">Rezerwowy</span>
-                            {% endif %}
-                            {% if player.avg_rating %}
-                            ⭐ {{ player.avg_rating }}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
     </div>
 
     {# ── ZAKŁADKA 2: TABELA LIGOWA (Domyślnie ukryta) ── #}
     <div id="tab-standings" class="tab-content" style="display: none;">
         <div class="team-section">
-            <h2><i class="fa-solid fa-list-ol"></i> Tabela ligowa {{ league.name|default:"" }}</h2>
+            <h2><i class="fa-solid fa-list-ol"></i> Tabela ligowa</h2>
             <div class="table-container">
                 <table class="standings-table">
                     <thead>
@@ -134,7 +122,7 @@
                     </thead>
                     <tbody>
                         {% for row in standings %}
-                        <tr class="{% if row.team == team %}highlight-row{% endif %}">
+                        <tr>
                             <td class="col-pos">{{ row.position }}</td>
                             <td class="col-team">
                                 <a href="{% url 'team_detail' row.team.id %}" class="team-link">
@@ -167,21 +155,26 @@
 
 <script>
 function switchTab(tabId, btnContext) {
+    // 1. Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
         content.style.display = 'none';
         content.classList.remove('active');
     });
     
+    // 2. Remove active class from all buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
+    // 3. Show selected tab content
     const selectedContent = document.getElementById('tab-' + tabId);
     if (selectedContent) {
         selectedContent.style.display = 'block';
+        // Add a small delay for CSS animation (fade-in)
         setTimeout(() => selectedContent.classList.add('active'), 10);
     }
     
+    // 4. Set active state on clicked button
     if (btnContext) {
         btnContext.classList.add('active');
     }

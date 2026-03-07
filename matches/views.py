@@ -20,6 +20,7 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_not_required
+from .models import LeagueStandings, League
 
 
 
@@ -449,8 +450,8 @@ def search_api_view(request):
 
 
 def team_detail_view(request, team_id):
-    """Strona drużyny: ostatnie mecze + skład."""
-    from .models import Team, LiveMatch, MatchLineup
+    """Strona drużyny: ostatnie mecze + skład + tabela."""
+    from .models import Team, LiveMatch, MatchLineup, LeagueStandings
 
     team = get_object_or_404(Team, id=team_id)
 
@@ -484,11 +485,22 @@ def team_detail_view(request, team_id):
             is_home_team=(latest_match_with_lineup.home_team == team)
         ).order_by('-is_starting_xi', 'shirt_number')
 
+    # Tabela ligi dla danej drużyny (szukamy ligi, w której uczestniczy)
+    team_standing = LeagueStandings.objects.filter(team=team).select_related('league').first()
+    league = None
+    standings = []
+    
+    if team_standing:
+        league = team_standing.league
+        standings = LeagueStandings.objects.filter(league=league).select_related('team').order_by('position')
+
     return render(request, 'matches/team_detail.html', {
         'team': team,
         'recent_matches': recent_matches,
         'squad': squad,
         'latest_match': all_team_matches.first(),
+        'league': league,
+        'standings': standings,
     })
 
 
@@ -707,3 +719,46 @@ def logout_view(request):
     logout(request)
     return redirect('home')
 
+
+def league_detail_view(request, api_id):
+    """
+    KROK 2: Widok wyświetlający szczegóły ligi
+    - listę meczów (ostatnie rozegrane/nadchodzące)
+    - tabelę ligową (posortowaną po pozycji)
+    """
+    # Spróbuj pobrać ligę, jeśli nie istnieje - zwróć po prostu puste dane (API się nie wywołało w tle)
+    league = League.objects.filter(api_id=api_id).first()
+    
+    if not league:
+        # Możemy zwrócić informację, że liga nie została jeszcze pobrana przez tasks.py
+        return render(request, 'matches/league_detail.html', {
+            'league': {'name': 'Nieznana Liga', 'country': ''},
+            'upcoming_matches': [],
+            'recent_matches': [],
+            'standings': [],
+            'error': "Tabela dla tej ligi nie została jeszcze pobrana (lub zła konfiguracja API)."
+        })
+        
+    # Pobieramy nadchodzące i zakończone mecze dla tej ligi
+    upcoming_matches = UpcomingMatch.objects.filter(
+        league=league
+    ).select_related('home_team', 'away_team').order_by('start_datetime')[:10]
+    
+    recent_matches = LiveMatch.objects.filter(
+        league=league,
+        status__in=['ended', 'finished', 'after extra time', 'after penalties']
+    ).select_related('home_team', 'away_team').order_by('-match_date')[:10]
+    
+    # Pobieramy tabelę
+    standings = LeagueStandings.objects.filter(
+        league=league
+    ).select_related('team').order_by('position')
+    
+    context = {
+        'league': league,
+        'upcoming_matches': upcoming_matches,
+        'recent_matches': recent_matches,
+        'standings': standings,
+    }
+    
+    return render(request, 'matches/league_detail.html', context)
