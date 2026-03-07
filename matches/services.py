@@ -1,4 +1,4 @@
-import os
+
 import os
 import requests
 from dotenv import load_dotenv
@@ -1037,17 +1037,31 @@ def search_teams_from_api(query: str) -> list:
 #  Wywoływana TYLKO gdy brak wyników w lokalnej bazie.
 # =============================================================================
 
-def fetch_league_standings(tournament_id: int, season_id: str) -> list:
+def fetch_league_standings(tournament_id: int, season_id: str = None, local_league_id: int = None) -> list:
     """
     Pobiera tabelę ligi z API i aktualizuje lub tworzy wpisy w modelu LeagueStandings.
     """
-    url = f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}/season/{season_id}/standings/total"
     headers = {
         "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
         "x-rapidapi-host": os.getenv("SPORT_API_HOST", "sportapi7.p.rapidapi.com"),
     }
 
     try:
+        # 1. Automatyczne rozwiązanie ID sezonu, jeśli nie podano w argumencie
+        if not season_id:
+            season_url = f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}/seasons"
+            resp_seasons = requests.get(season_url, headers=headers)
+            if resp_seasons.status_code == 200:
+                seasons = resp_seasons.json().get('seasons', [])
+                if seasons:
+                    season_id = seasons[0].get('id')
+            
+            if not season_id:
+                print(f"API API błąd: Nie udało się pobrać aktualnego sezonu dla turnieju {tournament_id}")
+                return []
+
+        # 2. Pobieranie tabeli ligowej
+        url = f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}/season/{season_id}/standings/total"
         response = requests.get(url, headers=headers, timeout=8)
         if response.status_code != 200:
             print(f"API League Standings błąd: {response.status_code}")
@@ -1055,16 +1069,30 @@ def fetch_league_standings(tournament_id: int, season_id: str) -> list:
 
         data = response.json()
         standings = data.get('standings', [])
-        if not standings:
-            print("API League Standings: brak danych w odpowiedzi")
-            return []
+        # Próba wyciągnięcia prawdziwej nazwy ligi i kraju z pierwszej tabeli
+        league_name = f"Liga {tournament_id}"
+        league_country = ""
+        
+        if standings and 'tournament' in standings[0]:
+            tourn_data = standings[0]['tournament']
+            league_name = tourn_data.get('name', league_name)
+            category_data = tourn_data.get('category', {})
+            league_country = category_data.get('name', "")
+
+        # Używamy local_league_id, w przeciwnym razie tournament_id (SportAPI unique ID)
+        target_league_id = local_league_id if local_league_id is not None else tournament_id
 
         league, created = League.objects.update_or_create(
-            api_id=tournament_id,
-            defaults={'name': f"Liga {tournament_id}"}
+            api_id=target_league_id,
+            defaults={
+                'name': league_name,
+                'country': league_country
+            }
         )
         if created:
             print(f"Utworzono ligę: {league.name}")
+        else:
+            print(f"Zaktualizowano ligę: {league.name} ({league_country})")
 
         for standing in standings:
             for row in standing.get('rows', []):
@@ -1072,13 +1100,13 @@ def fetch_league_standings(tournament_id: int, season_id: str) -> list:
                 team_name = row['team']['name']
                 position = row.get('position')
                 points = row.get('points')
-                matches_played = row.get('matches')
-                matches_won = row.get('wins')
-                matches_drawn = row.get('draws')
-                matches_lost = row.get('losses')
-                goals_for = row.get('scoresFor')
-                goals_against = row.get('scoresAgainst')
-                goal_difference = (goals_for or 0) - (goals_against or 0)
+                matches_played = row.get('matches') or 0
+                matches_won = row.get('wins') or 0
+                matches_drawn = row.get('draws') or 0
+                matches_lost = row.get('losses') or 0
+                goals_for = row.get('scoresFor') or 0
+                goals_against = row.get('scoresAgainst') or 0
+                goal_difference = goals_for - goals_against
 
                 team, team_created = Team.objects.get_or_create(
                     api_id=team_id, 

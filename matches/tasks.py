@@ -1,6 +1,6 @@
 from celery import shared_task
 from .services import sync_live_matches as sync_live_matches_service
-from .services import fetch_match_details, fetch_upcoming_matches
+from .services import fetch_match_details, fetch_upcoming_matches, fetch_league_standings
 
 
 @shared_task(name='matches.tasks.sync_live_matches')
@@ -39,12 +39,37 @@ def fetch_upcoming_matches_task():
     return "Upcoming matches fetched!"
 
 
-@shared_task(name='matches.tasks.fetch_league_standings_task')
-def fetch_league_standings_task(tournament_id: int, season_id: str):
+@shared_task(name='matches.tasks.fetch_top_leagues_standings_task')
+def fetch_top_leagues_standings_task():
     """
-    Pobiera tabelę ligi w tle.
-    Wywoływany np. po dodaniu nowej ligi lub ręcznie.
+    Pobiera aktualną tabelę dla zdefiniowanych TOP lig.
+    Wywoływane automatycznie codziennie np. o 02:00 przez Celery Beat.
     """
-    print(f"Celery: Pobieram tabelę ligi tournament_id={tournament_id}...")
-    fetch_league_standings(tournament_id, season_id)
-    return f"League standings fetched for tournament {tournament_id}"
+    # Lista wyselekcjonowanych niezmiennych ID turniejów ze SportAPI
+    top_leagues_ids = [
+        17,   # Premier League
+        8,    # LaLiga
+        23,   # Serie A
+        35,   # Bundesliga
+        34,   # Ligue 1
+        202,  # Ekstraklasa
+        37,   # Eredivisie
+        238,  # Liga Portugal
+        18,   # Championship
+        52,   # Süper Lig
+        53,   # Scottish Premiership
+        44    # Pro League (Belgium)
+    ]
+    
+    print("Celery: Rozpoczynam pobieranie tabel dla TOP 12 lig...")
+    success_count = 0
+    
+    for tournament_id in top_leagues_ids:
+        try:
+            # Automatycznie pobiera najwyższy trwający 'season_id' i odświeża tabelę
+            fetch_league_standings(tournament_id=tournament_id)
+            success_count += 1
+        except Exception as e:
+            print(f"Błąd pobierania tabeli dla ID {tournament_id}: {e}")
+            
+    return f"Pobrano tabele dla {success_count} lig z TOP 12"
