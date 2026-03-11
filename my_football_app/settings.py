@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 from dotenv import load_dotenv
+import sentry_sdk
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,6 +32,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['13.62.58.123', 'localhost', '127.0.0.1']
 
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN", "https://57fe3a4f7a85f4c31ec62748e24ee3a7@o4511019727388672.ingest.de.sentry.io/4511019742003280"),
+    send_default_pii=True,
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+)
 
 # Application definition
 
@@ -43,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_beat',
     'matches',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -166,7 +176,7 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'aktualizuj-live-mecze-co-3-minuty': {
         'task': 'matches.tasks.sync_live_matches',
-        'schedule': crontab(minute='*/2'), # Wykonuj co
+        'schedule': crontab(minute='*/1'), # Wykonuj co
     },
     'pobierz-jutrzejsze-mecze': {
         'task': 'matches.tasks.fetch_upcoming_matches',
@@ -174,7 +184,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'pobierz-tabele-top-lig': {
         'task': 'matches.tasks.fetch_top_leagues_standings_task',
-        'schedule': crontab(hour=19, minute=6), # Codziennie o zadanej godzinie (według czasu lokalnego polskiego zachowanego w bazie)
+        'schedule': crontab(hour=15, minute=47), # Codziennie o zadanej godzinie (według czasu lokalnego polskiego zachowanego w bazie)
     },
 }
 

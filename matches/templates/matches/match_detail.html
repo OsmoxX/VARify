@@ -462,19 +462,28 @@
     // ========================================================
     // ZEGAR MECZU – liczy minuty na stronie szczegółów
     // ========================================================
-    const LIVE_KW = ['half', 'live', 'progress', 'period', '1st', '2nd', 'extra', 'overtime'];
+    const LIVE_KW   = ['half', 'live', 'progress', 'period', '1st', '2nd', 'extra', 'overtime'];
+    // Statusy PAUZY: sprawdzane PRZED LIVE_KW — muszą zatrzymać timer
+    const PAUSED_KW = ['halftime', 'half time', 'ht', 'pause', 'break'];
 
     function updateMatchClock() {
         const el = document.getElementById('match-clock');
         if (!el) return;
 
-        const periodStart = parseInt(el.dataset.periodStart, 10) || 0;  // Unix ts startu okresu
-        const initialMin  = parseInt(el.dataset.initialMin, 10) || 0;   // 0 lub 45 (lub 90)
-        const baseMins    = parseInt(el.dataset.minute, 10) || 0;         // fallback
+        const periodStart = parseInt(el.dataset.periodStart, 10) || 0;
+        const initialMin  = parseInt(el.dataset.initialMin, 10) || 0;
+        const baseMins    = parseInt(el.dataset.minute, 10) || 0;
         const status      = (el.dataset.status || '').toLowerCase();
         const clockText   = document.getElementById('clock-text');
 
-        // Sprawdzamy czy mecz jest live
+        // Najpierw sprawdź pauzę — jeśli przerwa, pokazuj HT i nie licz dalej
+        const isPaused = PAUSED_KW.some(kw => status.includes(kw));
+        if (isPaused) {
+            clockText.textContent = 'HT';
+            return;
+        }
+
+        // Sprawdzamy czy mecz jest live (live, 1st, 2nd itp.)
         const isLive = LIVE_KW.some(kw => status.includes(kw));
 
         if (!isLive) {

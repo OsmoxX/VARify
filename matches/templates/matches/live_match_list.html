@@ -38,13 +38,7 @@
                 </div>
 
                 <div class="filter-content" id="league-filter-list">
-                    {% for league_name in all_league_names %}
-                    <label class="checkbox-label league-filter-item" data-league-lower="{{ league_name|lower }}">
-                        <input type="checkbox" checked class="league-filter-cb" onchange="applyFilters()"
-                            data-league="{{ league_name }}">
-                        <span class="league-filter-name">{{ league_name }}</span>
-                    </label>
-                    {% endfor %}
+                    <!-- Dynamicznie wypełniane przez JS -->
                 </div>
 
                 <div class="filter-no-results" id="filter-no-results" style="display:none;">
@@ -64,71 +58,18 @@
     </div>
 </div>
 
-<div class="leagues-container">
-    {% for league in structured_data %}
-
-    {# Separator "Inne ligi" – pojawia się raz przy pierwszej lidze spoza Top 12 #}
-    {% if not league.is_top %}
-    {% ifchanged league.is_top %}
-    <div class="other-leagues-divider">
-        <span>Inne ligi</span>
+<div class="leagues-container" id="leagues-container">
+    <!-- Dynamicznie wypełniane przez JS -->
+    <div class="loading-state" id="loading-state">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+        <p>Ładowanie meczów...</p>
     </div>
-    {% endifchanged %}
-    {% endif %}
-
-    <div class="league-section{% if league.is_top %} top-league{% endif %}" data-league-name="{{ league.display_name }}" data-is-top="{% if league.is_top %}1{% else %}0{% endif %}">
-        <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
-            <div class="league-info">
-                {% if league.is_top %}
-                <i class="fa-solid fa-star league-icon top-icon"></i>
-                {% else %}
-                <i class="fa-solid fa-trophy league-icon"></i>
-                {% endif %}
-                <span class="league-title">{{ league.name }}</span>
-                {% if league.country %}
-                <span class="country-tag">• {{ league.country }}</span>
-                {% endif %}
-            </div>
-            <i class="fa-solid fa-chevron-down chevron-icon"></i>
-        </div>
-
-        <div class="league-matches">
-            {% for match in league.matches %}
-            <div class="match-row-wrapper" data-match-id="{{ match.api_id }}">
-                <a href="{% url 'match_detail' match.id %}" class="match-row">
-                    <div class="team team-home">{{ match.home_team.name }}</div>
-                    <div class="score-container">
-                        <div class="score-display">{{ match.home_score }} - {{ match.away_score }}</div>
-                        <div class="match-status-label" data-status="{{ match.status }}">
-                            {{ match.status }}
-                        </div>
-                    </div>
-                    <div class="team team-away">{{ match.away_team }}</div>
-                </a>
-                <button
-                    class="bell-btn"
-                    data-match-id="{{ match.api_id }}"
-                    title="Powiadomienia o meczu"
-                    aria-label="Włącz powiadomienia"
-                >
-                    <i class="fa-solid fa-bell"></i>
-                </button>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% empty %}
-    <div class="empty-state">
-        <i class="fa-solid fa-circle-nodes"></i>
-        <p>Brak meczów na żywo w Twojej bazie danych.</p>
-    </div>
-    {% endfor %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // CSRF helper — Django's recommended way to get the CSRF token from cookie
+    // CSRF helper
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -144,93 +85,7 @@
         return cookieValue;
     }
 
-    // 1. Toggle filter menu
-    function toggleFilterMenu() {
-        const menu = document.getElementById('filter-menu');
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // 2. Search/filter league checkboxes
-    function filterLeagueCheckboxes(query) {
-        const q = query.trim().toLowerCase();
-        const items = document.querySelectorAll('.league-filter-item');
-        let visibleCount = 0;
-
-        items.forEach(item => {
-            const name = item.getAttribute('data-league-lower');
-            const match = !q || name.includes(q);
-            item.style.display = match ? 'flex' : 'none';
-            if (match) visibleCount++;
-        });
-
-        document.getElementById('filter-no-results').style.display =
-            visibleCount === 0 ? 'block' : 'none';
-    }
-
-    // 3. Select / Deselect all visible
-    function selectAllVisible() {
-        document.querySelectorAll('.league-filter-item').forEach(item => {
-            if (item.style.display !== 'none') {
-                item.querySelector('.league-filter-cb').checked = true;
-            }
-        });
-        applyFilters();
-    }
-
-    function deselectAllVisible() {
-        document.querySelectorAll('.league-filter-item').forEach(item => {
-            if (item.style.display !== 'none') {
-                item.querySelector('.league-filter-cb').checked = false;
-            }
-        });
-        applyFilters();
-    }
-
-    // 4. Apply filters — show/hide league sections
-    function applyFilters() {
-        const checkboxes = document.querySelectorAll('.league-filter-cb');
-        const sections = document.querySelectorAll('.league-section');
-
-        checkboxes.forEach(cb => {
-            const leagueName = cb.getAttribute('data-league');
-            sections.forEach(section => {
-                if (section.getAttribute('data-league-name') === leagueName) {
-                    section.style.display = cb.checked ? 'block' : 'none';
-                }
-            });
-        });
-    }
-
-    // 5. Toggle single league section
-    function toggleLeagueSection(section) {
-        section.classList.toggle('collapsed');
-    }
-
-    // 6. Global expand/collapse
-    function toggleAllLeagues(checkbox) {
-        const sections = document.querySelectorAll('.league-section');
-        sections.forEach(section => {
-            if (checkbox.checked) {
-                section.classList.remove('collapsed');
-            } else {
-                section.classList.add('collapsed');
-            }
-        });
-    }
-
-    // Close filter menu on outside click
-    document.addEventListener('click', function (e) {
-        const menu = document.getElementById('filter-menu');
-        const btn = document.querySelector('.filter-btn');
-        if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
-            menu.style.display = 'none';
-        }
-    });
-
-    // ========================================================
-    // STATUS LABELS – zamienia surowe statusy API na czytelne
-    // etykiety z kolorami (bez live timera JS!)
-    // ========================================================
+    // STATUS labels
     const STATUS_MAP = {
         '1st half':              '1. połowa',
         '2nd half':              '2. połowa',
@@ -249,100 +104,264 @@
         'abandoned':             'Przerwany',
         'awarded':               'Walkower',
     };
-
-    // Klasyfikacja statusów do kolorowania
     const LIVE_STATUSES = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', 'penalties'];
     const BREAK_STATUSES = ['halftime', 'extra time halftime'];
 
-    document.querySelectorAll('.match-status-label').forEach(el => {
-        const raw = (el.dataset.status || '').toLowerCase().trim();
-        el.textContent = STATUS_MAP[raw] || el.dataset.status;
+    function getStatusClass(raw) {
+        if (LIVE_STATUSES.includes(raw)) return 'status-live';
+        if (BREAK_STATUSES.includes(raw)) return 'status-break';
+        return 'status-ended';
+    }
 
-        if (LIVE_STATUSES.includes(raw)) {
-            el.classList.add('status-live');
-        } else if (BREAK_STATUSES.includes(raw)) {
-            el.classList.add('status-break');
-        } else {
-            el.classList.add('status-ended');
-        }
-    });
-
-    // ========================================================
-    // WEBSOCKET + BELL BUTTON — delegujemy do globalnego VarifyWS (base.html)
-    // ========================================================
-
-    // Ekspozycja funkcji jako globalnych — VarifyWS w base.html wywoła je zdalnie
-    window.showMatchToast = showMatchToast;
-    window.updateMatchRow = updateMatchRow;
-
-    // 1. Przywróć stan dzwoneczków — z localStorage (VarifyWS) + z sesji serwera
+    // Subskrybowane mecze (z sesji Django)
     const serverSubscribedIds = {{ subscribed_ids_json|safe }};
-    console.log('🔔 VARify: serverSubscribedIds =', serverSubscribedIds);
 
-    // Połącz subskrypcje z serwera z tymi w localStorage
-    serverSubscribedIds.forEach(function(apiId) {
-        if (!window.VarifyWS.isSubscribed(apiId)) {
-            window.VarifyWS.subscribe(apiId);  // doda do localStorage + otworzy WS
-        }
-    });
+    // ============================================================
+    // BUDOWANIE DOM
+    // ============================================================
 
-    // Przywróć wizualny stan dzwoneczków na podstawie localStorage
-    window.VarifyWS.getIds().forEach(function(apiId) {
-        const btn = document.querySelector('.bell-btn[data-match-id="' + apiId + '"]');
-        if (btn) {
-            btn.classList.add('bell-active');
-            btn.title = 'Wyłącz powiadomienia';
-        }
-    });
+    function buildLeagueSection(leagueName, country, displayName, isTop, matches) {
+        const section = document.createElement('div');
+        section.className = 'league-section' + (isTop ? ' top-league' : '');
+        section.setAttribute('data-league-name', displayName);
+        section.setAttribute('data-is-top', isTop ? '1' : '0');
 
-    // 2. Bell toggle — używa VarifyWS
-    document.querySelectorAll('.bell-btn').forEach(function(button) {
-        button.addEventListener('click', function(e) {
+        const icon = isTop
+            ? '<i class="fa-solid fa-star league-icon top-icon"></i>'
+            : '<i class="fa-solid fa-trophy league-icon"></i>';
+        const countryTag = country ? `<span class="country-tag">• ${country}</span>` : '';
+
+        section.innerHTML = `
+            <div class="league-header" onclick="toggleLeagueSection(this.parentElement)">
+                <div class="league-info">
+                    ${icon}
+                    <span class="league-title">${leagueName}</span>
+                    ${countryTag}
+                </div>
+                <i class="fa-solid fa-chevron-down chevron-icon"></i>
+            </div>
+            <div class="league-matches" id="matches-${CSS.escape(displayName)}"></div>
+        `;
+
+        const matchesContainer = section.querySelector('.league-matches');
+        matches.forEach(match => matchesContainer.appendChild(buildMatchRow(match)));
+
+        return section;
+    }
+
+    function buildMatchRow(match) {
+        const raw = (match.status || '').toLowerCase().trim();
+        const statusLabel = STATUS_MAP[raw] || match.status;
+        const statusClass = getStatusClass(raw);
+        const isBellActive = window.VarifyWS && window.VarifyWS.isSubscribed(match.api_id)
+            ? 'bell-active' : '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'match-row-wrapper';
+        wrapper.setAttribute('data-match-id', match.api_id);
+        wrapper.innerHTML = `
+            <a href="${match.match_url}" class="match-row">
+                <div class="team team-home">${match.home_team}</div>
+                <div class="score-container">
+                    <div class="score-display">${match.home_score} - ${match.away_score}</div>
+                    <div class="match-status-label ${statusClass}" data-status="${match.status}">
+                        ${statusLabel}
+                    </div>
+                </div>
+                <div class="team team-away">${match.away_team}</div>
+            </a>
+            <button class="bell-btn ${isBellActive}" data-match-id="${match.api_id}"
+                title="${isBellActive ? 'Wyłącz powiadomienia' : 'Włącz powiadomienia'}"
+                aria-label="Włącz powiadomienia">
+                <i class="fa-solid fa-bell"></i>
+            </button>
+        `;
+
+        // Bell click handler
+        const btn = wrapper.querySelector('.bell-btn');
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            const matchId = parseInt(button.dataset.matchId, 10);
-
+            const matchId = parseInt(btn.dataset.matchId, 10);
             fetch('/toggle-notifications/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                 body: JSON.stringify({ match_id: matchId })
             })
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'added') {
-                    button.classList.add('bell-active');
-                    button.title = 'Wyłącz powiadomienia';
+                    btn.classList.add('bell-active');
+                    btn.title = 'Wyłącz powiadomienia';
                     showMatchToast('🔔', 'Powiadomienia włączone', 'info');
-                    window.VarifyWS.subscribe(matchId);
+                    if (window.VarifyWS) window.VarifyWS.subscribe(matchId);
                 } else if (data.status === 'removed') {
-                    button.classList.remove('bell-active');
-                    button.title = 'Włącz powiadomienia';
+                    btn.classList.remove('bell-active');
+                    btn.title = 'Włącz powiadomienia';
                     showMatchToast('🔕', 'Powiadomienia wyłączone', 'info');
-                    window.VarifyWS.unsubscribe(matchId);
+                    if (window.VarifyWS) window.VarifyWS.unsubscribe(matchId);
                 } else {
                     showMatchToast('❌', data.message || 'Błąd', 'error');
                 }
             })
-            .catch(() => {
-                showMatchToast('❌', 'Błąd połączenia. Spróbuj ponownie.', 'error');
-            });
+            .catch(() => showMatchToast('❌', 'Błąd połączenia. Spróbuj ponownie.', 'error'));
         });
-    });
 
-    // 3. Aktualizacja wiersza meczu (live DOM) — eksponowana globalnie dla base.html
+        return wrapper;
+    }
+
+    // ============================================================
+    // FETCH LIVE MATCHES
+    // ============================================================
+
+    let lastMatchData = null;
+
+    function loadLiveMatches(silent = false) {
+        fetch('/api/live-matches/')
+            .then(r => r.json())
+            .then(matches => {
+                lastMatchData = matches;
+
+                // Grupowanie po lidze
+                const leagueMap = new Map();
+                matches.forEach(match => {
+                    const key = match.league_api_id || match.league_name;
+                    if (!leagueMap.has(key)) {
+                        leagueMap.set(key, {
+                            name: match.league_name || 'Nieznana',
+                            country: match.league_country || match.country_name || '',
+                            displayName: match.league_country
+                                ? `${match.league_name} • ${match.league_country}`
+                                : (match.league_name || 'Nieznana'),
+                            isTop: match.is_top,
+                            matches: [],
+                        });
+                    }
+                    leagueMap.get(key).matches.push(match);
+                });
+
+                // Posortuj: top ligi pierwsze, potem alfabetycznie
+                const sorted = [...leagueMap.values()].sort((a, b) => {
+                    if (a.isTop !== b.isTop) return a.isTop ? -1 : 1;
+                    return a.name.localeCompare(b.name);
+                });
+
+                renderLeagues(sorted);
+                if (!silent) hideLoading();
+            })
+            .catch(err => {
+                console.error('Błąd fetch live matches:', err);
+                if (!silent) showError();
+            });
+    }
+
+    function renderLeagues(leagueList) {
+        const container = document.getElementById('leagues-container');
+
+        // Zapamiętaj które sekcje są zwinięte
+        const collapsed = new Set();
+        container.querySelectorAll('.league-section.collapsed').forEach(s => {
+            collapsed.add(s.getAttribute('data-league-name'));
+        });
+
+        container.innerHTML = '';
+
+        if (leagueList.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                    <p>Brak meczów na żywo w Twojej bazie danych.</p>
+                </div>`;
+            return;
+        }
+
+        let dividerAdded = false;
+        leagueList.forEach(league => {
+            // Separator "Inne ligi"
+            if (!league.isTop && !dividerAdded) {
+                const sep = document.createElement('div');
+                sep.className = 'other-leagues-divider';
+                sep.innerHTML = '<span>Inne ligi</span>';
+                container.appendChild(sep);
+                dividerAdded = true;
+            }
+
+            const section = buildLeagueSection(
+                league.name, league.country, league.displayName, league.isTop, league.matches
+            );
+            if (collapsed.has(league.displayName)) {
+                section.classList.add('collapsed');
+            }
+            container.appendChild(section);
+        });
+
+        // Przebuduj listę filtrów
+        rebuildFilterList(leagueList.map(l => l.displayName));
+
+        // Przywróć stan dzwoneczków WS
+        initBells();
+    }
+
+    function rebuildFilterList(leagueNames) {
+        const filterList = document.getElementById('league-filter-list');
+        filterList.innerHTML = '';
+        leagueNames.forEach(name => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-label league-filter-item';
+            label.setAttribute('data-league-lower', name.toLowerCase());
+            label.innerHTML = `
+                <input type="checkbox" checked class="league-filter-cb" onchange="applyFilters()"
+                    data-league="${name}">
+                <span class="league-filter-name">${name}</span>
+            `;
+            filterList.appendChild(label);
+        });
+    }
+
+    function hideLoading() {
+        const el = document.getElementById('loading-state');
+        if (el) el.remove();
+    }
+
+    function showError() {
+        const container = document.getElementById('leagues-container');
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <p>Błąd ładowania meczów. Spróbuj odświeżyć stronę.</p>
+            </div>`;
+    }
+
+    function initBells() {
+        // Przywróć stan WS (subskrypcje sesji + localStorage)
+        serverSubscribedIds.forEach(function(apiId) {
+            if (window.VarifyWS && !window.VarifyWS.isSubscribed(apiId)) {
+                window.VarifyWS.subscribe(apiId);
+            }
+        });
+        if (window.VarifyWS) {
+            window.VarifyWS.getIds().forEach(function(apiId) {
+                const btn = document.querySelector('.bell-btn[data-match-id="' + apiId + '"]');
+                if (btn) {
+                    btn.classList.add('bell-active');
+                    btn.title = 'Wyłącz powiadomienia';
+                }
+            });
+        }
+    }
+
+    // Ekspozycja dla base.html WebSocket
+    window.showMatchToast = showMatchToast;
+    window.updateMatchRow = updateMatchRow;
+
     function updateMatchRow(matchId, data) {
         const wrapper = document.querySelector('.match-row-wrapper[data-match-id="' + matchId + '"]');
         if (!wrapper) return;
 
-        // Aktualizuj wynik jeśli przekazano
         if (data.home_score !== undefined && data.away_score !== undefined) {
             const scoreEl = wrapper.querySelector('.score-display');
             if (scoreEl) {
                 scoreEl.textContent = data.home_score + ' - ' + data.away_score;
-                // Animacja flashowania wyniku
                 scoreEl.style.transition = 'color 0.3s, transform 0.3s';
                 scoreEl.style.color = '#10b981';
                 scoreEl.style.transform = 'scale(1.3)';
@@ -353,50 +372,24 @@
             }
         }
 
-        // Aktualizuj status jeśli przekazano
         if (data.status) {
             const statusEl = wrapper.querySelector('.match-status-label');
             if (statusEl) {
-                const STATUS_MAP = {
-                    '1st half': '1. połowa', '2nd half': '2. połowa',
-                    'halftime': 'Przerwa', 'ended': 'Zakończony',
-                    'not started': 'Nie rozpoczęty',
-                    'extra time 1st half': 'Dogrywka 1H',
-                    'extra time 2nd half': 'Dogrywka 2H',
-                    'penalties': 'Karne',
-                };
                 const raw = data.status.toLowerCase().trim();
                 statusEl.textContent = STATUS_MAP[raw] || data.status;
                 statusEl.dataset.status = data.status;
-
-                // Aktualizuj klasę kolorowania
-                const LIVE = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', 'penalties'];
-                const BREAK = ['halftime', 'extra time halftime'];
                 statusEl.classList.remove('status-live', 'status-break', 'status-ended');
-                if (LIVE.includes(raw)) {
-                    statusEl.classList.add('status-live');
-                } else if (BREAK.includes(raw)) {
-                    statusEl.classList.add('status-break');
-                } else {
-                    statusEl.classList.add('status-ended');
-                }
+                statusEl.classList.add(getStatusClass(raw));
             }
         }
     }
 
-    // 4. Stylowe powiadomienie toast z ikoną
     function showMatchToast(icon, msg, eventType) {
         const bgColors = {
-            goal: '#22c55e',
-            card: '#eab308',
-            substitution: '#3b82f6',
-            period: '#8b5cf6',
-            info: '#6366f1',
-            error: '#ef4444',
+            goal: '#22c55e', card: '#eab308', substitution: '#3b82f6',
+            period: '#8b5cf6', info: '#6366f1', error: '#ef4444',
         };
         const bg = bgColors[eventType] || '#333';
-
-        // Usuwamy stary toast (max 1 na ekranie)
         const existing = document.querySelector('.varify-toast');
         if (existing) existing.remove();
 
@@ -416,7 +409,80 @@
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; }, 4000);
         setTimeout(() => toast.remove(), 4500);
     }
+
+    // ============================================================
+    // FILTER UI
+    // ============================================================
+
+    function toggleFilterMenu() {
+        const menu = document.getElementById('filter-menu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function filterLeagueCheckboxes(query) {
+        const q = query.trim().toLowerCase();
+        const items = document.querySelectorAll('.league-filter-item');
+        let visibleCount = 0;
+        items.forEach(item => {
+            const name = item.getAttribute('data-league-lower');
+            const match = !q || name.includes(q);
+            item.style.display = match ? 'flex' : 'none';
+            if (match) visibleCount++;
+        });
+        document.getElementById('filter-no-results').style.display =
+            visibleCount === 0 ? 'block' : 'none';
+    }
+
+    function selectAllVisible() {
+        document.querySelectorAll('.league-filter-item').forEach(item => {
+            if (item.style.display !== 'none') item.querySelector('.league-filter-cb').checked = true;
+        });
+        applyFilters();
+    }
+
+    function deselectAllVisible() {
+        document.querySelectorAll('.league-filter-item').forEach(item => {
+            if (item.style.display !== 'none') item.querySelector('.league-filter-cb').checked = false;
+        });
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const checkboxes = document.querySelectorAll('.league-filter-cb');
+        const sections = document.querySelectorAll('.league-section');
+        checkboxes.forEach(cb => {
+            const leagueName = cb.getAttribute('data-league');
+            sections.forEach(section => {
+                if (section.getAttribute('data-league-name') === leagueName) {
+                    section.style.display = cb.checked ? 'block' : 'none';
+                }
+            });
+        });
+    }
+
+    function toggleLeagueSection(section) {
+        section.classList.toggle('collapsed');
+    }
+
+    function toggleAllLeagues(checkbox) {
+        document.querySelectorAll('.league-section').forEach(section => {
+            if (checkbox.checked) section.classList.remove('collapsed');
+            else section.classList.add('collapsed');
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('filter-menu');
+        const btn = document.querySelector('.filter-btn');
+        if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+    // ============================================================
+    // START + AUTO-REFRESH
+    // ============================================================
+    loadLiveMatches();
+    setInterval(() => loadLiveMatches(true), 30000); // odświeżaj co 30s
 </script>
-
 {% endblock %}
-

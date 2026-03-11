@@ -47,6 +47,9 @@ def fetch_top_leagues_standings_task():
     """
     # Lista wyselekcjonowanych niezmiennych ID turniejów ze SportAPI
     top_leagues_ids = [
+        2,    # Champions League
+        3,    # Europa League
+        8,    # Conference League
         17,   # Premier League
         8,    # LaLiga
         23,   # Serie A
@@ -58,7 +61,8 @@ def fetch_top_leagues_standings_task():
         18,   # Championship
         52,   # Süper Lig
         53,   # Scottish Premiership
-        44    # Pro League (Belgium)
+        44,    # Pro League (Belgium)
+
     ]
     
     print("Celery: Rozpoczynam pobieranie tabel dla TOP 12 lig...")

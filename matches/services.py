@@ -187,15 +187,26 @@ def fetch_upcoming_matches():
             levels = filters.get('level', [])
             # Sprawdzamy, czy mecz się jeszcze nie zaczął
             if status_type == 'notstarted':
-                is_top = 'top-competitions' in levels
+                # Wyszukaj najpierw unikalny turniej (często to on odpowiada głównej Lidze Mistrzów, a nie poszczególne etapy np. grupowe)
+                league_data = event['tournament']
+                unique_tournament = league_data.get('uniqueTournament', {})
+
+                # Bezpieczne wyciąganie ID (priorytet unique_tournament, inaczej zwykłe tournament)
+                league_id = unique_tournament.get('id') or league_data['id']
+                league_name = unique_tournament.get('name') or league_data['name']
+                
+                # Używamy ID faktycznych "unikalnych" turniejów (LM = 7, LE = 679)
+                # Oraz tych lig krajowych ze zwykłego ID (unique i tak przekaże poprawne ID np 17 dla PL)
+                TOP_LEAGUES = {7, 679, 1703, 17, 8, 23, 35, 34, 202, 37, 238, 18, 52, 53, 44}
+                
+                is_top = (league_id in TOP_LEAGUES)
                 api_id = event['id']
                 start_timestamp = event['startTimestamp']
                 start_datetime = make_aware(datetime.fromtimestamp(start_timestamp) + timedelta(hours=1))
                
-                league_data = event['tournament']
                 league_obj, _ = League.objects.get_or_create(
-                    api_id=league_data['id'],
-                    defaults={'name': league_data['name']}
+                    api_id=league_id,
+                    defaults={'name': league_name}
                 )
 
                 home_team_data = event['homeTeam']
@@ -330,14 +341,19 @@ def sync_live_matches():
         try:
             # 1. Liga + Kraj z tournament.category
             league_data = event['tournament']
+            unique_tournament = league_data.get('uniqueTournament', {})
+            
+            league_id = unique_tournament.get('id') or league_data['id']
+            league_name = unique_tournament.get('name') or league_data['name']
+            
             category = league_data.get('category', {})
             country_name = category.get('name', 'Inne')
             country_alpha2 = category.get('alpha2', '')
 
             league, created = League.objects.get_or_create(
-                api_id=league_data['id'],
+                api_id=league_id,
                 defaults={
-                    'name': league_data['name'],
+                    'name': league_name,
                     'country': country_name,
                 }
             )
@@ -396,6 +412,10 @@ def sync_live_matches():
             home_score = event['homeScore'].get('current', 0)
             away_score = event['awayScore'].get('current', 0)
 
+            TOP_LEAGUES = {7, 679, 1703, 17, 8, 23, 35, 34, 202, 37, 238, 18, 52, 53, 44}
+            # Sprawdzenie z API (events.tournament.category) czy liga ma is_top
+            is_top = league_id in TOP_LEAGUES
+
             defaults = {
                 'league': league,
                 'home_team': home_team,
@@ -407,6 +427,7 @@ def sync_live_matches():
                 'match_time': match_time_to_save,
                 'match_date': match_date,
                 'country_name': country_name,
+                'is_top': is_top,
             }
             try:
                 old_match = LiveMatch.objects.get(api_id=event['id'])

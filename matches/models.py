@@ -58,6 +58,7 @@ class LiveMatch(models.Model):
     stats_json = models.JSONField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     match_date = models.DateField(null=True, blank=True, help_text="Data meczu (z API startTimestamp)")
+    is_top = models.BooleanField(default=False, help_text="Czy mecz jest top z API lub wg własnej listy")
 
     @property
     def updated_at_timestamp(self):
