@@ -192,6 +192,11 @@ class MatchEvent(models.Model):
         return self.incident_type == 'varDecision'
 
     @property
+    def is_in_game_penalty(self):
+        """Karny dostawiony w grze przez sędziego (awarded/missed)."""
+        return self.incident_type == 'inGamePenalty'
+
+    @property
     def formatted_time(self):
         if self.is_period_marker or self.is_injury_time_announcement:
             return ""

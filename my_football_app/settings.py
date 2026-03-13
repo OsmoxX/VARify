@@ -176,7 +176,7 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'aktualizuj-live-mecze-co-3-minuty': {
         'task': 'matches.tasks.sync_live_matches',
-        'schedule': crontab(minute='*/1'), # Wykonuj co
+        'schedule': 30.0, # Wykonuj co 30 sekund
     },
     'pobierz-jutrzejsze-mecze': {
         'task': 'matches.tasks.fetch_upcoming_matches',
@@ -202,5 +202,19 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             "hosts": [("redis", 6379)],
         },
+    },
+}
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '[%(levelname)s] %(name)s: %(message)s'},
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
+    },
+    'loggers': {
+        'matches': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'django': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
     },
 }

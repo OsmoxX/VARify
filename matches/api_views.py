@@ -16,8 +16,7 @@ from .serializers import (
     MatchEventSerializer, MatchLineupSerializer,
     PlayerSerializer, TeamSerializer, UpcomingMatchSerializer,
 )
-from .services import fetch_last_matches_for_team
-
+from .services import fetch_last_matches_for_team, search_players_from_api, fetch_player
 
 # ─────────────────────────────────
 # LEAGUES
@@ -154,9 +153,13 @@ def get_players(request):
 @api_view(['GET'])
 def get_player_detail(request, api_id):
     """Profil zawodnika o podanym api_id."""
-    try:
-        player = Player.objects.select_related('team').get(api_id=api_id)
-    except Player.DoesNotExist:
+    player = Player.objects.select_related('team').filter(api_id=api_id).first()
+    
+    # Jeśli brak w bazie lub nie ma pełnych danych (np. wzrostu/daty urodzenia), doczytajmy z API
+    if not player or not player.date_of_birth:
+        player = fetch_player(api_id)
+
+    if not player:
         return Response({'detail': 'Zawodnik nie znaleziony.'}, status=status.HTTP_404_NOT_FOUND)
     return Response(PlayerSerializer(player).data)
 
@@ -258,8 +261,11 @@ def search(request):
     if not q:
         return Response({'teams': [], 'players': []})
 
-    teams = Team.objects.filter(name__icontains=q)[:20]
-    players = Player.objects.filter(name__icontains=q).select_related('team')[:20]
+    teams = list(Team.objects.filter(name__icontains=q)[:20])
+    players = list(Player.objects.filter(name__icontains=q).select_related('team')[:20])
+
+    if not players:
+        players = search_players_from_api(q)
 
     return Response({
         'teams': TeamSerializer(teams, many=True).data,

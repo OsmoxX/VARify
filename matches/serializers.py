@@ -70,6 +70,7 @@ class MatchEventSerializer(serializers.ModelSerializer):
     is_card = serializers.ReadOnlyField()
     is_substitution = serializers.ReadOnlyField()
     is_period_marker = serializers.ReadOnlyField()
+    is_in_game_penalty = serializers.ReadOnlyField()
     card_color = serializers.ReadOnlyField()
     side = serializers.ReadOnlyField()
 
@@ -85,7 +86,7 @@ class MatchEventSerializer(serializers.ModelSerializer):
             'home_score', 'away_score', 'running_score',
             'length', 'confirmed',
             'is_goal', 'is_card', 'is_substitution', 'is_period_marker',
-            'card_color',
+            'is_in_game_penalty', 'card_color',
         ]
 
 

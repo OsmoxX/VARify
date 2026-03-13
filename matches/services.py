@@ -16,7 +16,7 @@ load_dotenv()
 
 def fetch_player(player_id):
     """Pobiera i zapisuje/aktualizuje dane konkretnego zawodnika z API."""
-    
+
     url = f"https://sportapi7.p.rapidapi.com/api/v1/player/{player_id}"
     headers = {
         "x-rapidapi-key": os.getenv("SPORT_API_KEY"),
@@ -26,7 +26,6 @@ def fetch_player(player_id):
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # Automatycznie wyrzuci wyjątek dla błędów np. 404, 500
-        
         data = response.json().get('player')
         if not data:
             return None
@@ -53,7 +52,7 @@ def fetch_player(player_id):
             'market_value': data.get('marketValue'),
             'date_of_birth': parse_ts(data.get('dateOfBirthTimestamp')),
             'contract_until': parse_ts(data.get('contractUntilTimestamp')),
-            'nationality': data.get('country', {}).get('name'), # Bezpieczne wyciąganie z zagnieżdżonego słownika
+            'nationality': data.get('country', {}).get('name'),
             'retired': data.get('retired', False),
             'team': team_obj
         }
@@ -601,6 +600,15 @@ def _map_var_decision(item):
     }
 
 
+def _map_in_game_penalty(item):
+    """Mapuje zdarzenie typu 'inGamePenalty' (karny w trakcie gry: przyznany/zmarnowany)."""
+    return {
+        'player_name': _safe_nested(item, 'player', 'name') or item.get('playerName', ''),
+        'incident_class': item.get('incidentClass'),  # 'awarded' lub 'missed'
+        'reason': item.get('reason'),                  # np. 'goalkeeperSave'
+    }
+
+
 # Dispatcher: typ zdarzenia → funkcja mapująca
 INCIDENT_MAPPERS = {
     'goal': _map_goal,
@@ -609,6 +617,7 @@ INCIDENT_MAPPERS = {
     'period': _map_period,
     'injuryTime': _map_injury_time,
     'varDecision': _map_var_decision,
+    'inGamePenalty': _map_in_game_penalty,
 }
 
 

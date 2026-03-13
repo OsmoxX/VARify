@@ -133,6 +133,12 @@
                             {% elif event.is_substitution %}
                             <i class="fa-solid fa-right-left sub-icon"></i>
 
+                            {# --- IN-GAME PENALTY --- #}
+                            {% elif event.is_in_game_penalty %}
+                            <span class="penalty-icon">
+                                <i class="fa-solid fa-futbol"></i>
+                            </span>
+
                             {# --- INNE --- #}
                             {% else %}
                             <i class="fa-solid fa-circle-info info-icon"></i>
@@ -191,6 +197,22 @@
                                 <i class="fa-solid fa-kit-medical injury-badge" title="Kontuzja"></i>
                                 {% endif %}
                             </span>
+                            {% endif %}
+
+                            {# === IN-GAME PENALTY: szczegóły === #}
+                            {% elif event.is_in_game_penalty %}
+                            <span class="player-name">
+                                {{ event.player_name }}
+                                {% if event.incident_class == 'missed' %}
+                                <span class="rescinded-tag" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">Nietrafiony karny</span>
+                                {% elif event.incident_class == 'awarded' %}
+                                <span class="incident-tag">Karny przyznany</span>
+                                {% endif %}
+                            </span>
+                            {% if event.reason == 'goalkeeperSave' %}
+                            <span class="sub-info"><i class="fa-solid fa-hands"></i> Obrona bramkarza</span>
+                            {% elif event.reason %}
+                            <span class="sub-info">{{ event.reason }}</span>
                             {% endif %}
 
                             {# === INNE === #}
