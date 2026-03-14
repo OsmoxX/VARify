@@ -184,7 +184,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'pobierz-tabele-top-lig': {
         'task': 'matches.tasks.fetch_top_leagues_standings_task',
-        'schedule': crontab(hour=15, minute=47), # Codziennie o zadanej godzinie (według czasu lokalnego polskiego zachowanego w bazie)
+        'schedule': crontab(hour=13, minute=19), # Codziennie o zadanej godzinie (według czasu lokalnego polskiego zachowanego w bazie)
     },
 }
 
