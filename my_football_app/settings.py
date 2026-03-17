@@ -180,7 +180,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'pobierz-jutrzejsze-mecze': {
         'task': 'matches.tasks.fetch_upcoming_matches',
-        'schedule': crontab(hour=11, minute=52), # Wykonuj o 
+        'schedule': crontab(hour=11, minute=00), # Wykonuj o 
     },
     'pobierz-tabele-top-lig': {
         'task': 'matches.tasks.fetch_top_leagues_standings_task',

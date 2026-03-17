@@ -1,0 +1,64 @@
+"""
+views/account_views.py
+
+Account settings: change username, email, and password.
+"""
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+
+
+@login_required
+def account_settings(request):
+    """Strona ustawień konta – zmiana nazwy użytkownika, e-mail i hasła."""
+    user = request.user
+    errors = {}
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        # ── Zmiana danych podstawowych ──────────────────────────
+        if action == 'update_profile':
+            new_username = request.POST.get('username', '').strip()
+            new_email = request.POST.get('email', '').strip()
+
+            if not new_username:
+                errors['username'] = 'Nazwa użytkownika nie może być pusta.'
+            elif new_username != user.username:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                if User.objects.filter(username=new_username).exclude(pk=user.pk).exists():
+                    errors['username'] = 'Ta nazwa użytkownika jest już zajęta.'
+
+            if not errors:
+                user.username = new_username
+                user.email = new_email
+                user.save()
+                messages.success(request, 'Dane profilu zostały zaktualizowane.')
+                return redirect('account_settings')
+
+        # ── Zmiana hasła ────────────────────────────────────────
+        elif action == 'change_password':
+            current_pw = request.POST.get('current_password', '')
+            new_pw = request.POST.get('new_password', '')
+            confirm_pw = request.POST.get('confirm_password', '')
+
+            if not user.check_password(current_pw):
+                errors['current_password'] = 'Obecne hasło jest nieprawidłowe.'
+            elif len(new_pw) < 8:
+                errors['new_password'] = 'Nowe hasło musi mieć co najmniej 8 znaków.'
+            elif new_pw != confirm_pw:
+                errors['confirm_password'] = 'Hasła nie są identyczne.'
+
+            if not errors:
+                user.set_password(new_pw)
+                user.save()
+                update_session_auth_hash(request, user)  # zachowuje zalogowaną sesję
+                messages.success(request, 'Hasło zostało zmienione.')
+                return redirect('account_settings')
+
+    return render(request, 'matches/account_settings.html', {
+        'user': user,
+        'errors': errors,
+    })

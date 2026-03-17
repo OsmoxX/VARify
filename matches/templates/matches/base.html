@@ -27,18 +27,6 @@
 
             <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
         </div>
-        
-        <div>
-            {% if user.is_authenticated %}
-            <a href="{% url 'logout' %}" class="nav-link">
-                <i class="fa-solid fa-right-from-bracket"></i> Wyloguj
-            </a>
-            {% else %}
-            <a href="{% url 'login' %}" class="nav-link">
-                <i class="fa-solid fa-right-to-bracket"></i> Zaloguj
-            </a>
-            {% endif %}
-        </div>
 
         <div class="nav-links">
             <a href="/" class="nav-link">
@@ -47,6 +35,38 @@
             <a href="{% url 'calendar' %}" class="nav-link">
                 <i class="fa-solid fa-calendar-days"></i> Kalendarz
             </a>
+
+            {% if user.is_authenticated %}
+            <!-- ========== DROPDOWN KONTA UŻYTKOWNIKA ========== -->
+            <div class="user-menu-wrapper" id="user-menu-wrapper">
+                <button class="user-avatar-btn" id="user-avatar-btn" title="{{ user.username }}" aria-label="Menu użytkownika">
+                    <i class="fa-solid fa-circle-user"></i>
+                </button>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="user-dropdown-header">
+                        <i class="fa-solid fa-circle-user user-dropdown-icon"></i>
+                        <div>
+                            <div class="user-dropdown-name">{{ user.username }}</div>
+                            <div class="user-dropdown-email">{{ user.email|default:"brak e-mail" }}</div>
+                        </div>
+                    </div>
+                    <div class="user-dropdown-divider"></div>
+                    <a href="{% url 'account_settings' %}" class="user-dropdown-item">
+                        <i class="fa-solid fa-gear"></i>
+                        Ustawienia konta
+                    </a>
+                    <div class="user-dropdown-divider"></div>
+                    <a href="{% url 'logout' %}" class="user-dropdown-item user-dropdown-logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Wyloguj się
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="nav-link">
+                <i class="fa-solid fa-right-to-bracket"></i> Zaloguj
+            </a>
+            {% endif %}
 
             <!-- ========== PANEL POWIADOMIEŃ ========== -->
             <div class="notif-wrapper" id="notif-wrapper">
@@ -71,6 +91,7 @@
             </div>
         </div>
     </nav>
+
 
     <main class="main-content">
         {% block content %}
@@ -300,7 +321,30 @@
         if (query.length < 2) return;
         window.location.href = `/search-api/?q=${encodeURIComponent(query)}`;
     });
+
+    // ──────────────────────────────────────────────────
+    // USER AVATAR DROPDOWN
+    // ──────────────────────────────────────────────────
+    const userAvatarBtn = document.getElementById('user-avatar-btn');
+    const userDropdown  = document.getElementById('user-dropdown');
+    const userWrapper   = document.getElementById('user-menu-wrapper');
+
+    if (userAvatarBtn && userDropdown) {
+        userAvatarBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('user-dropdown-open');
+            // close notifications panel if open
+            document.getElementById('notif-panel')?.classList.remove('notif-panel-open');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (userWrapper && !userWrapper.contains(e.target)) {
+                userDropdown.classList.remove('user-dropdown-open');
+            }
+        });
+    }
     </script>
+
 
     {% block extra_js %}{% endblock %}
 </body>

@@ -1,0 +1,145 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block title %}VARify – Ustawienia konta{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/account_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-wrapper">
+
+    <a class="back-btn-modern" href="/">
+        <i class="fa-solid fa-chevron-left"></i> Powrót
+    </a>
+
+    <div class="account-header">
+        <div class="account-avatar">
+            <i class="fa-solid fa-circle-user"></i>
+        </div>
+        <div>
+            <h1 class="account-title">{{ user.username }}</h1>
+            <p class="account-subtitle">Ustawienia konta</p>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="account-messages">
+        {% for message in messages %}
+        <div class="account-alert account-alert-{{ message.tags }}">
+            <i class="fa-solid fa-circle-check"></i> {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── DANE PROFILU ───────────────────────────── -->
+    <div class="account-card">
+        <h2 class="account-card-title">
+            <i class="fa-solid fa-user-pen"></i> Dane profilu
+        </h2>
+        <form method="post" class="account-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_profile">
+
+            <div class="form-group">
+                <label for="username">Nazwa użytkownika</label>
+                <input type="text" id="username" name="username" value="{{ user.username }}"
+                    class="form-input {% if errors.username %}input-error{% endif %}"
+                    autocomplete="username">
+                {% if errors.username %}
+                <span class="form-error">{{ errors.username }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="email">Adres e-mail</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}"
+                    class="form-input" autocomplete="email">
+            </div>
+
+            <button type="submit" class="btn-save">
+                <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
+            </button>
+        </form>
+    </div>
+
+    <!-- ── ZMIANA HASŁA ───────────────────────────── -->
+    <div class="account-card">
+        <h2 class="account-card-title">
+            <i class="fa-solid fa-lock"></i> Zmiana hasła
+        </h2>
+        <form method="post" class="account-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="change_password">
+
+            <div class="form-group">
+                <label for="current_password">Obecne hasło</label>
+                <div class="input-eye-wrapper">
+                    <input type="password" id="current_password" name="current_password"
+                        class="form-input {% if errors.current_password %}input-error{% endif %}"
+                        autocomplete="current-password">
+                    <button type="button" class="toggle-eye" data-target="current_password">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                {% if errors.current_password %}
+                <span class="form-error">{{ errors.current_password }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="new_password">Nowe hasło <small>(min. 8 znaków)</small></label>
+                <div class="input-eye-wrapper">
+                    <input type="password" id="new_password" name="new_password"
+                        class="form-input {% if errors.new_password %}input-error{% endif %}"
+                        autocomplete="new-password">
+                    <button type="button" class="toggle-eye" data-target="new_password">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                {% if errors.new_password %}
+                <span class="form-error">{{ errors.new_password }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Powtórz nowe hasło</label>
+                <div class="input-eye-wrapper">
+                    <input type="password" id="confirm_password" name="confirm_password"
+                        class="form-input {% if errors.confirm_password %}input-error{% endif %}"
+                        autocomplete="new-password">
+                    <button type="button" class="toggle-eye" data-target="confirm_password">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                {% if errors.confirm_password %}
+                <span class="form-error">{{ errors.confirm_password }}</span>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-save btn-save-danger">
+                <i class="fa-solid fa-key"></i> Zmień hasło
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    document.querySelectorAll('.toggle-eye').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = document.getElementById(btn.dataset.target);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    });
+</script>
+{% endblock %}

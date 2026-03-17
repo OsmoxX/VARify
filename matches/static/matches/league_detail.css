@@ -140,3 +140,75 @@
     color: #10b981;
     font-size: 0.85rem !important;
 }
+
+/* =========================================
+   RESPONSYWNOŚĆ – MOBILE (≤ 768px)
+   league_detail.css
+========================================= */
+@media (max-width: 768px) {
+
+    /* Tabela: pełna szerokość, auto layout */
+    .table-container {
+        padding: 2px;
+        border-radius: 8px;
+        /* overflow-x:auto jest już, więc tabela może przewijać się
+           poziomo TYLKO jeśli naprawdę nie mieszczą się dane */
+    }
+
+    .standings-table {
+        width: 100%;
+        table-layout: auto;
+        font-size: 0.78rem;
+    }
+
+    /* Nagłówki: mniejszy padding */
+    .standings-table th,
+    .standings-table td {
+        padding: 9px 5px;
+    }
+
+    /* Kolumny liczbowe – bardzo wąskie */
+    .col-num {
+        width: 30px;
+        padding: 9px 3px;
+    }
+
+    /* Kolumna pozycji */
+    .col-pos {
+        width: 24px;
+        padding: 9px 3px;
+    }
+
+    /* Kolumna punktów */
+    .col-pts {
+        padding: 9px 4px;
+    }
+
+    /* Kolumna drużyna: może się zawijać */
+    .col-team {
+        white-space: normal;
+        min-width: 80px;
+    }
+
+    .team-link {
+        gap: 5px;
+        font-size: 0.78rem;
+    }
+
+    .team-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Zakładki – mniejszy tekst na mobile */
+    .tab-btn {
+        font-size: 0.82rem;
+        padding: 10px 0;
+        gap: 5px;
+    }
+
+    /* Wiersze meczów w zakładce meczów */
+    .team-match-row {
+        padding: 10px 12px;
+    }
+}

@@ -31,6 +31,10 @@ from .player_views import player_detail
 # Auth
 from .auth_views import register, logout_view
 
+# Account settings
+from .account_views import account_settings
+
+
 # Utilities
 from .utility_views import search_api_view, proxy_image_view
 
