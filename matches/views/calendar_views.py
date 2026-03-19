@@ -8,8 +8,6 @@ from collections import defaultdict, OrderedDict
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
 from django.views.generic import ListView
-from collections import OrderedDict
-
 from matches.models import LiveMatch, UpcomingMatch
 
 from .helpers import TOP_LEAGUES_CONFIG, _build_league_groups, _league_entry
