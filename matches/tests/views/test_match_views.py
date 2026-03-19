@@ -4,7 +4,7 @@ from django.test import RequestFactory
 from django.contrib.auth.models import User, AnonymousUser
 from unittest.mock import patch, MagicMock
 
-from matches.models import League, Team, LiveMatch, MatchEvent, MatchLineup, MissingPlayer, MatchSubscription
+from matches.models import League, Team, LiveMatch, MatchEvent, MatchLineup, MatchSubscription
 from matches.views.match_views import (
     live_matches_view, match_detail_view, HomeView, toggle_notifications, active_match_ids
 )
@@ -15,19 +15,19 @@ from matches.views.match_views import (
 @pytest.fixture
 def setup_match_data(db):
     user = User.objects.create_user(username='tester', password='123')
-    l = League.objects.create(api_id=1, name="Premier League", country="England")
+    league = League.objects.create(api_id=1, name="Premier League", country="England")
     t1 = Team.objects.create(api_id=10, name="Arsenal")
     t2 = Team.objects.create(api_id=20, name="Chelsea")
     
     # Mecz na żywo (zagra do HomeView)
     m_live = LiveMatch.objects.create(
-        api_id=100, league=l, home_team=t1, away_team=t2, 
+        api_id=100, league=league, home_team=t1, away_team=t2, 
         status="1st Half", match_time="10000", minute=10
     )
     
     # Mecz zakończony (dla testowania detali i funkcji is_ended)
     m_ended = LiveMatch.objects.create(
-        api_id=200, league=l, home_team=t2, away_team=t1, 
+        api_id=200, league=league, home_team=t2, away_team=t1, 
         status="Ended"
     )
     

@@ -1,4 +1,3 @@
-import pytest
 from matches.routing import websocket_urlpatterns
 from matches.consumers import MatchConsumer
 
@@ -19,7 +18,6 @@ def test_websocket_routing_loads_correctly():
     # 4. Upewniamy się, że ten adres prowadzi do prawidłowej klasy Consumera
     assert pattern.callback.consumer_class == MatchConsumer
 
-from matches.routing import websocket_urlpatterns
 
 def test_websocket_urlpatterns_exists():
     # Sprawdzamy, czy ścieżka do MatchConsumer jest poprawnie zdefiniowana

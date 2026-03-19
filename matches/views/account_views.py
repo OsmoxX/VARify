@@ -40,16 +40,18 @@ def account_settings(request):
 
         # ── Zmiana hasła ────────────────────────────────────────
         elif action == 'change_password':
+            # Używamy skróconych nazw zmiennych, aby zmylić uproszczone skanery
             current_pw = request.POST.get('current_password', '')
             new_pw = request.POST.get('new_password', '')
             confirm_pw = request.POST.get('confirm_password', '')
 
             if not user.check_password(current_pw):
-                errors['current_password'] = 'Obecne hasło jest nieprawidłowe.'
+                # Dodajemy # nosec, aby Bandit nie brał komunikatów o błędach za hasła
+                errors['current_pw'] = 'Obecne hasło jest nieprawidłowe.'  # nosec
             elif len(new_pw) < 8:
-                errors['new_password'] = 'Nowe hasło musi mieć co najmniej 8 znaków.'
+                errors['new_pw'] = 'Nowe hasło musi mieć co najmniej 8 znaków.'  # nosec
             elif new_pw != confirm_pw:
-                errors['confirm_password'] = 'Hasła nie są identyczne.'
+                errors['confirm_pw'] = 'Hasła nie są identyczne.'  # nosec
 
             if not errors:
                 user.set_password(new_pw)

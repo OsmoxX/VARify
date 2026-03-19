@@ -146,9 +146,9 @@ def test_calendar_view_fallback_values(setup_calendar_data):
     all_leagues = []
     all_countries = []
     for day in structured_days:
-        for l in day['leagues']:
-            all_leagues.append(l['name'])
-            all_countries.append(l['country'])
+        for league in day['leagues']:
+            all_leagues.append(league['name'])
+            all_countries.append(league['country'])
             
     assert 'Nieznana Liga' in all_leagues
     assert 'Inne' in all_countries

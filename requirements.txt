@@ -48,3 +48,6 @@ pytest
 pytest-django
 pytest-cov
 pytest-asyncio
+ruff
+types-requests
+django-stubs

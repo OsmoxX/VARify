@@ -12,8 +12,8 @@ from matches.models import League, LeagueStandings, Team
 
 def fetch_league_standings(
     tournament_id: int,
-    season_id: str = None,
-    local_league_id: int = None,
+    season_id: str | None = None,
+    local_league_id: int | None = None,
 ) -> list:
     """
     Pobiera tabelę ligi z API i aktualizuje lub tworzy wpisy w modelu LeagueStandings.

@@ -38,8 +38,8 @@ class Command(BaseCommand):
             # Pobieramy na nowo
             result = fetch_match_details(match.id, match.api_id)
             if result:
-                self.stdout.write(self.style.SUCCESS(f"  ✓ Reimport zakończony."))
+                self.stdout.write(self.style.SUCCESS("  ✓ Reimport zakończony."))
             else:
-                self.stdout.write(self.style.ERROR(f"  ✗ Błąd importu."))
+                self.stdout.write(self.style.ERROR("  ✗ Błąd importu."))
 
         self.stdout.write(self.style.SUCCESS(f"\nGotowe! Przetworzono {total} meczów."))

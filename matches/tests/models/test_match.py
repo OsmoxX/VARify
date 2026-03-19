@@ -60,7 +60,7 @@ def test_match_subscription_str(base_data):
 def test_matches_unique_constraints(base_data):
     # Tworzymy pierwsze, poprawne rekordy
     match_live = LiveMatch.objects.create(api_id=999, status="live")
-    match_upcoming = UpcomingMatch.objects.create(api_id=888)
+    UpcomingMatch.objects.create(api_id=888)
     MatchSubscription.objects.create(session_key="abc", match=match_live)
 
     # 1. LiveMatch: blokada zduplikowanego api_id

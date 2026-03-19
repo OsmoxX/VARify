@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from .models import League, Team, LiveMatch, MatchEvent, MatchLineup
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 class LeagueAdmin(admin.ModelAdmin):
@@ -38,9 +39,6 @@ class MatchLineupAdmin(admin.ModelAdmin):
     )
     list_filter = ('is_home_team', 'is_starting_xi', 'is_captain', 'position')
     search_fields = ('player_name', 'match__home_team__name', 'match__away_team__name')
-
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-
 
 class CustomUserAdmin(BaseUserAdmin):
     # Extend Django's built-in UserAdmin with extra list columns/filters

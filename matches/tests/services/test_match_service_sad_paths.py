@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from matches.models import LiveMatch, League, Team
 from matches.services.match_service import (
     fetch_live_matches,
@@ -15,10 +15,10 @@ from matches.services.match_service import (
 # ==========================================
 @pytest.fixture
 def setup_match():
-    l = League.objects.create(api_id=1, name="Test League")
+    league = League.objects.create(api_id=1, name="Test League")
     t1 = Team.objects.create(api_id=1, name="Team 1")
     t2 = Team.objects.create(api_id=2, name="Team 2")
-    return LiveMatch.objects.create(api_id=999, league=l, home_team=t1, away_team=t2, id=10, home_score=0, away_score=0)
+    return LiveMatch.objects.create(api_id=999, league=league, home_team=t1, away_team=t2, id=10, home_score=0, away_score=0)
 
 # ==========================================
 # TESTY: AWARIE SIECI (Sad Paths)

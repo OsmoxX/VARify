@@ -3,7 +3,6 @@ views/player_views.py
 
 Player profile page – data is fetched by JS from the DRF API.
 """
-from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import render
 
 

@@ -17,11 +17,11 @@ def api_client():
 def setup_leagues():
     """Przygotowuje Ligi, Drużyny i Tabele do testów."""
     l1 = League.objects.create(api_id=10, name="Premier League", country="England")
-    l2 = League.objects.create(api_id=20, name="La Liga", country="Spain")
-    l3 = League.objects.create(api_id=30, name="Ekstraklasa", country="Poland")
+    League.objects.create(api_id=20, name="La Liga", country="Spain")
+    League.objects.create(api_id=30, name="Ekstraklasa", country="Poland")
 
     t1 = Team.objects.create(api_id=1, name="Arsenal")
-    t2 = Team.objects.create(api_id=2, name="Chelsea")
+    t2 =Team.objects.create(api_id=2, name="Chelsea")
 
     # Tworzymy tabelę dla Premier League
     LeagueStandings.objects.create(

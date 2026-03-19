@@ -2,7 +2,6 @@ import pytest
 import requests
 from unittest.mock import patch
 from datetime import datetime
-from matches.models import Player, Team
 from matches.services.player_service import fetch_player, search_players_from_api
 
 # ==========================================

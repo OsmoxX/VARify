@@ -32,7 +32,7 @@ from .player_views import player_detail
 from .auth_views import register, logout_view
 
 # Account settings
-from .account_views import account_settings
+from .account_views import account_settings as account_settings
 
 
 # Utilities

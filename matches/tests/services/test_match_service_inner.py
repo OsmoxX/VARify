@@ -3,8 +3,7 @@ from unittest.mock import patch, MagicMock
 import io
 import sys
 
-from matches.models import LiveMatch, League, Team, MatchLineup, MatchEvent, MatchSubscription
-from django.contrib.auth.models import User
+from matches.models import LiveMatch, League, Team, MatchLineup, MatchEvent
 from matches.services.match_service import (
     _safe_nested, 
     _save_lineup_players, 
@@ -19,11 +18,11 @@ from matches.services.match_service import (
 # ==========================================
 @pytest.fixture
 def setup_data():
-    l = League.objects.create(api_id=1, name="L")
+    league = League.objects.create(api_id=1, name="L")
     t1 = Team.objects.create(api_id=1, name="T1")
     t2 = Team.objects.create(api_id=2, name="T2")
     m = LiveMatch.objects.create(
-        api_id=100, league=l, home_team=t1, away_team=t2, status="1st Half"
+        api_id=100, league=league, home_team=t1, away_team=t2, status="1st Half"
     )
     return m
 

@@ -1,4 +1,3 @@
-import pytest
 from matches.services.match_service import (
     _safe_nested, _map_goal, _map_card, _map_substitution,
     _map_period, _map_injury_time, _map_var_decision,

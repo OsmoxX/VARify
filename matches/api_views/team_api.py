@@ -11,7 +11,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from matches.models import League, LeagueStandings, LiveMatch, Team
+from matches.models import LeagueStandings, LiveMatch, Team
 from matches.serializers import LeagueStandingsSerializer, LiveMatchSerializer, TeamSerializer
 from matches.services import fetch_last_matches_for_team
 

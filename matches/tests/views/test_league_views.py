@@ -13,30 +13,30 @@ from matches.views.league_views import league_detail_view
 @pytest.fixture
 def setup_league_data(db):
     """Tworzy testową ligę z meczami i tabelą."""
-    l = League.objects.create(api_id=99, name="Test League", country="Poland")
+    league = League.objects.create(api_id=99, name="Test League", country="Poland")
     t1 = Team.objects.create(api_id=1, name="Team A")
     t2 = Team.objects.create(api_id=2, name="Team B")
     
     # Mecz nadchodzący
     UpcomingMatch.objects.create(
-        api_id=10, league=l, home_team=t1, away_team=t2, 
+        api_id=10, league=league, home_team=t1, away_team=t2, 
         start_datetime=timezone.now() + timedelta(days=1)
     )
     
     # Mecz zakończony (status 'ended')
     LiveMatch.objects.create(
-        api_id=20, league=l, home_team=t2, away_team=t1,
+        api_id=20, league=league, home_team=t2, away_team=t1,
         status='ended', match_date=timezone.now().date()
     )
     
     # Tabela wyników (pamiętamy o zerach, żeby uniknąć błędu z MySQL!)
     LeagueStandings.objects.create(
-        league=l, team=t1, position=1, points=3,
+        league=league, team=t1, position=1, points=3,
         matches_played=1, matches_won=1, matches_drawn=0, matches_lost=0,
         goals_for=2, goals_against=0, goal_difference=2
     )
     
-    return l
+    return league
 
 # ==========================================
 # TESTY: Widok Detali Ligi

@@ -1,7 +1,7 @@
 import pytest
 import time
 from unittest.mock import Mock, MagicMock
-from matches.models import LiveMatch, MatchEvent, MatchLineup, League, MatchSubscription
+from matches.models import LiveMatch, MatchSubscription
 from matches.views.helpers import (
     _build_league_groups, _league_entry, _rating_class, _build_pitch_data,
     _subscribed_ids, _current_match_minute, _should_show_event, _parse_stats

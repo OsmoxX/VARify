@@ -9,13 +9,13 @@ from matches.models import League, Team, LiveMatch, MatchEvent, MatchLineup
 # ==========================================
 @pytest.fixture
 def setup_command_data():
-    l = League.objects.create(api_id=1, name="Test League")
+    league = League.objects.create(api_id=1, name="Test League")
     t1 = Team.objects.create(api_id=1, name="Team A")
     t2 = Team.objects.create(api_id=2, name="Team B")
     
     # Tworzymy dwa mecze
-    m1 = LiveMatch.objects.create(api_id=100, league=l, home_team=t1, away_team=t2)
-    m2 = LiveMatch.objects.create(api_id=200, league=l, home_team=t2, away_team=t1)
+    m1 = LiveMatch.objects.create(api_id=100, league=league, home_team=t1, away_team=t2)
+    m2 = LiveMatch.objects.create(api_id=200, league=league, home_team=t2, away_team=t1)
     
     # Tworzymy "stare śmieci", które komenda powinna usunąć
     MatchEvent.objects.create(match=m1, time=10, incident_type="goal")

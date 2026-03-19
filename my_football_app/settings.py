@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import sentry_sdk
-
+from celery.schedules import crontab
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -170,8 +170,6 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 CELERY_TIMEZONE = 'Europe/Warsaw'
 
-
-from celery.schedules import crontab
 # ==========================================
 # CELERY BEAT (Harmonogram zadań)
 # ==========================================
