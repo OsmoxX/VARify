@@ -47,3 +47,4 @@ django-cors-headers
 pytest
 pytest-django
 pytest-cov
+pytest-asyncio
