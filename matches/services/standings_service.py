@@ -35,7 +35,7 @@ def fetch_league_standings(
             season_url = (
                 f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}/seasons"
             )
-            resp_seasons = requests.get(season_url, headers=headers)
+            resp_seasons = requests.get(season_url, headers=headers, timeout=10)
             if resp_seasons.status_code == 200:
                 seasons = resp_seasons.json().get('seasons', [])
                 if seasons:

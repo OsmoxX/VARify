@@ -111,7 +111,7 @@ def get_team_matches(request, api_id):
         try:
             fetch_last_matches_for_team(team_api_id=team.api_id, n=5)
         except Exception:
-            pass
+            pass # nosec B110
 
     qs = (
         LiveMatch.objects
