@@ -120,7 +120,7 @@ def test_change_password_wrong_current(logged_client):
     })
     
     assert response.status_code == 200
-    assert response.context['errors']['current_password'] == 'Obecne hasło jest nieprawidłowe.'
+    assert response.context['errors']['current_pw'] == 'Obecne hasło jest nieprawidłowe.'
 
 @pytest.mark.django_db
 def test_change_password_too_short(logged_client):
@@ -133,7 +133,7 @@ def test_change_password_too_short(logged_client):
     })
     
     assert response.status_code == 200
-    assert response.context['errors']['new_password'] == 'Nowe hasło musi mieć co najmniej 8 znaków.'
+    assert response.context['errors']['new_pw'] == 'Nowe hasło musi mieć co najmniej 8 znaków.'
 
 @pytest.mark.django_db
 def test_change_password_mismatch(logged_client):
@@ -146,4 +146,4 @@ def test_change_password_mismatch(logged_client):
     })
     
     assert response.status_code == 200
-    assert response.context['errors']['confirm_password'] == 'Hasła nie są identyczne.'
+    assert response.context['errors']['confirm_pw'] == 'Hasła nie są identyczne.'

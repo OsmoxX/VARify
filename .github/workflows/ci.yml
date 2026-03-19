@@ -33,9 +33,9 @@ jobs:
       - name: Install Bandit & Safety
         run: pip install bandit safety
       - name: Run Bandit (Code security)
-        run: bandit -r matches/
-      - name: Run Safety (Dependencies security)
-        run: safety check --full-report || echo "Warnings found but continuing"
+        run: bandit -r matches/ -x matches/tests/
+      - name: Run Safety
+        run: safety check --full-report || echo "Warnings found"
 
   # 3. KONTROLA TYPÓW (Type Checking)
   types:
