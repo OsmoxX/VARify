@@ -1,6 +1,6 @@
 import pytest
 import requests
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from matches.models import Team
 from matches.services.football_api_service import search_teams_from_api
 
@@ -78,3 +78,45 @@ def test_search_teams_api_timeout_exception(mock_get):
     # 3. ASSERT: Funkcja powinna złapać wyjątek (except Exception as e) i zwrócić pustą listę.
     assert teams == []
     assert Team.objects.count() == 0
+
+@pytest.mark.django_db
+@patch('matches.services.football_api_service.requests.get')
+def test_search_teams_empty_results(mock_get):
+    # 1. ARRANGE: Symulujemy API, które odpowiada statusem 200, ale nie zwraca żadnych wyników
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"results": []}
+    mock_get.return_value = mock_response
+
+    # 2. ACT
+    result = search_teams_from_api("KlubKtoryNieIstnieje")
+
+    # 3. ASSERT: Powinno wejść w "if not results:" i zwrócić pustą listę (pokrywa linie 47-48)
+    assert result == []
+
+@pytest.mark.django_db
+@patch('matches.services.football_api_service.requests.get')
+def test_search_teams_missing_api_id_or_name(mock_get):
+    # 1. ARRANGE: Symulujemy API, które zwraca drużyny z "popsutymi" danymi
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "results": [
+            {
+                "type": "team",
+                "entity": {"id": None, "name": "Brak ID"}  # Odrzuci przez brak api_id
+            },
+            {
+                "type": "team",
+                "entity": {"id": 999, "name": "   "}       # Odrzuci, bo nazwa po strip() będzie pusta
+            }
+        ]
+    }
+    mock_get.return_value = mock_response
+
+    # 2. ACT
+    result = search_teams_from_api("ZepsutaDruzyna")
+
+    # 3. ASSERT: Obie drużyny powinny zostać pominięte (continue w linii 61)
+    assert result == []
+    assert Team.objects.count() == 0  # Baza powinna pozostać czysta

@@ -58,11 +58,11 @@ def get_league_detail(request, api_id):
 @login_not_required
 @api_view(['GET'])
 @throttle_classes([AnonRateThrottle, UserRateThrottle])
-def get_league_standings(request, league_id):
+def get_league_standings(request, api_id):
     """Tabela ligi o podanym api_id (league_id = api_id ligi)."""
     standings = (
         LeagueStandings.objects
-        .filter(league__api_id=league_id)
+        .filter(league__api_id=api_id)
         .select_related('team', 'league')
         .order_by('position', 'id')
     )

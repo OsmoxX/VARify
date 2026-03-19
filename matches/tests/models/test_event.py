@@ -65,6 +65,26 @@ def test_match_event_is_substitution_and_display_names(match_fixture):
     assert sub.display_player_in == 'Milik'
     assert sub.display_player_out == 'Piątek'
 
+@pytest.mark.django_db
+def test_match_event_is_period_marker_unknown_time(match_fixture):
+    # Tworzymy specyficzne zdarzenie: "Unknown" i doliczony czas = 900
+    event = MatchEvent.objects.create(match=match_fixture, time=45, incident_type='Unknown', added_time=900)
+    
+    # Powinno zwrócić True (wyłapuje specyficzny błąd z API jako koniec połowy)
+    assert event.is_period_marker is True
+
+@pytest.mark.django_db
+def test_match_event_is_var_decision(match_fixture):
+    # Tworzymy zdarzenie typu VAR
+    event_var = MatchEvent.objects.create(match=match_fixture, time=15, incident_type='varDecision')
+    
+    # Tworzymy zwykłe zdarzenie (np. faul)
+    event_other = MatchEvent.objects.create(match=match_fixture, time=16, incident_type='foul')
+    
+    # Sprawdzamy boolean
+    assert event_var.is_var_decision is True
+    assert event_other.is_var_decision is False
+
 # ==========================================
 # TESTY: FORMATOWANIE CZASU I ZDARZEŃ
 # ==========================================
