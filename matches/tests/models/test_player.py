@@ -36,6 +36,7 @@ def test_player_creation_and_str_method(team_fixture):
     )
     
     assert player.api_id == 10
+    assert player.team is not None
     assert player.team.name == "FC Barcelona"
     assert player.preferred_foot == "left"
     assert player.retired is False  # Sprawdzenie wartości domyślnej

@@ -56,7 +56,7 @@ def test_calendar_view_requires_login():
     response = CalendarView.as_view()(request)
     
     assert response.status_code == 302
-    assert 'login' in response.url
+    assert 'login' in getattr(response, 'url', '')
 
 @pytest.mark.django_db
 def test_calendar_view_logged_in(setup_calendar_data):
@@ -67,7 +67,7 @@ def test_calendar_view_logged_in(setup_calendar_data):
     response = CalendarView.as_view()(request)
     assert response.status_code == 200
     
-    context = response.context_data
+    context = getattr(response, 'context_data', {})
     
     assert 'structured_days' in context
     assert 'all_league_names' in context
@@ -136,7 +136,7 @@ def test_calendar_view_fallback_values(setup_calendar_data):
     
     # 2. ACT: Generujemy widok
     response = CalendarView.as_view()(request)
-    context = response.context_data
+    context = getattr(response, 'context_data', {})
     structured_days = context['structured_days']
     
     # 3. ASSERT: Wyciągamy wygenerowane nazwy i sprawdzamy, czy zapasowe teksty zadziałały

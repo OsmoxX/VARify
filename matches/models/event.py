@@ -128,7 +128,7 @@ class MatchEvent(models.Model):
             'penaltyNotAwarded': 'karny nie uznany',
             'yellowRed': '2× żółta',
         }
-        return labels.get(ic, '')
+        return labels.get(ic or '', '')
 
     @property
     def side(self):

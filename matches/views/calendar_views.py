@@ -8,6 +8,7 @@ from collections import defaultdict, OrderedDict
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
 from django.views.generic import ListView
+from collections import OrderedDict
 
 from matches.models import LiveMatch, UpcomingMatch
 
@@ -30,7 +31,7 @@ class CalendarView(LoginRequiredMixin, ListView):
             .order_by('-match_date', 'league__name')
         )
 
-        days_data = OrderedDict()
+        days_data: OrderedDict = OrderedDict()
         for match in ended_matches:
             day = match.match_date or 'Brak daty'
             country = match.country_name or (match.league.country if match.league else None) or 'Inne'

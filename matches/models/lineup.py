@@ -22,7 +22,7 @@ class MatchLineup(models.Model):
             'M': 'MID',
             'F': 'FWD',
         }
-        return labels.get(self.position, self.position or '')
+        return labels.get(self.position or '', self.position or '')
 
     @property
     def is_goalkeeper(self):

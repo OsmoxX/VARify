@@ -45,6 +45,7 @@ def test_fetch_player_success(mock_get):
     assert player.date_of_birth == expected_dob
     
     # Sprawdzamy, czy utworzyło klucz obcy do drużyny
+    assert player.team is not None
     assert player.team.name == "Inter Miami"
     assert player.team.api_id == 101
 

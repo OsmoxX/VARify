@@ -42,6 +42,8 @@ def test_sync_live_matches_creates_new_match(mock_get, mock_channel_layer):
     match = LiveMatch.objects.get(api_id=12345)
     
     # Sprawdzamy czy relacje (Klucze Obce) zostały poprawnie utworzone "w locie"
+    assert match.home_team is not None
+    assert match.league is not None
     assert match.home_team.name == "Real Madrid"
     assert match.league.name == "LaLiga"
     assert match.country_name == "Spain"
@@ -102,7 +104,9 @@ def test_fetch_upcoming_matches_success(mock_get):
     
     # Upewniamy się, że zapisał się TYLKO ten nieistniejący (Arsenal - Chelsea)
     upcoming = UpcomingMatch.objects.first()
+    assert upcoming is not None
     assert upcoming.api_id == 99999
+    assert upcoming.home_team is not None
     assert upcoming.home_team.name == "Arsenal"
 
 
@@ -179,7 +183,9 @@ def test_fetch_match_details_success(mock_get):
     
     # Sprawdzamy krok 1: Zdarzenia (Musi być 1 gol)
     assert MatchEvent.objects.filter(match=match).count() == 1
-    assert MatchEvent.objects.first().player_name == "Lewy"
+    recent_event = MatchEvent.objects.first()
+    assert recent_event is not None
+    assert recent_event.player_name == "Lewy"
     
     # Sprawdzamy krok 2: Składy i Formacje
     assert match.home_formation == "4-4-2"

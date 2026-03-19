@@ -32,7 +32,7 @@ def search_teams_from_api(query: str) -> list:
     headers = _api_headers()
 
     try:
-        results = []
+        results: list[dict] = []
         for url in urls_to_try:
             response = requests.get(url, headers=headers, timeout=8)
             if response.status_code == 200:

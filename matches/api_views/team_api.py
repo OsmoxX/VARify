@@ -67,10 +67,17 @@ def get_team_standings(request, api_id):
         .select_related('team', 'league')
         .order_by('position')
     )
-    if not standings.exists():
-        return Response({'detail': 'Brak tabeli dla tej drużyny.'}, status=status.HTTP_404_NOT_FOUND)
 
-    first_league = standings.first().league
+    first_record = standings.first()
+
+    if not first_record or not first_record.league:
+        return Response(
+            {'detail': 'Brak tabeli dla tej drużyny.'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    first_league = first_record.league
+    
     all_standings = (
         LeagueStandings.objects
         .filter(league=first_league)
@@ -79,7 +86,7 @@ def get_team_standings(request, api_id):
     )
     
     # ==========================================
-    # NOWY KOD - PAGINACJA
+    # PAGINACJA
     # ==========================================
     
     # 1. Tworzymy obiekt paginatora

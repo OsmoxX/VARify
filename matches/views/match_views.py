@@ -58,11 +58,12 @@ def match_detail_view(request, match_id):
         current_minute = _current_match_minute(match)
         status_lower = match.status.lower().strip()
         # Filter first, then sort descending so newest events appear at top
-        events = sorted(
+        sorted_events = sorted(
             [e for e in events if _should_show_event(e, status_lower, current_minute)],
             key=lambda e: (e.time, e.added_time or 0, e.id),
             reverse=True,
         )
+        events = sorted_events  # type: ignore
 
     lineups_qs = MatchLineup.objects.filter(match=match)
     home_xi = list(lineups_qs.filter(is_home_team=True, is_starting_xi=True).order_by('shirt_number'))

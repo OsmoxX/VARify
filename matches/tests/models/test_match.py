@@ -40,8 +40,8 @@ def test_live_and_upcoming_match_properties(base_data):
     assert isinstance(upcoming_match.updated_at_timestamp, int)
 
     # 3. Test edge case: co jeśli updated_at to None? (symulujemy to ręcznie)
-    live_match.updated_at = None
-    upcoming_match.updated_at = None
+    live_match.updated_at = None  # type: ignore
+    upcoming_match.updated_at = None  # type: ignore
     assert live_match.updated_at_timestamp == 0
     assert upcoming_match.updated_at_timestamp == 0
 
@@ -67,7 +67,7 @@ def test_matches_unique_constraints(base_data):
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             LiveMatch.objects.create(api_id=999, status="ended")
-
+    
     # 2. UpcomingMatch: blokada zduplikowanego api_id
     with pytest.raises(IntegrityError):
         with transaction.atomic():

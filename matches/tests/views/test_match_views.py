@@ -112,7 +112,7 @@ def test_home_view_requires_login():
     
     response = HomeView.as_view()(request)
     assert response.status_code == 302
-    assert 'login' in response.url
+    assert 'login' in getattr(response, 'url', '')
 
 @pytest.mark.django_db
 @patch('matches.views.match_views.TOP_LEAGUES_CONFIG', [(1, 'Premier League', 'England')])
@@ -127,7 +127,7 @@ def test_home_view_logged_in(setup_match_data):
     response = HomeView.as_view()(request)
     assert response.status_code == 200
     
-    context = response.context_data
+    context = getattr(response, 'context_data', {})
     assert 'structured_data' in context
     
     # Pobieramy przefiltrowane dane

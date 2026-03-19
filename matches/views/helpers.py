@@ -100,7 +100,7 @@ def _build_pitch_data(xi_players, formation_str, is_home=True):
     Zwraca listę słowników {player, top, left, rating_class}.
     """
     if not formation_str:
-        positions = {'G': [], 'D': [], 'M': [], 'F': []}
+        positions: dict[str, list] = {'G': [], 'D': [], 'M': [], 'F': []}
         for p in xi_players:
             positions.get(p.position, positions.setdefault(p.position, [])).append(p)
         formation_rows = [len(positions[k]) for k in ['D', 'M', 'F'] if positions[k]]
@@ -111,7 +111,7 @@ def _build_pitch_data(xi_players, formation_str, is_home=True):
     except ValueError:
         rows = [4, 4, 2]
 
-    groups = {'G': [], 'D': [], 'M': [], 'F': []}
+    groups: dict[str, list] = {'G': [], 'D': [], 'M': [], 'F': []}
     for p in xi_players:
         groups.get(p.position or 'M', groups['M']).append(p)
 
