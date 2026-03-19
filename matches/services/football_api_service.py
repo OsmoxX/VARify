@@ -2,7 +2,6 @@
 services/football_api_service.py
 
 Low-level helpers and search functions for the SportAPI.
-Responsible ONLY for HTTP calls and basic data shaping – no DB writes.
 """
 import os
 

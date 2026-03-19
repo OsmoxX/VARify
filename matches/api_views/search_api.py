@@ -4,8 +4,9 @@ api_views/search_api.py
 Global search endpoint: teams and players.
 """
 from django.contrib.auth.decorators import login_not_required
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 from matches.models import Player, Team
 from matches.serializers import PlayerSerializer, TeamSerializer
@@ -14,6 +15,7 @@ from matches.services import search_players_from_api
 
 @login_not_required
 @api_view(['GET'])
+@throttle_classes([AnonRateThrottle, UserRateThrottle])
 def search(request):
     """Globalne wyszukiwanie ?q=<str>. Zwraca drużyny i zawodników pasujących do zapytania."""
     q = request.GET.get('q', '').strip()

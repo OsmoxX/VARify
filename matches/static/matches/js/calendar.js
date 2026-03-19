@@ -1,6 +1,7 @@
 /**
  * calendar.js
  * Handles fetching, grouping, and rendering of upcoming matches calendar.
+ * Supports day-picker navigation across 5 days (today + 4 ahead).
  */
 
 // TOP LEAGUES (same order as in views.py TOP_LEAGUES_CONFIG)
@@ -19,6 +20,73 @@ const TOP_LEAGUES_CONFIG = [
     { id: '18',   name: 'Championship',               country: 'England' },
     { id: '52',   name: 'Trendyol Süper Lig',         country: 'Turkey' },
 ];
+
+// ────────────────────────────────────────────────
+// DAY PICKER
+// ────────────────────────────────────────────────
+
+// Currently selected date in YYYY-MM-DD format
+let activeDateStr = '';
+
+/**
+ * Returns the ISO date string (YYYY-MM-DD) for a given Date object,
+ * using local time (not UTC), so it stays correct for Polish timezone.
+ */
+function toLocalDateStr(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * Builds the 5-button day-picker strip and wires up click handlers.
+ */
+function buildDayPicker() {
+    const picker = document.getElementById('day-picker');
+    if (!picker) return;
+
+    const now = new Date();
+    const dayNames = ['Ndz', 'Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob'];
+
+    for (let delta = 0; delta < 5; delta++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() + delta);
+
+        const dateStr = toLocalDateStr(d);
+        const dayName = delta === 0 ? 'Dziś'
+                      : delta === 1 ? 'Jutro'
+                      : dayNames[d.getDay()];
+        const dayDate = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        const btn = document.createElement('button');
+        btn.className = 'day-picker-btn' + (delta === 0 ? ' active' : '');
+        btn.setAttribute('data-date', dateStr);
+        btn.innerHTML = `
+            <span class="day-name">${dayName}</span>
+            <span class="day-date">${dayDate}</span>
+        `;
+        btn.addEventListener('click', () => selectDay(dateStr));
+        picker.appendChild(btn);
+    }
+
+    // Set today as the default active date
+    activeDateStr = toLocalDateStr(now);
+}
+
+/**
+ * Switches the active day and reloads matches for that date.
+ */
+function selectDay(dateStr) {
+    activeDateStr = dateStr;
+
+    // Update button active state
+    document.querySelectorAll('.day-picker-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-date') === dateStr);
+    });
+
+    loadUpcomingMatches();
+}
 
 // ────────────────────────────────────────────────
 // DOM BUILDERS
@@ -54,7 +122,7 @@ function buildLeagueSection(league) {
         matchesHtml = `
             <div class="no-matches-msg">
                 <i class="fa-regular fa-calendar-xmark"></i>
-                Brak meczów na dziś
+                Brak meczów na ten dzień
             </div>
         `;
     }
@@ -76,23 +144,67 @@ function buildLeagueSection(league) {
 }
 
 // ────────────────────────────────────────────────
+// RENDER CALENDAR
+// ────────────────────────────────────────────────
+
+function renderCalendar(leagueList, itemsOnPageCount) {
+    const container = document.getElementById('calendar-container');
+    container.innerHTML = '';
+    
+    if (itemsOnPageCount === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fa-solid fa-calendar-xmark"></i>
+                <p>Brak nadchodzących meczów na ten dzień.</p>
+            </div>`;
+        return;
+    }
+    
+    leagueList.forEach(league => container.appendChild(buildLeagueSection(league)));
+    rebuildFilterList(leagueList.filter(l => l.matches.length > 0).map(l => l.displayName));
+}
+
+// ────────────────────────────────────────────────
 // FETCH UPCOMING MATCHES
 // ────────────────────────────────────────────────
 
 function loadUpcomingMatches() {
-    fetch('/api/upcoming-matches/')
+    const container = document.getElementById('calendar-container');
+
+    // Show loading spinner
+    container.innerHTML = `
+        <div class="loading-state" id="loading-state">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>Ładowanie meczów...</p>
+        </div>
+    `;
+
+    // Build URL with selected date
+    const url = activeDateStr
+        ? `/api/upcoming-matches/?date=${activeDateStr}`
+        : '/api/upcoming-matches/';
+
+    fetch(url)
         .then(r => r.json())
-        .then(matches => {
+        .then(matchesArray => { 
             const leagueMap = new Map();
-            matches.forEach(match => {
-                const key = match.league_api_id || match.league_name;
+            
+            matchesArray.forEach(match => {
+                let name = match.league_name || 'Nieznana';
+                let key = match.league_api_id ? String(match.league_api_id) : name;
+
+                // --- PANCERNY FALLBACK DLA LIGI MISTRZÓW I INNYCH ---
+                if (name.includes('Champions League')) key = '7';
+                else if (name.includes('Europa League')) key = '679';
+                else if (name.includes('Conference League')) key = '1703';
+                else if (name.includes('Ekstraklasa')) key = '202';
+
                 if (!leagueMap.has(key)) {
                     const country = match.league_country || '';
-                    const name = match.league_name || 'Nieznana';
                     leagueMap.set(key, {
                         id: key,
-                        name,
-                        country,
+                        name: name,
+                        country: country,
                         displayName: country ? `${name} • ${country}` : name,
                         isTop: match.is_top,
                         matches: [],
@@ -128,7 +240,7 @@ function loadUpcomingMatches() {
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .forEach(l => orderedLeagues.push(l));
 
-            renderCalendar(orderedLeagues);
+            renderCalendar(orderedLeagues, matchesArray.length);
             document.getElementById('loading-state')?.remove();
         })
         .catch(err => {
@@ -139,21 +251,6 @@ function loadUpcomingMatches() {
                     <p>Błąd ładowania meczów. Spróbuj odświeżyć stronę.</p>
                 </div>`;
         });
-}
-
-function renderCalendar(leagueList) {
-    const container = document.getElementById('calendar-container');
-    container.innerHTML = '';
-    if (leagueList.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fa-solid fa-calendar-xmark"></i>
-                <p>Brak nadchodzących meczów. Uruchom synchronizację.</p>
-            </div>`;
-        return;
-    }
-    leagueList.forEach(league => container.appendChild(buildLeagueSection(league)));
-    rebuildFilterList(leagueList.filter(l => l.matches.length > 0).map(l => l.displayName));
 }
 
 // ────────────────────────────────────────────────
@@ -240,5 +337,8 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// ────────────────────────────────────────────────
 // START
+// ────────────────────────────────────────────────
+buildDayPicker();
 loadUpcomingMatches();

@@ -364,7 +364,7 @@ def sync_live_matches():
 
     live_api_ids = {event['id'] for event in data['events']}
     stale_matches = LiveMatch.objects.filter(
-        status__iregex=r'(half|halftime|extra|break|live|progress|period)'
+        status__iregex=r'(half|halftime|extra|awaiting|penalties|break|live|progress|period)'
     ).exclude(api_id__in=live_api_ids)
     ended_count = stale_matches.update(status='Ended')
     if ended_count:
@@ -549,64 +549,80 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
 # =============================================================================
 
 def fetch_upcoming_matches():
-    """Pobiera mecze zaplanowane na dzisiaj i zapisuje je do UpcomingMatch."""
-    from datetime import datetime
-    url = "https://sportapi7.p.rapidapi.com/api/v1/sport/football/scheduled-events/{date}"
-    date = datetime.now().strftime("%Y-%m-%d")
-    url = url.format(date=date)
-    response = requests.get(url, headers=_api_headers())
-    if response.status_code != 200:
-        return
+    """Pobiera mecze zaplanowane na dziś i 4 kolejne dni (łącznie 5 dni)."""
+    url_template = "https://sportapi7.p.rapidapi.com/api/v1/sport/football/scheduled-events/{date}"
+    today = datetime.now().date()
 
-    data = response.json()
-    events = data.get('events', [])
-    UpcomingMatch.objects.all().delete()
-    print("Wyczyszczono stare nadchodzące mecze.")
+    # Usuwamy tylko przeszłe mecze – nie kasujemy tych, które wczęśniej pobraliśmy
+    UpcomingMatch.objects.filter(start_datetime__date__lt=today).delete()
+    print(f"Usunięto stare mecze sprzed {today}.")
 
-    for event in events:
-        status_type = event['status']['type']
-        if status_type != 'notstarted':
+    for delta in range(5):  # 0 = dziś, 1 = jutro, ..., 4 = za 4 dni
+        fetch_date = today + timedelta(days=delta)
+        date_str = fetch_date.strftime("%Y-%m-%d")
+        url = url_template.format(date=date_str)
+        try:
+            response = requests.get(url, headers=_api_headers(), timeout=10)
+        except Exception as e:
+            print(f"Błąd połączenia dla daty {date_str}: {e}")
             continue
 
-        filters = event.get('eventFilters', {})
-        levels = filters.get('level', [])
+        if response.status_code != 200:
+            print(f"Błąd API dla daty {date_str}: {response.status_code}")
+            continue
 
-        league_data = event['tournament']
-        unique_tournament = league_data.get('uniqueTournament', {})
-        league_id = unique_tournament.get('id') or league_data['id']
-        league_name = unique_tournament.get('name') or league_data['name']
+        events = response.json().get('events', [])
+        print(f"[{date_str}] Znaleziono {len(events)} eventów.")
 
-        is_top = league_id in _TOP_LEAGUES
-        api_id = event['id']
-        start_ts = event['startTimestamp']
-        start_datetime = make_aware(datetime.fromtimestamp(start_ts) + timedelta(hours=1))
+        for event in events:
+            try:
+                status_type = event['status']['type']
+                if status_type != 'notstarted':
+                    continue
 
-        league_obj, _ = League.objects.get_or_create(
-            api_id=league_id,
-            defaults={'name': league_name}
-        )
-        home_team_data = event['homeTeam']
-        away_team_data = event['awayTeam']
-        home_team_obj, _ = Team.objects.get_or_create(api_id=home_team_data['id'], defaults={'name': home_team_data['name']})
-        away_team_obj, _ = Team.objects.get_or_create(api_id=away_team_data['id'], defaults={'name': away_team_data['name']})
+                league_data = event['tournament']
+                unique_tournament = league_data.get('uniqueTournament', {})
+                league_id = unique_tournament.get('id') or league_data['id']
+                league_name = unique_tournament.get('name') or league_data['name']
 
-        match, created = UpcomingMatch.objects.update_or_create(
-            api_id=api_id,
-            defaults={
-                'home_team': home_team_obj, 'away_team': away_team_obj,
-                'league': league_obj, 'start_datetime': start_datetime,
-                'is_top': is_top,
-            }
-        )
-        action = 'DODANO' if created else 'ZAKTUALIZOWANO'
-        print(f"{'⭐' if is_top else '  '} {action}: {home_team_obj.name} vs {away_team_obj.name}")
+                is_top = league_id in _TOP_LEAGUES
+                api_id = event['id']
+                start_ts = event['startTimestamp']
+                start_datetime = make_aware(datetime.fromtimestamp(start_ts) + timedelta(hours=1))
+
+                league_obj, _ = League.objects.get_or_create(
+                    api_id=league_id,
+                    defaults={'name': league_name}
+                )
+                home_team_data = event['homeTeam']
+                away_team_data = event['awayTeam']
+                home_team_obj, _ = Team.objects.get_or_create(
+                    api_id=home_team_data['id'], defaults={'name': home_team_data['name']}
+                )
+                away_team_obj, _ = Team.objects.get_or_create(
+                    api_id=away_team_data['id'], defaults={'name': away_team_data['name']}
+                )
+
+                match, created = UpcomingMatch.objects.update_or_create(
+                    api_id=api_id,
+                    defaults={
+                        'home_team': home_team_obj, 'away_team': away_team_obj,
+                        'league': league_obj, 'start_datetime': start_datetime,
+                        'is_top': is_top,
+                    }
+                )
+                action = 'DODANO' if created else 'ZAKTUALIZOWANO'
+                print(f"  {'⭐' if is_top else '  '} {action}: {home_team_obj.name} vs {away_team_obj.name} [{date_str}]")
+            except Exception as e:
+                print(f"  Błąd przy meczu ID {event.get('id')}: {e}")
+                continue
 
 
 # =============================================================================
 #  LAST MATCHES FOR TEAM (Zwiadowca)
 # =============================================================================
 
-def fetch_last_matches_for_team(team_api_id: int, n: int = 3) -> list:
+def fetch_last_matches_for_team(team_api_id: int, n: int = 5) -> list:
     """
     Pobiera ostatnie n meczów drużyny z API i zapisuje TYLKO podstawowe dane.
     NIE pobiera: zdarzeń, składów, statystyk.

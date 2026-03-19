@@ -44,6 +44,7 @@ sentry_sdk.init(
 INSTALLED_APPS = [
     'daphne',
     'channels',
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,10 +53,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_beat',
     'matches',
-    'rest_framework',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -174,15 +176,15 @@ from celery.schedules import crontab
 # CELERY BEAT (Harmonogram zadań)
 # ==========================================
 CELERY_BEAT_SCHEDULE = {
-    'aktualizuj-live-mecze-co-3-minuty': {
+    'update-live-matches-every-30-seconds': {
         'task': 'matches.tasks.sync_live_matches',
         'schedule': 30.0, # Wykonuj co 30 sekund
     },
-    'pobierz-jutrzejsze-mecze': {
+    'fetch-upcoming-matches': {
         'task': 'matches.tasks.fetch_upcoming_matches',
         'schedule': crontab(hour=11, minute=00), # Wykonuj o 
     },
-    'pobierz-tabele-top-lig': {
+    'fetch-top-leagues-standings': {
         'task': 'matches.tasks.fetch_top_leagues_standings_task',
         'schedule': crontab(hour=13, minute=19), # Codziennie o zadanej godzinie (według czasu lokalnego polskiego zachowanego w bazie)
     },
@@ -218,3 +220,24 @@ LOGGING = {
         'django': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
     },
 }
+
+REST_FRAMEWORK = {
+    # 1. Konfiguracja Throttlingu
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle', # Dla niezalogowanych (anonimowych)
+        'rest_framework.throttling.UserRateThrottle'  # Dla zalogowanych użytkowników
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '5/minute',  # Niezalogowany może wysłać max 30 zapytań na minutę
+        'user': '20/minute',  # Zalogowany ma większy limit
+    },
+    # 2. Konfiguracja Pagination (stronicowania)
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20 # Zwraca maksymalnie 20 elementów na jedno zapytanie
+}
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    # "https://twoja-domena.com",
+]

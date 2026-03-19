@@ -65,12 +65,13 @@
         <p>Ładowanie meczów...</p>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 {# Pass Django template variable to JS via window object, then load external script #}
-<script>
-    window.serverSubscribedIds = {{ subscribed_ids_json|safe }};
+<script id="subscribed-leagues-data" type="application/json">
+    {{ subscribed_ids_json|safe }}
 </script>
 <script src="{% static 'matches/js/live_matches.js' %}"></script>
 {% endblock %}

@@ -36,6 +36,10 @@ const STATUS_MAP = {
     'not started':           'Nie rozpoczęty',
     'extra time 1st half':   'Dogrywka 1H',
     'extra time 2nd half':   'Dogrywka 2H',
+    '1st extra':             'Dogrywka 1H',
+    '2nd extra':             'Dogrywka 2H',
+    'awaiting extra time':   'Oczekuje na dogrywkę',
+    'awaiting penalties':    'Oczekuje na karne',
     'extra time halftime':   'Przerwa dogrywki',
     'after extra time':      'Po dogrywce',
     'after penalties':       'Po karnych',
@@ -46,8 +50,8 @@ const STATUS_MAP = {
     'abandoned':             'Przerwany',
     'awarded':               'Walkower',
 };
-const LIVE_STATUSES = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', 'penalties'];
-const BREAK_STATUSES = ['halftime', 'extra time halftime'];
+const LIVE_STATUSES = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', '1st extra', '2nd extra', 'penalties'];
+const BREAK_STATUSES = ['halftime', 'extra time halftime', 'awaiting extra time', 'awaiting penalties'];
 
 function getStatusClass(raw) {
     if (LIVE_STATUSES.includes(raw)) return 'status-live';
@@ -66,7 +70,7 @@ function buildLeagueSection(leagueName, country, displayName, isTop, matches) {
     section.setAttribute('data-is-top', isTop ? '1' : '0');
 
     const icon = isTop
-        ? '<i class="fa-solid fa-star league-icon top-icon"></i>'
+        ? '<i class="fa-solid fa-star league-icon top-icon" style="color: var(--accent);"></i>'
         : '<i class="fa-solid fa-trophy league-icon"></i>';
     const countryTag = country ? `<span class="country-tag">• ${country}</span>` : '';
 
@@ -97,7 +101,7 @@ function buildMatchRow(match) {
     wrapper.className = 'match-row-wrapper';
     wrapper.setAttribute('data-match-id', match.api_id);
     wrapper.innerHTML = `
-        <a href="${match.match_url}" class="match-row">
+        <a href="${match.match_url || '#'}" class="match-row">
             <div class="team team-home">${match.home_team}</div>
             <div class="score-container">
                 <div class="score-display">${match.home_score} - ${match.away_score}</div>
@@ -147,34 +151,54 @@ function buildMatchRow(match) {
 }
 
 // ────────────────────────────────────────────────
-// FETCH LIVE MATCHES
+// FETCH LIVE MATCHES (BEZ PAGINACJI)
 // ────────────────────────────────────────────────
 
-let lastMatchData = null;
-
 function loadLiveMatches(silent = false) {
+    if (!silent) showLoading();
+
     fetch('/api/live-matches/')
         .then(r => r.json())
-        .then(matches => {
-            lastMatchData = matches;
-
+        .then(matchesArray => {
             const leagueMap = new Map();
-            matches.forEach(match => {
-                const key = match.league_api_id || match.league_name;
+            
+            matchesArray.forEach(match => {
+                let name = match.league_name || 'Nieznana';
+                let key = match.league_api_id ? String(match.league_api_id) : name;
+
+                // --- PANCERNY FALLBACK ---
+                if (key === '7' || name.includes('UEFA Champions League')) {
+                    key = '7';
+                    name = 'Champions League';
+                }
+                else if (key === '679' || name.includes('UEFA Europa League')) {
+                    key = '679';
+                    name = 'Europa League';
+                }
+                else if (key === '1703' || name.includes('UEFA Europa Conference') || name.includes('UEFA Conference')) {
+                    key = '1703';
+                    name = 'Conference League';
+                }
+                else if (key === '202' || name.includes('Ekstraklasa')) {
+                    key = '202';
+                }
+
                 if (!leagueMap.has(key)) {
+                    const country = match.league_country || match.country_name || '';
                     leagueMap.set(key, {
-                        name: match.league_name || 'Nieznana',
-                        country: match.league_country || match.country_name || '',
-                        displayName: match.league_country
-                            ? `${match.league_name} • ${match.league_country}`
-                            : (match.league_name || 'Nieznana'),
+                        name: name,
+                        country: country,
+                        displayName: country ? `${name} • ${country}` : name,
                         isTop: match.is_top,
                         matches: [],
                     });
+                } else if (match.is_top) {
+                    leagueMap.get(key).isTop = true;
                 }
                 leagueMap.get(key).matches.push(match);
             });
 
+            // Sortowanie: najpierw Top Ligi (alfabetycznie), potem reszta (alfabetycznie)
             const sorted = [...leagueMap.values()].sort((a, b) => {
                 if (a.isTop !== b.isTop) return a.isTop ? -1 : 1;
                 return a.name.localeCompare(b.name);
@@ -188,6 +212,10 @@ function loadLiveMatches(silent = false) {
             if (!silent) showError();
         });
 }
+
+// ────────────────────────────────────────────────
+// RENDER LEAGUES
+// ────────────────────────────────────────────────
 
 function renderLeagues(leagueList) {
     const container = document.getElementById('leagues-container');
@@ -203,7 +231,7 @@ function renderLeagues(leagueList) {
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fa-solid fa-circle-nodes"></i>
-                <p>Brak meczów na żywo w Twojej bazie danych.</p>
+                <p>Brak meczów na żywo w tym momencie.</p>
             </div>`;
         return;
     }
@@ -231,20 +259,20 @@ function renderLeagues(leagueList) {
     initBells();
 }
 
-function rebuildFilterList(leagueNames) {
-    const filterList = document.getElementById('league-filter-list');
-    filterList.innerHTML = '';
-    leagueNames.forEach(name => {
-        const label = document.createElement('label');
-        label.className = 'checkbox-label league-filter-item';
-        label.setAttribute('data-league-lower', name.toLowerCase());
-        label.innerHTML = `
-            <input type="checkbox" checked class="league-filter-cb" onchange="applyFilters()"
-                data-league="${name}">
-            <span class="league-filter-name">${name}</span>
-        `;
-        filterList.appendChild(label);
-    });
+// ────────────────────────────────────────────────
+// UI UTILS
+// ────────────────────────────────────────────────
+
+function showLoading() {
+    const container = document.getElementById('leagues-container');
+    if (!document.getElementById('loading-state')) {
+        container.insertAdjacentHTML('beforeend', `
+            <div class="loading-state" id="loading-state">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <p>Ładowanie meczów...</p>
+            </div>
+        `);
+    }
 }
 
 function hideLoading() {
@@ -261,8 +289,20 @@ function showError() {
         </div>`;
 }
 
+// ────────────────────────────────────────────────
+// FILTER & NOTIFICATION LOGIC
+// ────────────────────────────────────────────────
+
 function initBells() {
-    const serverSubscribedIds = window.serverSubscribedIds || [];
+    let serverSubscribedIds = [];
+    try {
+        const scriptData = document.getElementById('subscribed-leagues-data');
+        if (scriptData) {
+            serverSubscribedIds = JSON.parse(scriptData.textContent);
+        }
+    } catch (e) {
+        console.error("Error parsing subscribed leagues", e);
+    }
     serverSubscribedIds.forEach(function(apiId) {
         if (window.VarifyWS && !window.VarifyWS.isSubscribed(apiId)) {
             window.VarifyWS.subscribe(apiId);
@@ -278,10 +318,6 @@ function initBells() {
         });
     }
 }
-
-// ────────────────────────────────────────────────
-// WEBSOCKET CALLBACKS (exposed to base.html)
-// ────────────────────────────────────────────────
 
 window.showMatchToast = function showMatchToast(icon, msg, eventType) {
     const bgColors = {
@@ -339,9 +375,21 @@ window.updateMatchRow = function updateMatchRow(matchId, data) {
     }
 };
 
-// ────────────────────────────────────────────────
-// FILTER UI
-// ────────────────────────────────────────────────
+function rebuildFilterList(leagueNames) {
+    const filterList = document.getElementById('league-filter-list');
+    filterList.innerHTML = '';
+    leagueNames.forEach(name => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-label league-filter-item';
+        label.setAttribute('data-league-lower', name.toLowerCase());
+        label.innerHTML = `
+            <input type="checkbox" checked class="league-filter-cb" onchange="applyFilters()"
+                data-league="${name}">
+            <span class="league-filter-name">${name}</span>
+        `;
+        filterList.appendChild(label);
+    });
+}
 
 function toggleFilterMenu() {
     const menu = document.getElementById('filter-menu');

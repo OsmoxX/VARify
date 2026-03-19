@@ -219,3 +219,66 @@
     padding: 30px;
     font-size: 0.9rem;
 }
+
+/* =========================================
+   RESPONSYWNOŚĆ – MOBILE (≤ 768px)
+   team_detail.css
+========================================= */
+@media (max-width: 768px) {
+
+    /* Nagłówek drużyny – mniejsze logo i tytuł */
+    .team-header {
+        padding: 16px;
+        gap: 14px;
+    }
+
+    .team-logo,
+    .team-logo-placeholder {
+        width: 56px;
+        height: 56px;
+    }
+
+    .team-name-section h1 {
+        font-size: 1.3rem;
+    }
+
+    /* Wiersz meczu: nie może wyjeżdżać poza ekran */
+    .team-match-row {
+        padding: 10px 10px;
+        overflow: hidden;
+    }
+
+    .match-teams {
+        gap: 6px;
+        min-width: 0; /* pozwól się skurczyć */
+        overflow: hidden;
+    }
+
+    /* Nazwy drużyn: rezygnujemy ze stałej szerokości,
+       ucinamy tekst jeśli za długi */
+    .match-team-name {
+        min-width: 0;
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8rem;
+    }
+
+    .match-score-box {
+        padding: 4px 8px;
+        font-size: 0.9rem;
+        min-width: 48px;
+        flex-shrink: 0;
+    }
+
+    /* Nazwa ligi – chowamy na mobile, żeby nie wychodziła */
+    .match-league-tag {
+        display: none;
+    }
+
+    /* Skład: 1 kolumna na mobile */
+    .squad-grid {
+        grid-template-columns: 1fr;
+    }
+}

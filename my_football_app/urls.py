@@ -20,6 +20,7 @@ from matches.views import match_detail_view, live_matches_view, HomeView, search
 from matches import views
 from django.contrib.auth import views as auth_views
 from matches import api_views
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,6 +30,7 @@ urlpatterns = [
     path('team/<int:team_id>/', team_detail_view, name='team_detail'),
     path('player/<int:api_id>/', player_detail, name='player_detail'),
     path('', HomeView.as_view(), name='home'),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
     path('calendar/', upcoming_matches_view, name='calendar'),
     path('search-api/', search_api_view, name='search_api'),
     path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),

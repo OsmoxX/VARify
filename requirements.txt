@@ -43,3 +43,7 @@ daphne
 whitenoise>=6.5.0
 sentry-sdk
 djangorestframework
+django-cors-headers
+pytest
+pytest-django
+pytest-cov
