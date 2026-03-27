@@ -18,7 +18,6 @@ COPY requirements.txt .
 
 # 5. Instalujemy biblioteki (Docker robi to wewnątrz siebie, nie na Twoim Macu!)
 RUN pip install --no-cache-dir -r requirements.txt
-
 # 6. Kopiujemy całą resztę Twojego kodu (pliki Django) do kontenera
 COPY . .
 

@@ -553,8 +553,8 @@ input:checked+.slider:before {
     /* Menu filtrów – pełna szerokość */
     .filter-menu {
         width: calc(100vw - 32px);
-        right: 0;
-        left: auto;
+        left: -10px;
+        right: auto;
     }
 
     /* Separator "inne ligi" */

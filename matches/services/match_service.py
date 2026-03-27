@@ -644,12 +644,15 @@ def fetch_last_matches_for_team(team_api_id: int, n: int = 5) -> list:
     for event in last_events:
         try:
             league_data = event.get('tournament', {})
+            unique_tournament = league_data.get('uniqueTournament', {})
+            league_id = unique_tournament.get('id') or league_data['id']
+            league_name = unique_tournament.get('name') or league_data.get('name', 'Nieznana Liga')
             category = league_data.get('category', {})
             country_name = category.get('name', 'Inne')
 
             league, _ = League.objects.get_or_create(
-                api_id=league_data['id'],
-                defaults={'name': league_data.get('name', 'Nieznana Liga'), 'country': country_name},
+                api_id=league_id,
+                defaults={'name': league_name, 'country': country_name},
             )
             home_data = event.get('homeTeam', {})
             away_data = event.get('awayTeam', {})

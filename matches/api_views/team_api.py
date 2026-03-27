@@ -113,12 +113,23 @@ def get_team_matches(request, api_id):
     except Team.DoesNotExist:
         return Response({'detail': 'Drużyna nie znaleziona.'}, status=status.HTTP_404_NOT_FOUND)
 
-    matches_count = LiveMatch.objects.filter(Q(home_team=team) | Q(away_team=team)).count()
-    if matches_count < 5 and team.api_id:
+    from django.utils import timezone
+
+    team_matches_qs = LiveMatch.objects.filter(Q(home_team=team) | Q(away_team=team))
+    matches_count = team_matches_qs.count()
+
+    latest_match = team_matches_qs.order_by('-match_date', '-id').first()
+    stale = (
+        latest_match is None
+        or latest_match.match_date is None
+        or latest_match.match_date < timezone.now().date()
+    )
+
+    if (matches_count < 5 or stale) and team.api_id:
         try:
             fetch_last_matches_for_team(team_api_id=team.api_id, n=5)
         except Exception:
-            pass # nosec B110
+            pass  # nosec B110
 
     qs = (
         LiveMatch.objects

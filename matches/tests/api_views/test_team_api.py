@@ -1,4 +1,5 @@
 import pytest
+from datetime import date, timedelta
 from unittest.mock import patch
 from rest_framework.test import APIClient
 from rest_framework import status
@@ -126,15 +127,55 @@ def test_get_team_matches_api_exception_handled(mock_fetch, api_client, setup_te
 @pytest.mark.django_db
 @patch('matches.api_views.team_api.fetch_last_matches_for_team')
 def test_get_team_matches_over_5_skips_api(mock_fetch, api_client, setup_team_data):
-    # ARRANGE: Dodajemy Arsenalowi 3 kolejne mecze, żeby miał ich łącznie 5 w bazie
+    # ARRANGE: Dodajemy Arsenalowi 3 kolejne mecze z dzisiejszą datą (czyli świeże)
     t1, t2, l1 = setup_team_data['t1'], setup_team_data['t2'], setup_team_data['l1']
+    today = date.today()
     for i in range(3):
-        LiveMatch.objects.create(api_id=200+i, league=l1, home_team=t1, away_team=t2)
-    
+        LiveMatch.objects.create(api_id=200+i, league=l1, home_team=t1, away_team=t2, match_date=today)
+    # Aktualizujemy też oryginalne 2 mecze, żeby miały dzisiejszą datę
+    LiveMatch.objects.filter(api_id__in=[100, 101]).update(match_date=today)
+
     # ACT
     res = api_client.get('/api/teams/10/matches/')
-    
-    # ASSERT: Baza jest pełna (5 meczów), więc zwiadowca z API NIE POWINIEN zostać wywołany!
+
+    # ASSERT: Baza jest pełna (5 meczów) i dane są świeże → zwiadowca NIE powinien się wywołać!
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json()['count'] == 5
+    mock_fetch.assert_not_called()
+
+
+@pytest.mark.django_db
+@patch('matches.api_views.team_api.fetch_last_matches_for_team')
+def test_get_team_matches_stale_data_triggers_api(mock_fetch, api_client, setup_team_data):
+    # ARRANGE: Arsenal ma 5 meczów, ale wszystkie z wczoraj (czyli stale)
+    t1, t2, l1 = setup_team_data['t1'], setup_team_data['t2'], setup_team_data['l1']
+    yesterday = date.today() - timedelta(days=1)
+    for i in range(3):
+        LiveMatch.objects.create(api_id=200+i, league=l1, home_team=t1, away_team=t2, match_date=yesterday)
+    LiveMatch.objects.filter(api_id__in=[100, 101]).update(match_date=yesterday)
+
+    # ACT
+    res = api_client.get('/api/teams/10/matches/')
+
+    # ASSERT: Dane są stale (wczorajsze) → zwiadowca POWINIEN się wywołać!
+    assert res.status_code == status.HTTP_200_OK
+    mock_fetch.assert_called_once_with(team_api_id=10, n=5)
+
+
+@pytest.mark.django_db
+@patch('matches.api_views.team_api.fetch_last_matches_for_team')
+def test_get_team_matches_fresh_data_skips_api(mock_fetch, api_client, setup_team_data):
+    # ARRANGE: Arsenal ma 5 meczów z dzisiejszą datą (czyli świeże)
+    t1, t2, l1 = setup_team_data['t1'], setup_team_data['t2'], setup_team_data['l1']
+    today = date.today()
+    for i in range(3):
+        LiveMatch.objects.create(api_id=200+i, league=l1, home_team=t1, away_team=t2, match_date=today)
+    LiveMatch.objects.filter(api_id__in=[100, 101]).update(match_date=today)
+
+    # ACT
+    res = api_client.get('/api/teams/10/matches/')
+
+    # ASSERT: Dane są świeże (dzisiaj) → zwiadowca NIE powinien się wywołać!
     assert res.status_code == status.HTTP_200_OK
     assert res.json()['count'] == 5
     mock_fetch.assert_not_called()

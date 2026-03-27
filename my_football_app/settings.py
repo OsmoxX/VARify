@@ -45,6 +45,13 @@ INSTALLED_APPS = [
     'daphne',
     'channels',
     'corsheaders',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.github',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +62,7 @@ INSTALLED_APPS = [
     'matches',
     'rest_framework'
 ]
-
+SITE_ID = 1
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -67,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.LoginRequiredMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'my_football_app.urls'
@@ -74,7 +82,7 @@ ROOT_URLCONF = 'my_football_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'matches' / 'templates'], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -85,6 +93,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'my_football_app.wsgi.application'
 ASGI_APPLICATION = 'my_football_app.asgi.application'
@@ -137,6 +146,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    # Logowanie klasyczne (nazwa użytkownika / hasło)
+    'django.contrib.auth.backends.ModelBackend',
+    # Logowanie przez dostawców OAuth (Google, itp.)
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -239,3 +254,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     # "https://twoja-domena.com",
 ]
+
+# Gdzie przekierować po udanym logowaniu/wylogowaniu
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Konfiguracja Allauth
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email' # Można logować się i mailem, i loginem
+ACCOUNT_EMAIL_REQUIRED = True # Wymagamy maila od użytkownika
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'VARify Team <noreply@varify.pl>'

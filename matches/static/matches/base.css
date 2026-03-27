@@ -93,6 +93,7 @@ body {
     border-radius: 20px;
     color: white;
     outline: none;
+    box-sizing: border-box;
 }
 
 .search-dropdown {

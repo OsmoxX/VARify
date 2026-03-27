@@ -51,3 +51,5 @@ pytest-asyncio
 ruff
 types-requests
 django-stubs
+django-allauth
+PyJWT

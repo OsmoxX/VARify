@@ -1,4 +1,5 @@
 {% load static %}
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,6 +69,14 @@
                 <i class="fa-solid fa-right-to-bracket"></i> Sign In
             </button>
         </form>
+        <div style="text-align: center; margin-top: 20px;">
+                <form action="{% provider_login_url 'google' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" style="color: white; border: none; cursor: pointer; padding: 10px 20px; background-color: #4285F4; border-radius: 5px; font-weight: bold; width: 100%; font-size: 16px;">
+                        <i class="fa-brands fa-google"></i> Zaloguj przez Google
+                    </button>
+                </form>
+            </div>
 
         <div class="divider">or</div>
 
