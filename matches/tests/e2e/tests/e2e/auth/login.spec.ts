@@ -11,10 +11,10 @@
 
 import { test, expect } from '../fixtures';
 
-// Override: do NOT use the shared authenticated session for auth tests
-test.use({ storageState: { cookies: [], origins: [] } });
+// Top-level test.use() removed to avoid UI Mode scoping errors
 
 test.describe('Login page — UI', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     test('renders login form with username, password fields and Sign In button', async ({ page }) => {
         await page.goto('/login/');
 
@@ -35,6 +35,7 @@ test.describe('Login page — UI', () => {
 });
 
 test.describe('Login flow — successful', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     test('logs in with valid credentials and redirects to home', async ({ page }) => {
         const username = process.env.E2E_USERNAME ?? 'test_fan_99';
         const password = process.env.E2E_PASSWORD ?? 'Strong!Password123#';
@@ -82,6 +83,7 @@ test.describe('Login flow — successful', () => {
 });
 
 test.describe('Login flow — validation errors', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     test('shows error when using wrong password', async ({ page }) => {
         await page.goto('/login/');
         await page.locator('#id_username').fill('test_fan_99');

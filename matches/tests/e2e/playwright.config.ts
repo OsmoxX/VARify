@@ -38,6 +38,7 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: '**/global-setup.ts',
+      timeout: 60000,
     },
 
     // ─── 2. Chromium (authenticated) ─────────────────────────────────────────

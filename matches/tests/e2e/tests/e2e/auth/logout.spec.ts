@@ -7,9 +7,10 @@
 
 import { test, expect } from '../fixtures';
 
-test.use({ storageState: { cookies: [], origins: [] } });
+// Top-level test.use() removed to avoid UI Mode scoping errors
 
 test.describe('Logout flow', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     /**
      * Helper: log in before each test in this describe block.
      */

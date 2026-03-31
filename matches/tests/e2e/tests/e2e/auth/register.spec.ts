@@ -7,9 +7,10 @@
 
 import { test, expect } from '../fixtures';
 
-test.use({ storageState: { cookies: [], origins: [] } });
+// Top-level test.use() removed to avoid UI Mode scoping errors
 
 test.describe('Registration page — UI', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     test('renders all form fields and Create Account button', async ({ page }) => {
         await page.goto('/register/');
 
@@ -32,6 +33,7 @@ test.describe('Registration page — UI', () => {
 });
 
 test.describe('Registration flow — validation', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     test('shows error when passwords do not match', async ({ page }) => {
         await page.goto('/register/');
 

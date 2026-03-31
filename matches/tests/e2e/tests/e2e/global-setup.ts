@@ -40,15 +40,26 @@ test('authenticate and save session', async () => {
   const page = await context.newPage();
 
   // Navigate to login and authenticate
-  await page.goto('http://127.0.0.1:8000/login/', { waitUntil: 'networkidle' });
+  const baseURL = process.env.BASE_URL || 'http://localhost:8000';
+  console.log(`[Setup] Navigating to ${baseURL}/login/ ...`);
+  await page.goto(`${baseURL}/login/`, { waitUntil: 'networkidle' });
 
+  console.log('[Setup] Page loaded, waiting for #id_username to be visible...');
+  await page.locator('#id_username').waitFor({ state: 'visible' });
+
+  console.log('[Setup] Filling credentials...');
   await page.locator('#id_username').fill(username);
   await page.locator('#id_password').fill(password);
   await page.getByRole('button', { name: 'Sign In' }).click();
+  
+  console.log('[Setup] Submitted. Waiting for networkidle...');
   await page.waitForLoadState('networkidle');
 
   // Verify login was successful (should be on home page, not login)
+  console.log('[Setup] Verifying successful redirect away from login...');
   await expect(page).not.toHaveURL(/\/login\//);
+
+  console.log('[Setup] Login verified. Saving auth state...');
 
   // Save cookies + localStorage so other tests skip logging in
   await context.storageState({ path: AUTH_FILE });
