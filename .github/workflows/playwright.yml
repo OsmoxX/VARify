@@ -47,6 +47,13 @@ jobs:
 
       - name: Run Django migrations
         run: docker compose exec -T web python manage.py migrate
+        
+      - name: Initialize Dummy Social Apps for CI
+        run: |
+          # Django-allauth wyrzuca błąd 500 (SocialApp.DoesNotExist), gdy próbujemy wyrenderować 
+          # przycisk logowania (np. Google) na stronie /login/, a w bazie nie ma skonfigurowanej apki.
+          # W środowisku testowym CI tworzymy więc pustą/atrapową aplikację Google przed otwarciem przeglądarki.
+          docker compose exec -T web python manage.py shell -c "from allauth.socialaccount.models import SocialApp; from django.contrib.sites.models import Site; site, _ = Site.objects.get_or_create(id=1, defaults={'domain':'localhost', 'name':'localhost'}); app, _ = SocialApp.objects.get_or_create(provider='google', name='Google Dummy', client_id='dummy', secret='dummy'); app.sites.add(site)"
 
       - name: Wait for app to be ready
         run: |
