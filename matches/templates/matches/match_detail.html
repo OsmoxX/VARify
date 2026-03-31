@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="detail-wrapper">
-    <a href="{% url 'home' %}" class="back-btn-modern">
+    <a href="{% url 'home' %}" class="back-btn-modern" data-testid="back-to-results-btn">
         <i class="fa-solid fa-chevron-left"></i> Wróć do wyników
     </a>
 
@@ -36,9 +36,9 @@
         </div>
 
         <div class="match-tabs">
-            <button class="tab-btn active" onclick="openTab(event, 'timeline-tab')">Oś czasu</button>
-            <button class="tab-btn" onclick="openTab(event, 'lineups-tab')">Składy</button>
-            <button class="tab-btn" onclick="openTab(event, 'stats-tab')">Statystyki</button>
+            <button class="tab-btn active" onclick="openTab(event, 'timeline-tab')" data-testid="tab-timeline">Oś czasu</button>
+            <button class="tab-btn" onclick="openTab(event, 'lineups-tab')" data-testid="tab-lineups">Składy</button>
+            <button class="tab-btn" onclick="openTab(event, 'stats-tab')" data-testid="tab-stats">Statystyki</button>
         </div>
 
         {# ======================= OŚ CZASU ======================= #}

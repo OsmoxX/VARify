@@ -39,7 +39,7 @@
             {% if user.is_authenticated %}
             <!-- ========== DROPDOWN KONTA UŻYTKOWNIKA ========== -->
             <div class="user-menu-wrapper" id="user-menu-wrapper">
-                <button class="user-avatar-btn" id="user-avatar-btn" title="{{ user.username }}" aria-label="Menu użytkownika">
+                <button class="user-avatar-btn" id="user-avatar-btn" title="{{ user.username }}" aria-label="Menu użytkownika" data-testid="user-menu-btn">
                     <i class="fa-solid fa-circle-user"></i>
                 </button>
                 <div class="user-dropdown" id="user-dropdown">
@@ -56,7 +56,7 @@
                         Ustawienia konta
                     </a>
                     <div class="user-dropdown-divider"></div>
-                    <a href="{% url 'logout' %}" class="user-dropdown-item user-dropdown-logout">
+                    <a href="{% url 'logout' %}" class="user-dropdown-item user-dropdown-logout" data-testid="logout-link">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         Wyloguj się
                     </a>

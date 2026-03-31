@@ -1,80 +1,83 @@
 import { defineConfig, devices } from '@playwright/test';
 import dns from 'node:dns';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 dns.setDefaultResultOrder('ipv4first');
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const AUTH_FILE = join(__dirname, 'playwright/.auth/user.json');
+
+// Check if the auth file has a real session (size > empty JSON placeholder)
+const hasSession = existsSync(AUTH_FILE) && require(AUTH_FILE).cookies?.length > 0;
 
 /**
- * See https://playwright.dev/docs/test-configuration.
+ * VARify E2E Test Configuration
+ * Docs: https://playwright.dev/docs/test-configuration
+ *
+ * Auth strategy:
+ *  - `setup` project logs in once and stores the session to playwright/.auth/user.json
+ *  - All browser projects depend on `setup` and reuse that session via storageState
+ *  - Tests inside auth/ folder override storageState to `undefined` (fresh session)
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  /* Run tests in files in parallel */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+
   use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://127.0.0.1:8000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    baseURL: process.env.BASE_URL || 'http://localhost:8000',
     trace: 'on-first-retry',
-  },
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+},
 
-  /* Configure projects for major browsers */
   projects: [
+    // ─── 1. Auth Setup (runs once before everything else) ────────────────────
+    {
+      name: 'setup',
+      testMatch: '**/global-setup.ts',
+    },
+
+    // ─── 2. Chromium (authenticated) ─────────────────────────────────────────
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: AUTH_FILE,
+      },
+      dependencies: ['setup'],
     },
 
+    // ─── 3. Firefox (authenticated) ──────────────────────────────────────────
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: AUTH_FILE,
+      },
+      dependencies: ['setup'],
     },
 
+    // ─── 4. WebKit / Safari (authenticated) ──────────────────────────────────
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: AUTH_FILE,
+      },
+      dependencies: ['setup'],
     },
 
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    // ─── 5. Mobile Chrome (authenticated) ────────────────────────────────────
+    {
+      name: 'Mobile Chrome',
+      use: {
+        ...devices['Pixel 5'],
+        storageState: AUTH_FILE,
+      },
+      dependencies: ['setup'],
+    },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });

@@ -23,3 +23,10 @@ Thumbs.db
 
 # Statyczne pliki (opcjonalnie, jeśli używasz collectstatic)
 staticfiles/
+.coverage
+.coverage.*
+htmlcov/
+test-results/
+playwright-report/
+blob-report/
+playwright/.auth/
