@@ -51,12 +51,22 @@ jobs:
       - name: Wait for app to be ready
         run: |
           for i in {1..20}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/login/)
+            # Używamy -w żeby wyciągnąć kod i zapisujemy ciało odpowiedzi do pliku html
+            STATUS=$(curl -s -w "%{http_code}" -o response.html http://localhost:8000/login/)
+            
             if [ "$STATUS" = "200" ]; then
               echo "App is up and responding with HTTP 200!"
               exit 0
             fi
+            
             echo "Waiting for app... HTTP $STATUS ($i/20)"
+            
+            # Jeśli dostaniemy twardy błąd serwera (500), wypisz zawartość, by odkryć przyczynę (Traceback z Django)
+            if [ "$STATUS" = "500" ]; then
+              echo "=== ERROR 500 DETECTED! Printing response snippet (Traceback) ==="
+              cat response.html | grep -i "Exception" -A 15 || head -n 50 response.html
+            fi
+            
             sleep 3
           done
           echo "Timed out waiting for app"
