@@ -50,8 +50,17 @@ jobs:
 
       - name: Wait for app to be ready
         run: |
-          curl --retry 10 --retry-connrefused --retry-delay 3 -s -f http://localhost:8000/login/ > /dev/null
-          echo "App is up and responding!"
+          for i in {1..20}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/login/)
+            if [ "$STATUS" = "200" ]; then
+              echo "App is up and responding with HTTP 200!"
+              exit 0
+            fi
+            echo "Waiting for app... HTTP $STATUS ($i/20)"
+            sleep 3
+          done
+          echo "Timed out waiting for app"
+          exit 1
 
       # ── Playwright: uruchamia testy (z folderu e2e) ────────────────────────
       - name: Run Playwright tests
