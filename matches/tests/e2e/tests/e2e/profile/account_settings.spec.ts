@@ -77,6 +77,6 @@ test.describe('Account settings page — authenticated', () => {
         await backBtn.click();
         await page.waitForLoadState('networkidle');
 
-        await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:8000\//);
+        await expect(page).toHaveURL(/^http:\/\/(localhost|127\.0\.0\.1):8000\//);
     });
 });

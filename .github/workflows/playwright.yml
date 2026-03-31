@@ -37,7 +37,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: ${{ env.PW_DIR }}
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
 
       # ── Docker: budujemy i startujemy kontenery (z katalogu głównego) ──────
       - name: Start Docker containers
