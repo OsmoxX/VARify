@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VARify · Wybierz plan</title>
+    <meta name="description" content="Odblokuj pełen dostęp do statystyk piłkarskich. Wybierz plan VARify dopasowany do Ciebie.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'accounts/css/subscribe.css' %}">
+</head>
+<body>
+
+    {# ── Animated background (identyczny jak login) ── #}
+    <div class="pitch-bg"></div>
+    <div class="ball ball-1"></div>
+    <div class="ball ball-2"></div>
+    <div class="ball ball-3"></div>
+    <div class="ball ball-4"></div>
+
+    {# ── Latające piłki dekoracyjne ── #}
+    <div class="float-football" style="--delay:0s; --dur:18s; --x:8%; --size:2rem;">⚽</div>
+    <div class="float-football" style="--delay:3s; --dur:22s; --x:80%; --size:1.4rem;">⚽</div>
+    <div class="float-football" style="--delay:7s; --dur:15s; --x:45%; --size:2.5rem;">⚽</div>
+    <div class="float-football" style="--delay:12s; --dur:20s; --x:65%; --size:1.2rem;">⚽</div>
+
+    {# ── Nawigacja (powrót) ── #}
+    <nav class="sub-nav">
+        <a href="/" class="sub-nav-brand">
+            <div class="sub-nav-icon"><i class="fa-solid fa-futbol"></i></div>
+            VAR<span>ify</span>
+        </a>
+        <a href="/" class="sub-nav-back">
+            <i class="fa-solid fa-arrow-left"></i> Wróć do aplikacji
+        </a>
+    </nav>
+
+    <main class="sub-main">
+
+        {# ── Nagłówek ── #}
+        <div class="sub-header">
+            <div class="sub-badge">
+                <i class="fa-solid fa-trophy"></i> Odblokuj pełen potencjał
+            </div>
+            <h1>Wybierz swój plan</h1>
+            <p class="sub-subtitle">Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców.</p>
+
+            {# Messages (np. po przekierowaniu z widoku z tieram) #}
+            {% if messages %}
+            <div class="sub-messages">
+                {% for message in messages %}
+                <div class="sub-alert sub-alert-{{ message.tags }}">
+                    <i class="fa-solid fa-circle-exclamation"></i> {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# ── Karty planów ── #}
+        <div class="sub-cards">
+
+            {# ─── FREE ─── #}
+            <div class="sub-card sub-card-free">
+                <div class="sub-card-inner">
+                    <div class="plan-label">Free</div>
+                    <div class="plan-price">
+                        <span class="plan-amount">0 zł</span>
+                        <span class="plan-period">/miesiąc</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="ok"><i class="fa-solid fa-check"></i> Mecze na żywo</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Nadchodzące spotkania</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> Wyszukiwarka klubów</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> Składy i historia spotkań</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> Własny Nick w aplikacji</li>
+                    </ul>
+                    {% if user.profile.tier == 'FREE' %}
+                    <button class="plan-btn plan-btn-current" disabled>
+                        <i class="fa-solid fa-circle-check"></i> Twój obecny plan
+                    </button>
+                    {% else %}
+                    <a href="/" class="plan-btn plan-btn-free">Pozostań na Free</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ─── PLUS (highlighted) ─── #}
+            <div class="sub-card sub-card-plus">
+                <div class="popular-badge">
+                    <i class="fa-solid fa-star"></i> Najczęściej wybierany
+                </div>
+                <div class="sub-card-inner">
+                    <div class="plan-label plan-label-plus">Plus</div>
+                    <div class="plan-price">
+                        <span class="plan-amount">9,99 zł</span>
+                        <span class="plan-period">/miesiąc</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="ok"><i class="fa-solid fa-check"></i> Mecze na żywo i terminarz</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Wyszukiwarka klubów</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Składy i historia spotkań</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Zmiana Nicku w aplikacji</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> Zaawansowane statystyki graczy</li>
+                    </ul>
+                    {% if user.profile.tier == 'PLUS' %}
+                    <button class="plan-btn plan-btn-current" disabled>
+                        <i class="fa-solid fa-circle-check"></i> Twój obecny plan
+                    </button>
+                    {% else %}
+                    <form action="{% url 'create-checkout-session' 'plus' %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="plan-btn plan-btn-plus">
+                            <i class="fa-solid fa-bolt"></i> Zacznij z PLUS
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ─── PREMIUM ─── #}
+            <div class="sub-card sub-card-premium">
+                <div class="premium-crown"><i class="fa-solid fa-crown"></i></div>
+                <div class="sub-card-inner">
+                    <div class="plan-label plan-label-premium">Premium</div>
+                    <div class="plan-price">
+                        <span class="plan-amount">19,99 zł</span>
+                        <span class="plan-period">/miesiąc</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="ok"><i class="fa-solid fa-check"></i> Wszystko z pakietu PLUS</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Wyszukiwarka zawodników</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Zaawansowane statystyki XG</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Brak reklam</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> Priorytetowe wsparcie</li>
+                    </ul>
+                    {% if user.profile.tier == 'PREMIUM' %}
+                    <button class="plan-btn plan-btn-current" disabled>
+                        <i class="fa-solid fa-circle-check"></i> Twój obecny plan
+                    </button>
+                    {% else %}
+                    <form action="{% url 'create-checkout-session' 'premium' %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="plan-btn plan-btn-premium">
+                            <i class="fa-solid fa-crown"></i> Wybierz Premium
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>{# /sub-cards #}
+
+        <p class="sub-footer-note">
+            <i class="fa-solid fa-shield-halved"></i>
+            Bezpieczna płatność przez Stripe · Anuluj w dowolnym momencie · Brak ukrytych opłat
+        </p>
+
+    </main>
+
+    <script>
+        // Micro animacja wejścia kart
+        document.querySelectorAll('.sub-card').forEach((card, i) => {
+            card.style.animationDelay = `${i * 0.12}s`;
+        });
+    </script>
+</body>
+</html>

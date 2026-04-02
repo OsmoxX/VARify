@@ -54,3 +54,4 @@ django-stubs
 django-allauth
 PyJWT
 coverage
+stripe

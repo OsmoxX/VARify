@@ -45,13 +45,30 @@
 
             <div class="form-group">
                 <label for="username">Nazwa użytkownika</label>
+                {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
+                {# PLUS/PREMIUM: pole odblokowane #}
                 <input type="text" id="username" name="username" value="{{ user.username }}"
                     class="form-input {% if errors.username %}input-error{% endif %}"
                     autocomplete="username">
+                {% else %}
+                {# FREE: pole zablokowane (soft paywall) #}
+                <div class="input-locked-wrapper">
+                    <input type="text" id="username" value="{{ user.username }}"
+                        class="form-input input-locked"
+                        disabled title="Zmiana nicku wymaga planu PLUS">
+                    <i class="fa-solid fa-lock input-lock-icon" style="color: #f59e0b;"></i>
+                </div>
+                <span class="form-hint-locked">
+                    <i class="fa-solid fa-lock" style="font-size:0.7rem;"></i>
+                    Zmiana nicku dostępna od planu
+                    <a href="{% url 'subscribe' %}" class="hint-upgrade-link">PLUS →</a>
+                </span>
+                {% endif %}
                 {% if errors.username %}
                 <span class="form-error">{{ errors.username }}</span>
                 {% endif %}
             </div>
+
 
             <div class="form-group">
                 <label for="email">Adres e-mail</label>

@@ -1,0 +1,292 @@
+/* =======================================================
+   paywall.css — Style dla "Soft Paywall" systemu tierów
+   VARify | Użyj: <link rel="stylesheet" href="paywall.css">
+   ======================================================= */
+
+/* ── WYSZUKIWARKA — tooltip kłódki w navbarze ─────────── */
+
+.nav-search-locked {
+    cursor: not-allowed;
+    position: relative;
+}
+
+.nav-search-locked input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.search-lock-tooltip {
+    position: absolute;
+    top: 100%;              /* brak gap — tooltip zaczyna się od razu pod barem */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    padding: 1rem 1.4rem;
+    padding-top: 1.6rem;    /* dodatkowy padding góry = "most" nad gap */
+    white-space: nowrap;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+/* Pseudo-element bridge: wypełnia gap między barem a tooltipem */
+.search-lock-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -12px;             /* wyskoczy 12px nad tooltip, pokrywa ewentualny odstęp */
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: transparent;
+}
+
+.search-lock-tooltip i {
+    color: #f59e0b;
+    font-size: 1rem;
+}
+
+/* Pokazuj gdy parent:hover LUB gdy sam tooltip jest hovered */
+.nav-search-locked:hover .search-lock-tooltip,
+.nav-search-locked:focus-within .search-lock-tooltip,
+.search-lock-tooltip:hover {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tooltip-upgrade-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: transform 0.2s;
+    margin-left: 0.5rem;
+    cursor: pointer;        /* nadpisujemy not-allowed z parenta */
+}
+
+.tooltip-upgrade-btn:hover {
+    transform: scale(1.05);
+}
+
+
+/* ── BLUR PAYWALL — zakładka składów (PLUS) ──────────── */
+
+.paywall-blur-wrapper {
+    position: relative;
+    min-height: 320px;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.paywall-blur-content {
+    filter: blur(6px);
+    pointer-events: none;
+    user-select: none;
+    padding: 2rem;
+}
+
+.paywall-placeholder-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paywall-placeholder-row {
+    height: 52px;
+    background: linear-gradient(90deg, #1e293b 0%, #2d3e54 50%, #1e293b 100%);
+    border-radius: 10px;
+    width: 100%;
+    animation: paywall-shimmer 2s infinite;
+}
+
+@keyframes paywall-shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+.paywall-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(11, 17, 32, 0.75);
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+}
+
+.paywall-overlay-box {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    max-width: 420px;
+}
+
+.paywall-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto 1.25rem;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.paywall-overlay-box h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-bottom: 0.75rem;
+}
+
+.paywall-overlay-box p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.paywall-upgrade-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.85rem 2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+}
+
+.paywall-upgrade-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+}
+
+/* ── PREMIUM BANNER — zakładka statystyk (PREMIUM) ──── */
+
+.paywall-premium-banner {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(180deg, rgba(217, 119, 6, 0.05) 0%, rgba(11, 17, 32, 0) 100%);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    border-radius: 20px;
+    margin: 1rem 0;
+}
+
+.paywall-premium-crown {
+    font-size: 3rem;
+    margin-bottom: 1.25rem;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    width: 88px;
+    height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    animation: crown-pulse 3s ease-in-out infinite;
+}
+
+@keyframes crown-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3); }
+    50%       { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+}
+
+.paywall-premium-banner h3 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+.paywall-premium-banner p {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 0.5rem;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.paywall-premium-tagline {
+    color: #64748b !important;
+    font-style: italic;
+    font-size: 0.9rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.paywall-upgrade-premium {
+    background: linear-gradient(135deg, #d97706, #b45309) !important;
+    box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3) !important;
+}
+
+.paywall-upgrade-premium:hover {
+    background: linear-gradient(135deg, #b45309, #92400e) !important;
+    box-shadow: 0 8px 24px rgba(217, 119, 6, 0.5) !important;
+}
+
+/* ── USTAWIENIA KONTA — zablokowany input nicku ──────── */
+
+.input-locked-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+    padding-right: 2.5rem !important;
+}
+
+.input-lock-icon {
+    position: absolute;
+    right: 1rem;
+    pointer-events: none;
+}
+
+.form-hint-locked {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.hint-upgrade-link {
+    color: #f59e0b;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.hint-upgrade-link:hover {
+    color: #fbbf24;
+    text-decoration: underline;
+}

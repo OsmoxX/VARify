@@ -3,13 +3,12 @@ services:
   # 1. Twoja aplikacja Django
   web:
     build: .
-    # Mapujemy port z kontenera (8000) na port Twojego Maca (8000)
     ports:
       - "8000:8000"
-    # To sprawia, że jak zmienisz kod na Macu, od razu zaktualizuje się w kontenerze
     volumes:
       - .:/app
-    # Mówimy Django: "Zanim wstaniesz, upewnij się, że Redis już działa"
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -28,18 +27,22 @@ services:
     command: celery -A my_football_app worker -l info
     volumes:
       - .:/app
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
 
-  # 4. Celery Beat – HARMONOGRAM (uruchamia zadania cykliczne, np. co 3 minuty)
+  # 4. Celery Beat
   celery-beat:
     build: .
     command: celery -A my_football_app beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy

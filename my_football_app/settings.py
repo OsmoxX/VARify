@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_beat',
     'matches',
+    'accounts',
     'rest_framework'
 ]
 SITE_ID = 1
@@ -266,3 +267,13 @@ ACCOUNT_EMAIL_REQUIRED = True # Wymagamy maila od użytkownika
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'VARify Team <noreply@varify.pl>'
+
+
+# --- STRIPE CONFIGURATION ---
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+
+STRIPE_PRICE_ID_PLUS = os.getenv('STRIPE_PRICE_ID_PLUS', '')
+STRIPE_PRICE_ID_PREMIUM = os.getenv('STRIPE_PRICE_ID_PREMIUM', '')
+
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')

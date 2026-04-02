@@ -8,6 +8,7 @@
     <title>{% block title %}VARify{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'matches/base.css' %}">
+    <link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     {% block extra_css %}{% endblock %}
@@ -19,14 +20,27 @@
         <a href="/" class="nav-brand">
             <i class="fa-solid fa-futbol"></i> VAR<span>ify</span>
         </a>
+        
+        {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
+            {# ── PLUS/PREMIUM: pełna wyszukiwarka ── #}
+            <div class="nav-search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="live-search-input" class="nav-search-input" placeholder="Szukaj drużyny (Enter)" autocomplete="off">
+                <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
+            </div>
+        {% else %}
+            {# ── FREE: zablokowana wyszukiwarka (soft paywall) ── #}
+            <div class="nav-search-container nav-search-locked" id="locked-search-bar" title="Wymaga planu PLUS">
+                <i class="fa-solid fa-lock search-icon" style="color: #f59e0b;"></i>
+                <input type="text" class="nav-search-input" placeholder="Szukaj drużyny..." disabled>
+                <div class="search-lock-tooltip">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Wyszukiwarka klubów wymaga planu <strong>PLUS</strong></span>
+                    <a href="{% url 'subscribe' %}" class="tooltip-upgrade-btn">Ulepsz teraz →</a>
+                </div>
+            </div>
+        {% endif %}
 
-        <div class="nav-search-container">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="live-search-input" class="nav-search-input" placeholder="Szukaj drużyny (Enter)"
-                autocomplete="off">
-
-            <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
-        </div>
 
         <div class="nav-links">
             <a href="/" class="nav-link">

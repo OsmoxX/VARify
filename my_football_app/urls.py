@@ -40,6 +40,7 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='matches/login.html', next_page='home'), name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('account/', views.account_settings, name='account_settings'),
+    path('', include('accounts.urls')),
 
 
     # ── REST API ────────────────────────────────────────────────────────────────

@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Real-time football match tracker with live scores, WebSocket notifications, and team pages.</strong><br/>
-  <em>Built with Django · Django Channels · Celery · Redis · MySQL · Docker · Sentry</em>
+  <strong>Real-time football match tracker with live scores, WebSocket notifications, Stripe subscriptions, and tier-based access control.</strong><br/>
+  <em>Built with Django · Django Channels · Celery · Redis · MySQL · Stripe · Docker · Sentry</em>
 </p>
 
 <p align="center">
@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/Celery-5.6-37814A?style=flat-square&logo=celery&logoColor=white" />
   <img src="https://img.shields.io/badge/Redis-7.2-DC382D?style=flat-square&logo=redis&logoColor=white" />
   <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Stripe-Payments-635BFF?style=flat-square&logo=stripe&logoColor=white" />
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" />
 </p>
@@ -32,12 +33,12 @@
 
 - [About](#-about)
 - [Features](#-features)
+- [Subscription & Access Control](#-subscription--access-control)
 - [Real-Time Architecture](#-real-time-architecture)
 - [Tech Stack](#%EF%B8%8F-tech-stack)
 - [CI/CD Pipeline](#-cicd-pipeline--quality-gates)
 - [Monitoring & Logs](#-monitoring--logs)
 - [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
 - [Configuration](#%EF%B8%8F-configuration)
 - [Usage](#-usage)
 - [Data Models](#-data-models)
@@ -52,6 +53,8 @@
 **VARify** is a real-time football match tracking application that brings live scores, detailed match timelines, and team profiles into a sleek dark-mode interface. It fetches data from the [SportAPI](https://rapidapi.com/) and delivers instant notifications via WebSockets whenever a goal is scored, a card is given, or a substitution is made.
 
 Whether you're tracking goals, cards, substitutions, or browsing team stats — VARify has you covered, **even when you're on a different page**.
+
+VARify also features a **full subscription system powered by Stripe**, with tier-based access control (FREE → PLUS → PREMIUM) and a "soft paywall" UX that shows locked features with upgrade prompts rather than hiding them entirely.
 
 ---
 
@@ -131,7 +134,43 @@ Whether you're tracking goals, cards, substitutions, or browsing team stats — 
 
 ---
 
-## 🏗 Real-Time Architecture
+## 💳 Subscription & Access Control
+
+VARify uses **Stripe Checkout** and **webhooks** to manage recurring subscriptions with three access tiers:
+
+| Tier | Price | Access |
+|------|-------|--------|
+| 🆓 **Free** | 0 zł/mo | Live matches, upcoming calendar |
+| ⚡ **Plus** | 9.99 zł/mo | + Club search, match lineups, H2H history, custom username |
+| 👑 **Premium** | 19.99 zł/mo | + Advanced xG statistics, player search, no ads |
+
+### Soft Paywall UX
+
+Features are **not hidden** — they're shown as locked with elegant upgrade prompts:
+
+- 🔍 **Search bar** (FREE) — disabled input with a lockable hover tooltip linking to `/subscribe/`
+- ⚽ **Lineups tab** (FREE) — blurred shimmer placeholder with a centred "Unlock with PLUS" overlay
+- 📊 **Statistics tab** (FREE/PLUS) — gold crown banner "Available in PREMIUM only"
+- 👤 **Username field** (FREE) — `disabled` input with a small "Change available from PLUS" hint
+
+### Backend Architecture
+
+```python
+# accounts/permissions.py
+def has_access(user, required_tier) -> bool:
+    """Hierarchical tier check: PREMIUM ≥ PLUS ≥ FREE"""
+
+# accounts/decorators.py
+@require_tier(SubscriptionTier.PLUS)
+def team_detail_view(request, team_id): ...
+```
+
+- **`has_access(user, tier)`** — central helper respecting the hierarchy
+- **`@require_tier(tier)`** — view decorator; redirects to `/subscribe/` with a `messages` warning, or returns JSON 403 for AJAX requests
+- **Stripe webhook** (`/webhook/`) — verifies signature, updates `user.profile.tier` on `checkout.session.completed`
+- **User Profile** auto-created via `post_save` signal for every new and existing user
+- **Secrets** managed via `.env` — never hardcoded in `settings.py`
+
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -189,12 +228,13 @@ Whether you're tracking goals, cards, substitutions, or browsing team stats — 
 | **Broker / Layer** | Redis 7.2 | Celery broker + Channel Layer pub/sub |
 | **Scheduler** | Celery Beat + Django DB Scheduler | Periodic sync, DB-persisted schedules |
 | **Database** | MySQL 8.0 | Production-grade relational database |
+| **Payments** | Stripe + stripe-python | Subscription billing, webhooks, tier management |
 | **API** | SportAPI v7 (RapidAPI) | Live match data source |
 | **REST API** | Django REST Framework | Typed JSON API endpoints |
 | **Frontend** | HTML5 + CSS3 + Vanilla JS | Dark mode UI, Web Audio API |
 | **Static Files** | WhiteNoise | Efficient static file serving |
 | **Monitoring** | Sentry SDK | Error tracking & performance monitoring |
-| **Containerization** | Docker Compose | Orchestrates 4 services (web, celery, beat, db, redis) |
+| **Containerization** | Docker Compose | Orchestrates 5 services (web, celery, beat, db, redis) |
 | **CI/CD** | GitHub Actions | Automated quality gates on every push |
 | **Linting** | Ruff | Fast Python linter & formatter |
 | **Security** | Bandit + Safety | Static code analysis & CVE scanning |
@@ -322,6 +362,16 @@ VARify/
 ├── 📂 .github/workflows/
 │   └── ci.yml                      # 🚦 GitHub Actions CI pipeline (4 quality gates)
 │
+├── 📂 accounts/                    # Subscription & access control app
+│   ├── 📂 migrations/              # DB migrations for Profile model
+│   ├── 📂 static/accounts/css/     # subscribe.css — pricing page styles
+│   ├── 📂 templates/accounts/      # subscribe.html — animated pricing page
+│   ├── models.py                   # Profile model + SubscriptionTier choices + post_save signals
+│   ├── permissions.py              # has_access(user, tier) — hierarchical tier check
+│   ├── decorators.py               # @require_tier(tier) — view-level access guard
+│   ├── views.py                    # subscribe_view, create_checkout_session, stripe_webhook
+│   └── urls.py                     # /subscribe/, /create-checkout-session/<plan>/, /webhook/
+│
 ├── 📂 matches/                     # Main Django app
 │   ├── 📂 api_views/               # DRF JSON API endpoints (match, team, league, player)
 │   ├── 📂 migrations/              # Database migrations
@@ -332,100 +382,30 @@ VARify/
 │   │   ├── standings_service.py    #   League standings
 │   │   └── football_api_service.py #   Low-level API client
 │   ├── 📂 tests/                   # Comprehensive test suite (~167 tests)
-│   │   ├── 📂 models/              #   Unit tests for all models
-│   │   ├── 📂 services/            #   Unit tests for all services (mocked API)
-│   │   ├── 📂 api_views/           #   Integration tests for REST API
-│   │   ├── 📂 views/               #   Template view tests (RequestFactory)
-│   │   ├── 📂 consumers/           #   WebSocket consumer tests
-│   │   └── 📂 management/          #   Management command tests
-│   ├── 📂 static/matches/          # CSS architecture (modular)
+│   ├── 📂 static/matches/          # CSS architecture (modular) + paywall.css
 │   ├── 📂 templates/matches/       # Django templates
 │   ├── consumers.py                # MatchConsumer (WebSocket handler)
 │   ├── routing.py                  # WebSocket URL routing
 │   └── tasks.py                    # Celery tasks
 │
 ├── 📂 my_football_app/             # Django project config
-│   ├── settings.py                 # All configuration (Celery, Redis, Channels, Sentry)
+│   ├── settings.py                 # Configuration (Celery, Redis, Channels, Sentry, Stripe via .env)
 │   ├── asgi.py                     # ASGI entry point (HTTP + WebSocket)
 │   ├── urls.py                     # URL routing
 │   └── celery.py                   # Celery app config
 │
 ├── docker-compose.yml              # 🐳 5 services: web + celery + beat + db + redis
 ├── Dockerfile                      # App image definition
-├── mypy.ini                        # Mypy configuration
-├── pytest.ini                      # Pytest configuration
 ├── .env                            # 🔑 Secrets (not committed)
+├── .env.example                    # Template for required environment variables
 └── requirements.txt                # Python dependencies
 ```
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Docker & Docker Compose
-- SportAPI key from [RapidAPI](https://rapidapi.com/)
-
-### Installation (Docker — Recommended)
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/OsmoxX/VARify.git
-cd VARify
-
-# 2. Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys, DB credentials, and Sentry DSN
-
-# 3. Build and start all services
-docker compose up --build
-
-# 4. Run database migrations (first time only)
-docker compose exec web python manage.py migrate
-
-# 5. Create a superuser (optional, for /admin)
-docker compose exec web python manage.py createsuperuser
-```
-
-The app will be available at `http://localhost:8000`.  
-Celery Beat will automatically start syncing live matches every **2 minutes**.
-
-### Running the Test Suite
-
-```bash
-# Run all tests with coverage report
-docker compose exec web pytest --cov=matches matches/tests/
-
-# Run type checking
-docker compose exec web mypy . --explicit-package-bases
-
-# Run linter
-docker compose exec web ruff check .
-```
-
-### Manual Installation (without Docker)
-
-```bash
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-
-# Start ASGI server (required for WebSockets)
-daphne -b 0.0.0.0 -p 8000 my_football_app.asgi:application
-
-# In separate terminals:
-celery -A my_football_app worker --loglevel=info
-celery -A my_football_app beat --loglevel=info
-```
-
-> ⚠️ **`python manage.py runserver` does NOT support WebSockets.** You must use `daphne`.
-
----
-
 ## ⚙️ Configuration
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (copy from `.env.example`):
 
 ```env
 # Django
@@ -442,6 +422,13 @@ DB_USER=varify_user
 DB_PASSWORD=your_db_password
 DB_HOST=db
 DB_PORT=3306
+
+# Stripe (https://dashboard.stripe.com/apikeys)
+STRIPE_PUBLIC_KEY=pk_live_...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_PRICE_ID_PLUS=price_...
+STRIPE_PRICE_ID_PREMIUM=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Sentry (optional but recommended for production)
 SENTRY_DSN=https://your-sentry-dsn-here
@@ -471,13 +458,16 @@ CELERY_BEAT_SCHEDULE = {
 | Page | URL | Description |
 |------|-----|-------------|
 | 🏠 **Home** | `/` | Live match dashboard with league filters + bell subscriptions |
-| ⚽ **Match Detail** | `/match/<id>/` | Timeline + lineups + statistics |
+| ⚽ **Match Detail** | `/match/<id>/` | Timeline + lineups (PLUS) + statistics (PREMIUM) |
 | 📅 **Calendar** | `/calendar/` | Upcoming matches by day with day-picker |
-| 👥 **Team Page** | `/team/<id>/` | Recent matches + squad + standings |
+| 👥 **Team Page** | `/team/<id>/` | Recent matches + squad + standings *(requires PLUS)* |
 | 👤 **Player Page** | `/player/<api_id>/` | Player info, position, club |
-| 🔍 **Search** | `/search-api/?q=<query>` | Team/player search |
+| 🔍 **Search** | `/search-api/?q=<query>` | Team/player search *(navbar locked for FREE)* |
+| 💳 **Pricing** | `/subscribe/` | Animated subscription pricing page |
 | 🔧 **Admin** | `/admin/` | Django admin panel |
 | 🔔 **Toggle Notification** | `POST /toggle-notifications/` | Subscribe / unsubscribe to match |
+| 💳 **Checkout** | `/create-checkout-session/<plan>/` | Initiates Stripe Checkout session |
+| 🪝 **Webhook** | `POST /webhook/` | Stripe webhook — updates user tier on payment |
 
 ---
 
@@ -494,20 +484,23 @@ CELERY_BEAT_SCHEDULE = {
 └─────────────┘     │ away_score       │
                     │ status / minute  │     ┌──────────────────┐
                     │ stats_json       │     │  UpcomingMatch   │
-                    └────────┬─────────┘     ├──────────────────┤
-                             │ 1:N           │ api_id           │
-               ┌─────────────┼──────────────┐│ start_datetime   │
-               ▼             ▼              ▼│ is_top           │
-     ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-     │  MatchEvent  │  │ MatchLineup  │  │ MatchSubscription│  │
-     ├──────────────┤  ├──────────────┤  ├──────────────────┤  │
-     │ incident_id  │  │ player_name  │  │ session_key      │  │
-     │ incident_type│  │ shirt_number │  │ match (FK)       │  │
-     │ player_name  │  │ position     │  │ created_at       │  │
-     │ time         │  │ is_starting  │  └──────────────────┘  │
-     │ home_score   │  │ is_captain   │                        │
-     │ away_score   │  │ avg_rating   │                        │
-     └──────────────┘  └──────────────┘                        │
+                    └────────┬─────────┘     └──────────────────┘
+                             │ 1:N
+               ┌─────────────┼──────────────┐
+               ▼             ▼              ▼
+     ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
+     │  MatchEvent  │  │ MatchLineup  │  │ MatchSubscription│
+     └──────────────┘  └──────────────┘  └──────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│                  accounts app                        │
+├─────────────────────────────────────────────────────┤
+│  User (Django built-in)                              │
+│    └── Profile (OneToOne)                            │
+│          ├── tier: FREE | PLUS | PREMIUM             │
+│          ├── stripe_customer_id                      │
+│          └── stripe_subscription_id                 │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -538,6 +531,12 @@ base.css                    ← Loaded on EVERY page
  ├── Notification Panel (bell, badge, dropdown, items)
  └── Main Content Layout
 
+paywall.css                 ← Loaded on EVERY page (soft paywall UX)
+ ├── Locked search bar with hover tooltip
+ ├── Blur overlay for lineups (PLUS gate)
+ ├── Premium crown banner (PREMIUM gate)
+ └── Disabled input styles (username field)
+
 live_match_list.css         ← Home page only
  ├── Controls & Filters
  ├── League Sections
@@ -554,14 +553,14 @@ match_detail.css            ← Match detail only
  └── Statistics Bars
 
 calendar.css                ← Calendar page only
- ├── Day-picker strip
- ├── Active day highlight
- └── Responsive adjustments
-
 team_detail.css             ← Team page only
- ├── Team Header
- ├── Match History List
- └── Squad Grid
+
+accounts/css/subscribe.css  ← Pricing page (standalone, no base.html)
+ ├── Animated pitch-grid background
+ ├── Floating glow orbs
+ ├── Floating ⚽ football animations
+ ├── Frosted-glass pricing cards
+ └── Tier-aware button states
 ```
 
 ### Design Tokens
@@ -598,6 +597,9 @@ team_detail.css             ← Team page only
 - [x] 🛡️ Security scanning (Bandit + Safety)
 - [x] 📡 Sentry error tracking & performance monitoring
 - [x] 🧪 167 tests with ~99% code coverage
+- [x] 💳 Stripe subscription billing (FREE / PLUS / PREMIUM tiers)
+- [x] 🔒 Tier-based access control with soft paywall UX
+- [x] 🔑 Secrets management via `.env` (no hardcoded keys)
 - [ ] 📱 Responsive mobile layout
 - [ ] 🌍 Multi-language support (PL / EN)
 - [ ] ☁️ AWS / Railway deployment

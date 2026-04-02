@@ -39,11 +39,25 @@ jobs:
         working-directory: ${{ env.PW_DIR }}
         run: npx playwright install --with-deps
 
+      # ── Tworzymy plik .env z GitHub Secrets przed startem Dockera ──────────
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << EOF
+          SPORT_API_KEY=${{ secrets.SPORT_API_KEY }}
+          SPORT_API_HOST=${{ secrets.SPORT_API_HOST }}
+          STRIPE_PUBLIC_KEY=${{ secrets.STRIPE_PUBLIC_KEY }}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PRICE_ID_PLUS=${{ secrets.STRIPE_PRICE_ID_PLUS }}
+          STRIPE_PRICE_ID_PREMIUM=${{ secrets.STRIPE_PRICE_ID_PREMIUM }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          EOF
+
       # ── Docker: budujemy i startujemy kontenery (z katalogu głównego) ──────
       - name: Start Docker containers
         run: |
           docker compose up -d
           sleep 15
+
 
       - name: Run Django migrations
         run: docker compose exec -T web python manage.py migrate

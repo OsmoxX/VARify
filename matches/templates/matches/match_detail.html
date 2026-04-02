@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="{% static 'matches/match_timeline.css' %}">
 <link rel="stylesheet" href="{% static 'matches/match_lineups.css' %}">
 <link rel="stylesheet" href="{% static 'matches/match_stats.css' %}">
+<link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -58,7 +59,7 @@
                     </div>
                     <div class="feed-info period-info">
                         {% if event.text == 'HT' or event.time == 45 %}
-                        Koniec pierwszej połowy 
+                        Koniec pierwszej połowy
                         {% elif event.text == 'FT' or event.time == 90 %}
                         Koniec meczu
                         {% elif event.text %}
@@ -108,15 +109,11 @@
                     {% else %}
                     <div class="feed-card">
                         <div class="feed-icon">
-
-                            {# --- GOL --- #}
                             {% if event.is_goal %}
                             <i class="fa-solid fa-futbol goal-icon"></i>
                             {% if event.running_score %}
                             <span class="goal-score">{{ event.running_score }}</span>
                             {% endif %}
-
-                            {# --- KARTKA --- #}
                             {% elif event.is_card %}
                             {% if event.card_color == 'red' %}
                             <div class="card-icon red"></div>
@@ -128,25 +125,18 @@
                             {% else %}
                             <div class="card-icon yellow"></div>
                             {% endif %}
-
-                            {# --- ZMIANA --- #}
                             {% elif event.is_substitution %}
                             <i class="fa-solid fa-right-left sub-icon"></i>
-
-                            {# --- IN-GAME PENALTY --- #}
                             {% elif event.is_in_game_penalty %}
                             <span class="penalty-icon">
                                 <i class="fa-solid fa-futbol"></i>
                             </span>
-
-                            {# --- INNE --- #}
                             {% else %}
                             <i class="fa-solid fa-circle-info info-icon"></i>
                             {% endif %}
                         </div>
 
                         <div class="feed-details">
-                            {# === GOL: szczegóły === #}
                             {% if event.is_goal %}
                             <span class="player-name">
                                 {{ event.player_name }}
@@ -167,7 +157,6 @@
                             </span>
                             {% endif %}
 
-                            {# === KARTKA: szczegóły === #}
                             {% elif event.is_card %}
                             <span class="player-name">
                                 {{ event.player_name }}
@@ -182,12 +171,10 @@
                             <span class="sub-info card-type-label">{{ event.incident_class_label }}</span>
                             {% endif %}
 
-                            {# === ZMIANA: szczegóły === #}
                             {% elif event.is_substitution %}
                             <span class="sub-detail">
                                 <i class="fa-solid fa-arrow-up" style="color: #10b981;"></i>
                                 <span class="player-name">{{ event.display_player_in }}</span>
-
                             </span>
                             {% if event.display_player_out %}
                             <span class="sub-detail">
@@ -199,7 +186,6 @@
                             </span>
                             {% endif %}
 
-                            {# === IN-GAME PENALTY: szczegóły === #}
                             {% elif event.is_in_game_penalty %}
                             <span class="player-name">
                                 {{ event.player_name }}
@@ -215,7 +201,6 @@
                             <span class="sub-info">{{ event.reason }}</span>
                             {% endif %}
 
-                            {# === INNE === #}
                             {% else %}
                             <span class="player-name">{{ event.player_name }}</span>
                             {% if event.text %}
@@ -230,46 +215,40 @@
                 <p class="no-data">Brak zdarzeń.</p>
                 {% endfor %}
             </div>
-        </div>
+        </div>{# /timeline-tab #}
 
-        {# ======================= SKŁADY ======================= #}
+        {# ======================= SKŁADY (wymaga PLUS) ======================= #}
         <div id="lineups-tab" class="tab-content" style="display: none;">
+
+            {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
+            {# ██ PLUS/PREMIUM: pełne składy ██ #}
 
             {# ══════ BOISKO ══════ #}
             <div class="pitch-container">
-                {# Header z nazwami drużyn i formacjami #}
                 <div class="pitch-teams-header">
                     <div class="team-header-home">
                         {{ match.home_team.name }}
-                        {% if match.home_formation %}<span class="formation-tag">{{ match.home_formation }}</span>
-                        {% endif %}
+                        {% if match.home_formation %}<span class="formation-tag">{{ match.home_formation }}</span>{% endif %}
                     </div>
                     <div class="team-header-away">
-                        {% if match.away_formation %}<span class="formation-tag">{{ match.away_formation }}</span>
-                        {% endif %}
+                        {% if match.away_formation %}<span class="formation-tag">{{ match.away_formation }}</span>{% endif %}
                         {{ match.away_team.name }}
                     </div>
                 </div>
 
-                {# Pitch markings #}
                 <div class="pitch-field">
                     <div class="pitch-half-line"></div>
                     <div class="pitch-center-circle"></div>
                     <div class="pitch-center-dot"></div>
-
                     <div class="pitch-penalty-box pitch-penalty-left"></div>
                     <div class="pitch-penalty-box pitch-penalty-right"></div>
-
                     <div class="pitch-goal-box pitch-goal-left"></div>
                     <div class="pitch-goal-box pitch-goal-right"></div>
-
                     <div class="pitch-corner pitch-corner-tl"></div>
                     <div class="pitch-corner pitch-corner-tr"></div>
                     <div class="pitch-corner pitch-corner-bl"></div>
                     <div class="pitch-corner pitch-corner-br"></div>
 
-
-                    {# Home players #}
                     {% if pitch_home %}
                     {% for item in pitch_home %}
                     <div class="pitch-player home-player" style="--p-top: {{ item.top }}%; --p-left: {{ item.left }}%;">
@@ -286,15 +265,12 @@
                             {% endif %}
                         </div>
                         {% if item.player.avg_rating %}
-                        <div class="pitch-rating {{ item.rating_class }}">
-                            {{ item.player.avg_rating }}
-                        </div>
+                        <div class="pitch-rating {{ item.rating_class }}">{{ item.player.avg_rating }}</div>
                         {% endif %}
                     </div>
                     {% endfor %}
                     {% endif %}
 
-                    {# Away players #}
                     {% if pitch_away %}
                     {% for item in pitch_away %}
                     <div class="pitch-player away-player" style="--p-top: {{ item.top }}%; --p-left: {{ item.left }}%;">
@@ -311,9 +287,7 @@
                             {% endif %}
                         </div>
                         {% if item.player.avg_rating %}
-                        <div class="pitch-rating {{ item.rating_class }}">
-                            {{ item.player.avg_rating }}
-                        </div>
+                        <div class="pitch-rating {{ item.rating_class }}">{{ item.player.avg_rating }}</div>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -321,23 +295,17 @@
 
                     {% if not pitch_home and not pitch_away %}
                     <div class="pitch-empty-state">
-                        <div class="pitch-empty-icon">
-                            <i class="fa-solid fa-people-group"></i>
-                        </div>
-                        <div class="pitch-empty-text">
-                            Składy na boisku niedostępne
-                        </div>
+                        <div class="pitch-empty-icon"><i class="fa-solid fa-people-group"></i></div>
+                        <div class="pitch-empty-text">Składy na boisku niedostępne</div>
                     </div>
                     {% endif %}
-
                 </div>
             </div>
 
             {# ══════ REZERWA ══════ #}
             <div class="subs-section">
                 <div class="subs-half">
-                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa –
-                        {{match.home_team.name }}</div>
+                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa – {{ match.home_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in lineups.home_subs %}
                         <div class="sub-card">
@@ -357,8 +325,7 @@
                     </div>
                 </div>
                 <div class="subs-half">
-                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i>Rezerwa -
-                        {{match.away_team.name }}</div>
+                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa - {{ match.away_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in lineups.away_subs %}
                         <div class="sub-card">
@@ -379,12 +346,11 @@
                 </div>
             </div>
 
-            {# ══════ BRAKUJĄCY / NIEPEWNI ══════ #}
             {% if missing_home or missing_away %}
             <div class="subs-section missing-section">
                 <div class="subs-half">
                     {% if missing_home %}
-                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{match.home_team.name}}</div>
+                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia – {{ match.home_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in missing_home %}
                         <div class="sub-card missing-card">
@@ -398,7 +364,7 @@
                 </div>
                 <div class="subs-half">
                     {% if missing_away %}
-                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia - {{match.away_team.name }}</div>
+                    <div class="subs-title"><i class="fa-solid fa-user-injured"></i> Kontuzje i Zawieszenia - {{ match.away_team.name }}</div>
                     <div class="subs-grid">
                         {% for player in missing_away %}
                         <div class="sub-card missing-card">
@@ -412,9 +378,40 @@
                 </div>
             </div>
             {% endif %}
-        </div>
 
+            {% else %}
+            {# ██ FREE: blur paywall — PLUS wymagany ██ #}
+            <div class="paywall-blur-wrapper">
+                <div class="paywall-blur-content">
+                    <div class="paywall-placeholder-rows">
+                        <div class="paywall-placeholder-row"></div>
+                        <div class="paywall-placeholder-row" style="opacity:0.7;width:80%;"></div>
+                        <div class="paywall-placeholder-row" style="opacity:0.5;width:90%;"></div>
+                        <div class="paywall-placeholder-row" style="opacity:0.4;width:70%;"></div>
+                        <div class="paywall-placeholder-row" style="opacity:0.6;width:85%;"></div>
+                        <div class="paywall-placeholder-row" style="opacity:0.3;width:75%;"></div>
+                    </div>
+                </div>
+                <div class="paywall-overlay">
+                    <div class="paywall-overlay-box">
+                        <div class="paywall-icon"><i class="fa-solid fa-lock"></i></div>
+                        <h3>Odblokuj składy i historię H2H</h3>
+                        <p>Szczegółowe składy, rezerwowi, kontuzjowani gracze<br>oraz historia bezpośrednich spotkań &mdash; dostępne od planu <strong>PLUS</strong>.</p>
+                        <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Sprawdź cennik
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>{# /lineups-tab #}
+
+        {# ======================= STATYSTYKI xG (wymaga PREMIUM) ============== #}
         <div id="stats-tab" class="tab-content" style="display: none;">
+
+            {% if user.profile.tier == 'PREMIUM' %}
+            {# ██ PREMIUM: pełne statystyki ██ #}
             {% if stats_periods %}
             <div class="stats-container">
                 <div class="stats-period-tabs">
@@ -448,10 +445,27 @@
                 <i class="fa-solid fa-chart-bar"></i> Statystyki niedostępne
             </div>
             {% endif %}
-        </div>
 
-    </div>
-</div>
+            {% else %}
+            {# ██ FREE/PLUS: paywall PREMIUM — korona ██ #}
+            <div class="paywall-premium-banner">
+                <div class="paywall-premium-crown"><i class="fa-solid fa-crown"></i></div>
+                <h3>Statystyki xG i zaawansowane dane</h3>
+                <p>
+                    Oczekiwane bramki (xG), posiadanie piłki, strzały celne<br>
+                    i dziesiątki innych wskaźników &mdash; dostępne wyłącznie w planie <strong>PREMIUM</strong>.
+                </p>
+                <p class="paywall-premium-tagline">Wznieś swoje analizy na najwyższy poziom.</p>
+                <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn paywall-upgrade-premium">
+                    <i class="fa-solid fa-crown"></i> Wybierz Premium
+                </a>
+            </div>
+            {% endif %}
+
+        </div>{# /stats-tab #}
+
+    </div>{# /match-card-premium #}
+</div>{# /detail-wrapper #}
 
 <script src="{% static 'matches/js/match_detail.js' %}"></script>
 {% endblock %}
