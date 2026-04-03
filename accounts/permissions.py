@@ -35,9 +35,6 @@ def has_access(user, required_tier: str) -> bool:
         return required_tier == SubscriptionTier.FREE
 
     user_level = TIER_LEVEL.get(user_tier, 0)
-    try:
-        required_level = TIER_LEVEL.get(SubscriptionTier(required_tier), 0)
-    except ValueError:
-        required_level = 0
+    required_level = TIER_LEVEL.get(required_tier, 0)  # type: ignore[arg-type]
 
     return user_level >= required_level
