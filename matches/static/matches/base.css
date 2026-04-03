@@ -498,3 +498,41 @@ a.search-item:hover {
         width: 220px;
     }
 }
+
+/* =========================================
+   USER DROPDOWN - SUBSCRIPTION BADGES
+========================================= */
+.user-dropdown-tier {
+    margin-top: 6px;
+}
+
+.user-tier-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.70rem;
+    display: inline-block;
+    letter-spacing: 0.05em;
+}
+
+.user-tier-badge i {
+    margin-right: 4px;
+}
+
+.user-tier-badge.premium {
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(251,191,36,0.2);
+}
+
+.user-tier-badge.plus {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    font-weight: 700;
+}
+
+.user-tier-badge.free {
+    background: #374151;
+    color: #9ca3af;
+    font-weight: 600;
+}

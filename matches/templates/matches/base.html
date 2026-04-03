@@ -30,13 +30,16 @@
             </div>
         {% else %}
             {# ── FREE: zablokowana wyszukiwarka (soft paywall) ── #}
-            <div class="nav-search-container nav-search-locked" id="locked-search-bar" title="Wymaga planu PLUS">
+            <div class="nav-search-container nav-search-locked" id="locked-search-bar"
+                 data-testid="locked-search-bar" title="Wymaga planu PLUS">
                 <i class="fa-solid fa-lock search-icon" style="color: #f59e0b;"></i>
-                <input type="text" class="nav-search-input" placeholder="Szukaj drużyny..." disabled>
-                <div class="search-lock-tooltip">
+                <input type="text" class="nav-search-input" placeholder="Szukaj drużyny..."
+                       disabled data-testid="search-input-locked">
+                <div class="search-lock-tooltip" data-testid="search-lock-tooltip">
                     <i class="fa-solid fa-lock"></i>
                     <span>Wyszukiwarka klubów wymaga planu <strong>PLUS</strong></span>
-                    <a href="{% url 'subscribe' %}" class="tooltip-upgrade-btn">Ulepsz teraz →</a>
+                    <a href="{% url 'subscribe' %}" class="tooltip-upgrade-btn"
+                       data-testid="search-upgrade-btn">Ulepsz teraz →</a>
                 </div>
             </div>
         {% endif %}
@@ -62,6 +65,15 @@
                         <div>
                             <div class="user-dropdown-name">{{ user.username }}</div>
                             <div class="user-dropdown-email">{{ user.email|default:"brak e-mail" }}</div>
+                            <div class="user-dropdown-tier">
+                                {% if user.profile.tier == 'PREMIUM' %}
+                                    <span class="user-tier-badge premium"><i class="fa-solid fa-crown"></i> PREMIUM</span>
+                                {% elif user.profile.tier == 'PLUS' %}
+                                    <span class="user-tier-badge plus"><i class="fa-solid fa-star"></i> PLUS</span>
+                                {% else %}
+                                    <span class="user-tier-badge free">FREE</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="user-dropdown-divider"></div>

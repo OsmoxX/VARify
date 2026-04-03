@@ -34,6 +34,55 @@
     </div>
     {% endif %}
 
+    <!-- ── TWOJA SUBSKRYPCJA ──────────────────────── -->
+    <div class="account-card">
+        <h2 class="account-card-title sub-card-header">
+            <span><i class="fa-solid fa-credit-card"></i> Twoja Subskrypcja</span>
+            {% if user.profile.tier == 'PREMIUM' %}
+                <span class="sub-card-badge premium"><i class="fa-solid fa-crown"></i> Wyższy Plan PREMIUM</span>
+            {% elif user.profile.tier == 'PLUS' %}
+                <span class="sub-card-badge plus"><i class="fa-solid fa-star"></i> Aktywny Plan PLUS</span>
+            {% else %}
+                <span class="sub-card-badge free">Darmowy Plan FREE</span>
+            {% endif %}
+        </h2>
+        <div class="sub-info-container">
+            <div class="sub-info-box">
+                <p class="sub-info-label">Status Konta</p>
+                <div class="sub-info-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">
+                        Aktywne (Zgodne z regulaminem)
+                    </span>
+                </div>
+            </div>
+            
+            {% if user.profile.tier != 'FREE' %}
+            <div class="sub-info-box">
+                <p class="sub-info-label">Cykl Rozliczeniowy</p>
+                <p class="sub-info-value">
+                    Odświeżane automatycznie (co miesiąc)
+                </p>
+                <p class="sub-info-footer">
+                    <i class="fa-brands fa-stripe"></i> Bezpieczne płatności obsługiwane i chronione przez Stripe.
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="sub-action-wrapper">
+                <a href="{% url 'subscribe' %}" class="btn-sub-action {% if user.profile.tier == 'FREE' %}free{% else %}active-sub{% endif %}">
+                    {% if user.profile.tier == 'FREE' %}
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Poznaj możliwości ulepszenia planu
+                    {% elif user.profile.tier == 'PLUS' %}
+                        <i class="fa-solid fa-crown"></i> Przełącz na Premium
+                    {% else %}
+                        <i class="fa-solid fa-gear"></i> Zapoznaj się z ofertami
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- ── DANE PROFILU ───────────────────────────── -->
     <div class="account-card">
         <h2 class="account-card-title">

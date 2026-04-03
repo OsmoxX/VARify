@@ -380,8 +380,8 @@
             {% endif %}
 
             {% else %}
-            {# ██ FREE: blur paywall — PLUS wymagany ██ #}
-            <div class="paywall-blur-wrapper">
+            {# ██ FREE: blur paywall —— PLUS wymagany ██ #}
+            <div class="paywall-blur-wrapper" data-testid="paywall-lineups">
                 <div class="paywall-blur-content">
                     <div class="paywall-placeholder-rows">
                         <div class="paywall-placeholder-row"></div>
@@ -392,12 +392,13 @@
                         <div class="paywall-placeholder-row" style="opacity:0.3;width:75%;"></div>
                     </div>
                 </div>
-                <div class="paywall-overlay">
+                <div class="paywall-overlay" data-testid="paywall-lineups-overlay">
                     <div class="paywall-overlay-box">
                         <div class="paywall-icon"><i class="fa-solid fa-lock"></i></div>
                         <h3>Odblokuj składy i historię H2H</h3>
                         <p>Szczegółowe składy, rezerwowi, kontuzjowani gracze<br>oraz historia bezpośrednich spotkań &mdash; dostępne od planu <strong>PLUS</strong>.</p>
-                        <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn">
+                        <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn"
+                           data-testid="paywall-lineups-upgrade-btn">
                             <i class="fa-solid fa-arrow-up-right-from-square"></i> Sprawdź cennik
                         </a>
                     </div>
@@ -448,7 +449,7 @@
 
             {% else %}
             {# ██ FREE/PLUS: paywall PREMIUM — korona ██ #}
-            <div class="paywall-premium-banner">
+            <div class="paywall-premium-banner" data-testid="paywall-stats">
                 <div class="paywall-premium-crown"><i class="fa-solid fa-crown"></i></div>
                 <h3>Statystyki xG i zaawansowane dane</h3>
                 <p>
@@ -456,7 +457,8 @@
                     i dziesiątki innych wskaźników &mdash; dostępne wyłącznie w planie <strong>PREMIUM</strong>.
                 </p>
                 <p class="paywall-premium-tagline">Wznieś swoje analizy na najwyższy poziom.</p>
-                <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn paywall-upgrade-premium">
+                <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn paywall-upgrade-premium"
+                   data-testid="paywall-stats-upgrade-btn">
                     <i class="fa-solid fa-crown"></i> Wybierz Premium
                 </a>
             </div>
