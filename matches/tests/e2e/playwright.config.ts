@@ -1,22 +1,27 @@
 import { defineConfig, devices } from '@playwright/test';
 import dns from 'node:dns';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import path from 'node:path';
 dns.setDefaultResultOrder('ipv4first');
 
-const AUTH_FILE = join(__dirname, 'playwright/.auth/user.json');
-
-// Check if the auth file has a real session (size > empty JSON placeholder)
-const hasSession = existsSync(AUTH_FILE) && require(AUTH_FILE).cookies?.length > 0;
+// ── Auth state file paths ─────────────────────────────────────────────────
+const AUTH_FREE    = path.join(__dirname, 'playwright/.auth/user-free.json');
+const AUTH_PLUS    = path.join(__dirname, 'playwright/.auth/user-plus.json');
+const AUTH_PREMIUM = path.join(__dirname, 'playwright/.auth/user-premium.json');
 
 /**
  * VARify E2E Test Configuration
- * Docs: https://playwright.dev/docs/test-configuration
  *
  * Auth strategy:
- *  - `setup` project logs in once and stores the session to playwright/.auth/user.json
- *  - All browser projects depend on `setup` and reuse that session via storageState
- *  - Tests inside auth/ folder override storageState to `undefined` (fresh session)
+ *  - `setup` project runs global-setup.ts, which logs in all 3 tier users
+ *    and saves their sessions to playwright/.auth/user-{free,plus,premium}.json
+ *  - Browser projects all depend on `setup`.
+ *  - Tests use the default `user-free.json` session (the most restrictive).
+ *  - Tests that need a specific tier import `pageFree`, `pagePlus`, or
+ *    `pagePremium` from fixtures.ts — these lazily open a fresh context
+ *    with the correct storageState for each tier.
+ *  - Tests inside auth/ override storageState to `undefined` (fresh session).
+ *
+ * Docs: https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests/e2e',
@@ -24,59 +29,61 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [['html'], ['list']],
 
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:8000',
+    baseURL: process.env.BASE_URL ?? 'http://localhost:8000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-},
+    // Ignore self-signed cert errors when testing against nip.io / HTTPS proxy
+    ignoreHTTPSErrors: true,
+  },
 
   projects: [
-    // ─── 1. Auth Setup (runs once before everything else) ────────────────────
+    // ── 1. Auth Setup (runs once, creates all 3 tier sessions) ─────────────
     {
       name: 'setup',
       testMatch: '**/global-setup.ts',
-      timeout: 60000,
+      timeout: 90_000, // generous for 3 sequential logins
     },
 
-    // ─── 2. Chromium (authenticated) ─────────────────────────────────────────
+    // ── 2. Chromium — default session is FREE (most restrictive) ───────────
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: AUTH_FILE,
+        storageState: AUTH_FREE,
       },
       dependencies: ['setup'],
     },
 
-    // ─── 3. Firefox (authenticated) ──────────────────────────────────────────
+    // ── 3. Firefox ─────────────────────────────────────────────────────────
     {
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        storageState: AUTH_FILE,
+        storageState: AUTH_FREE,
       },
       dependencies: ['setup'],
     },
 
-    // ─── 4. WebKit / Safari (authenticated) ──────────────────────────────────
+    // ── 4. WebKit / Safari ─────────────────────────────────────────────────
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
-        storageState: AUTH_FILE,
+        storageState: AUTH_FREE,
       },
       dependencies: ['setup'],
     },
 
-    // ─── 5. Mobile Chrome (authenticated) ────────────────────────────────────
+    // ── 5. Mobile Chrome ──────────────────────────────────────────────────
     {
       name: 'Mobile Chrome',
       use: {
         ...devices['Pixel 5'],
-        storageState: AUTH_FILE,
+        storageState: AUTH_FREE,
       },
       dependencies: ['setup'],
     },
