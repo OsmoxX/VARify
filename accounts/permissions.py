@@ -7,15 +7,16 @@ Używaj has_access() wszędzie, gdzie potrzebujesz sprawdzić uprawnienia.
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ObjectDoesNotExist
 
 from .models import SubscriptionTier
 
-# Odwzorowanie tieru na wartość liczbową — wyższy = więcej przywilejów.
-# Klucze to STRINGI (wartości .value), bo Django CharField zawsze zwraca str.
+# KLUCZOWA ZMIANA 1: Używamy .value, aby klucze na 100% były stringami.
+# To rozwiązuje błędy niezgodności typów (str vs Enum) i sprawia, że .get() działa!
 TIER_LEVEL: dict[str, int] = {
-    SubscriptionTier.FREE:    0,  # 'FREE'
-    SubscriptionTier.PLUS:    1,  # 'PLUS'
-    SubscriptionTier.PREMIUM: 2,  # 'PREMIUM'
+    SubscriptionTier.FREE.value:    0,
+    SubscriptionTier.PLUS.value:    1,
+    SubscriptionTier.PREMIUM.value: 2,
 }
 
 
@@ -30,22 +31,20 @@ def has_access(user: "AbstractBaseUser | AnonymousUser", required_tier: "Subscri
     """
     Sprawdza, czy użytkownik ma dostęp do funkcji wymagającej danego poziomu.
     Respektuje hierarchię: PREMIUM >= PLUS >= FREE.
-
-    Użycie:
-        from accounts.permissions import has_access
-        if has_access(request.user, SubscriptionTier.PLUS):
-            ...
     """
     if not user.is_authenticated:
         return False
 
     try:
-        user_tier: str = user.profile.tier  # type: ignore[union-attr]
-    except AttributeError:
+        # KLUCZOWA ZMIANA 2: Używamy getattr(), co omija błąd Mypy [attr-defined]
+        profile = getattr(user, 'profile')
+        user_tier: str = profile.tier
+    except (AttributeError, ObjectDoesNotExist):
         # Profil nie istnieje (np. stary użytkownik) → traktujemy jak FREE
         return _tier_value(required_tier) == SubscriptionTier.FREE.value
 
-    user_level    = TIER_LEVEL.get(_tier_value(user_tier), 0)
+    # Teraz oba pobrania ze słownika na pewno zadziałają poprawnie
+    user_level = TIER_LEVEL.get(_tier_value(user_tier), 0)
     required_level = TIER_LEVEL.get(_tier_value(required_tier), 0)
 
     return user_level >= required_level
