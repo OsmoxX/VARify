@@ -6,13 +6,12 @@ from accounts.models import Profile, SubscriptionTier
 
 
 def _make_user_with_tier(username: str, tier) -> User:
-    """Helper: create a user and set their subscription tier cleanly."""
+    """Helper: create a user and set their subscription tier."""
     user = User.objects.create_user(username=username, password="pass")
-    profile, _ = Profile.objects.get_or_create(user=user)
-    # FIX: Extract the raw string value to prevent "Enum.NAME" DB stringification
-    profile.tier = tier.value if hasattr(tier, 'value') else str(tier)
-    profile.save()
-    return user
+    tier_str = tier.value if hasattr(tier, 'value') else str(tier)
+    Profile.objects.get_or_create(user=user)
+    Profile.objects.filter(user=user).update(tier=tier_str)
+    return User.objects.get(id=user.id)
 
 
 @pytest.mark.django_db
