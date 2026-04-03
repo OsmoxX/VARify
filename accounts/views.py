@@ -51,7 +51,7 @@ def create_checkout_session(request, plan):
             metadata={'tier': plan},
         )
         # 4. Przekierowujemy klienta na wygenerowany przez Stripe bezpieczny adres
-        return redirect(checkout_session.url, code=303)
+        return redirect(checkout_session.url or reverse('subscribe'), code=303)
     except Exception as e:
         # W razie błędu awaryjnego z serwerami Stripe
         print(f"Stripe error: {e}")
@@ -71,10 +71,10 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
-    except ValueError as e:
+    except ValueError:
         # Błędny ładunek (payload)
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.error.SignatureVerificationError:
         # Błędny podpis (ktoś podszywa się pod Stripe!)
         print("⚠️ Błąd weryfikacji podpisu Stripe!")
         return HttpResponse(status=400)

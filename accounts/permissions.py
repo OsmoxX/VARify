@@ -8,7 +8,7 @@ Używaj has_access() wszędzie, gdzie potrzebujesz sprawdzić uprawnienia.
 from .models import SubscriptionTier
 
 # Odwzorowanie tieru na wartość liczbową — wyższy = więcej przywilo
-TIER_LEVEL = {
+TIER_LEVEL: dict[SubscriptionTier, int] = {
     SubscriptionTier.FREE: 0,
     SubscriptionTier.PLUS: 1,
     SubscriptionTier.PREMIUM: 2,
@@ -35,6 +35,9 @@ def has_access(user, required_tier: str) -> bool:
         return required_tier == SubscriptionTier.FREE
 
     user_level = TIER_LEVEL.get(user_tier, 0)
-    required_level = TIER_LEVEL.get(required_tier, 0)
+    try:
+        required_level = TIER_LEVEL.get(SubscriptionTier(required_tier), 0)
+    except ValueError:
+        required_level = 0
 
     return user_level >= required_level

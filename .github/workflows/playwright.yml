@@ -64,11 +64,6 @@ jobs:
         
       - name: Initialize Data and Social Apps for CI
         run: |
-          # Django-allauth wyrzuca błąd 500 (SocialApp.DoesNotExist), gdy próbujemy wyrenderować 
-          # przycisk logowania (np. Google) na stronie /login/, a w bazie nie ma skonfigurowanej apki.
-          # W środowisku testowym CI tworzymy więc pustą/atrapową aplikację Google przed otwarciem przeglądarki.
-          # Ponadto środowisko GitHub Actions ma PUSTĄ bazę, więc musimy założyć konto użytkownika, 
-          # na które Playwright będzie się logował (test_fan_99).
           docker compose exec -T web python manage.py shell -c "
           from allauth.socialaccount.models import SocialApp;
           from django.contrib.sites.models import Site;
@@ -79,6 +74,21 @@ jobs:
           app, _ = SocialApp.objects.get_or_create(provider='google', name='Google Dummy', client_id='dummy', secret='dummy');
           app.sites.add(site);
           "
+
+      - name: Seed E2E tier users (Free / Plus / Premium)
+        env:
+          E2E_USERNAME_FREE:    ${{ secrets.E2E_USERNAME_FREE    != '' && secrets.E2E_USERNAME_FREE    || 'e2e_free_user'    }}
+          E2E_PASSWORD_FREE:    ${{ secrets.E2E_PASSWORD_FREE    != '' && secrets.E2E_PASSWORD_FREE    || 'E2e!Free2024#'    }}
+          E2E_USERNAME_PLUS:    ${{ secrets.E2E_USERNAME_PLUS    != '' && secrets.E2E_USERNAME_PLUS    || 'e2e_plus_user'    }}
+          E2E_PASSWORD_PLUS:    ${{ secrets.E2E_PASSWORD_PLUS    != '' && secrets.E2E_PASSWORD_PLUS    || 'E2e!Plus2024#'    }}
+          E2E_USERNAME_PREMIUM: ${{ secrets.E2E_USERNAME_PREMIUM != '' && secrets.E2E_USERNAME_PREMIUM || 'e2e_premium_user' }}
+          E2E_PASSWORD_PREMIUM: ${{ secrets.E2E_PASSWORD_PREMIUM != '' && secrets.E2E_PASSWORD_PREMIUM || 'E2e!Premium2024#' }}
+        run: |
+          docker compose exec -T \
+            -e E2E_USERNAME_FREE    -e E2E_PASSWORD_FREE \
+            -e E2E_USERNAME_PLUS    -e E2E_PASSWORD_PLUS \
+            -e E2E_USERNAME_PREMIUM -e E2E_PASSWORD_PREMIUM \
+            web python manage.py create_e2e_users
 
       - name: Wait for app to be ready
         run: |
@@ -107,11 +117,19 @@ jobs:
       # ── Playwright: uruchamia testy (z folderu e2e) ────────────────────────
       - name: Run Playwright tests
         working-directory: ${{ env.PW_DIR }}
-        run: npx playwright test 
+        run: npx playwright test
         env:
-          BASE_URL: http://localhost:8000
-          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
-          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          BASE_URL:             http://localhost:8000
+          # Legacy single-user credentials (kept for backward-compat)
+          E2E_USERNAME:         ${{ secrets.E2E_USERNAME }}
+          E2E_PASSWORD:         ${{ secrets.E2E_PASSWORD }}
+          # Tier-specific credentials (used by global-setup.ts)
+          E2E_USERNAME_FREE:    ${{ secrets.E2E_USERNAME_FREE    != '' && secrets.E2E_USERNAME_FREE    || 'e2e_free_user'    }}
+          E2E_PASSWORD_FREE:    ${{ secrets.E2E_PASSWORD_FREE    != '' && secrets.E2E_PASSWORD_FREE    || 'E2e!Free2024#'    }}
+          E2E_USERNAME_PLUS:    ${{ secrets.E2E_USERNAME_PLUS    != '' && secrets.E2E_USERNAME_PLUS    || 'e2e_plus_user'    }}
+          E2E_PASSWORD_PLUS:    ${{ secrets.E2E_PASSWORD_PLUS    != '' && secrets.E2E_PASSWORD_PLUS    || 'E2e!Plus2024#'    }}
+          E2E_USERNAME_PREMIUM: ${{ secrets.E2E_USERNAME_PREMIUM != '' && secrets.E2E_USERNAME_PREMIUM || 'e2e_premium_user' }}
+          E2E_PASSWORD_PREMIUM: ${{ secrets.E2E_PASSWORD_PREMIUM != '' && secrets.E2E_PASSWORD_PREMIUM || 'E2e!Premium2024#' }}
 
       # ── Artefakty: zawsze upload raportu, nawet przy błędzie ──────────────
       - name: Upload Playwright report
