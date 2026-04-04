@@ -430,18 +430,85 @@ body {
 /* ── RESPONSIVE ───────────────────────────────────────── */
 
 @media (max-width: 900px) {
-    .sub-cards {
-        flex-direction: column;
+    /* Karuzela na mobile */
+    .carousel-container {
+        position: relative;
+        display: flex;
         align-items: center;
-    }
-    .sub-card {
-        max-width: 480px;
         width: 100%;
-        transform: none !important;
     }
+
+    .carousel-nav {
+        display: flex;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(59, 130, 246, 0.15);
+        color: #fff;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        cursor: pointer;
+        transition: background 0.3s, border-color 0.3s;
+        backdrop-filter: blur(4px);
+    }
+    
+    .carousel-nav:hover {
+        background: rgba(59, 130, 246, 0.4);
+        border-color: rgba(59, 130, 246, 0.6);
+    }
+    
+    /* Wypuść nieco poza kontener żeby nie nachodziły na zawartość */
+    .carousel-prev { left: -8px; }
+    .carousel-next { right: -8px; }
+
+    .sub-cards {
+        flex-direction: row;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        gap: 1.5rem;
+        padding-bottom: 1.5rem;
+        padding-top: 1.5rem;
+        padding-left: 5vw;
+        padding-right: 5vw;
+        -ms-overflow-style: none; /* IE i Edge */
+        scrollbar-width: none;    /* Firefox */
+        align-items: stretch;
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .sub-cards::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sub-card {
+        min-width: 85vw;
+        max-width: 400px;
+        scroll-snap-align: center;
+        transform: none !important;
+        margin: 0;
+        flex: 0 0 auto;
+    }
+    
     .sub-card-plus {
         transform: none !important;
-        order: -1; /* Pokaż PLUS pierwszy na mobile */
+        order: 0; /* Wyłączony reorder (PLUS), karty idą 1 (Free) -> 2 (Plus) -> 3 (Premium) */
     }
-    .sub-card:hover { transform: translateY(-6px) !important; }
+    
+    .sub-card:hover { transform: none !important; }
+}
+
+@media (min-width: 901px) {
+    .carousel-nav {
+        display: none !important;
+    }
+    .carousel-container {
+        display: block;
+    }
 }

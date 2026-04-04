@@ -60,8 +60,9 @@
         </div>
 
         {# ── Karty planów ── #}
-        <div class="sub-cards">
-
+        <div class="carousel-container">
+            <button class="carousel-nav carousel-prev" id="carousel-prev" aria-label="Poprzedni plan"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="sub-cards" id="sub-cards">
             {# ─── FREE ─── #}
             <div class="sub-card sub-card-free">
                 <div class="sub-card-inner">
@@ -152,6 +153,8 @@
             </div>
 
         </div>{# /sub-cards #}
+            <button class="carousel-nav carousel-next" id="carousel-next" aria-label="Następny plan"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>{# /carousel-container #}
 
         <p class="sub-footer-note">
             <i class="fa-solid fa-shield-halved"></i>
@@ -165,6 +168,47 @@
         document.querySelectorAll('.sub-card').forEach((card, i) => {
             card.style.animationDelay = `${i * 0.12}s`;
         });
+
+        // Obsługa karuzeli dla mobile (strzałki znikają jeśli jesteśmy na początku/końcu)
+        const container = document.getElementById('sub-cards');
+        const btnPrev = document.getElementById('carousel-prev');
+        const btnNext = document.getElementById('carousel-next');
+
+        const updateButtons = () => {
+            if (window.innerWidth > 900) return; // logika tylko dla mobile
+            
+            const maxScrollLeft = container.scrollWidth - container.clientWidth;
+            
+            if (container.scrollLeft <= 10) {
+                btnPrev.style.display = 'none';
+            } else {
+                btnPrev.style.display = 'flex';
+            }
+
+            // check if there is room to scroll right
+            if (Math.ceil(container.scrollLeft) >= maxScrollLeft - 10) {
+                btnNext.style.display = 'none';
+            } else {
+                btnNext.style.display = 'flex';
+            }
+        };
+
+        if (container && btnPrev && btnNext) {
+            container.addEventListener('scroll', updateButtons);
+            window.addEventListener('resize', updateButtons);
+            // Wywołaj inicjalnie
+            setTimeout(updateButtons, 100);
+
+            btnPrev.addEventListener('click', () => {
+                const cardWidth = container.querySelector('.sub-card').offsetWidth;
+                container.scrollBy({ left: -cardWidth - 20, behavior: 'smooth' });
+            });
+
+            btnNext.addEventListener('click', () => {
+                const cardWidth = container.querySelector('.sub-card').offsetWidth;
+                container.scrollBy({ left: cardWidth + 20, behavior: 'smooth' });
+            });
+        }
     </script>
 </body>
 </html>
