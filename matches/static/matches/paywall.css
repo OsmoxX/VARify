@@ -80,6 +80,24 @@
     transform: scale(1.05);
 }
 
+/* Mobile responsive adjustments for search tooltip */
+@media (max-width: 768px) {
+    .search-lock-tooltip {
+        white-space: normal;
+        flex-direction: column;
+        width: 90vw;
+        max-width: 320px;
+        text-align: center;
+        padding-bottom: 1.2rem;
+    }
+    
+    .tooltip-upgrade-btn {
+        margin-left: 0;
+        margin-top: 0.75rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
 
 /* ── BLUR PAYWALL — zakładka składów (PLUS) ──────────── */
 
