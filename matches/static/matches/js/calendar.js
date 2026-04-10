@@ -25,6 +25,20 @@ const TOP_LEAGUES_CONFIG = [
 // DAY PICKER
 // ────────────────────────────────────────────────
 
+// ────────────────────────────────────────────────
+// i18n strings injected from Django template
+// ────────────────────────────────────────────────
+const _i18nEl = document.getElementById('calendar-i18n');
+const _i18n = {
+    today:      _i18nEl ? _i18nEl.dataset.today       : 'Dziś',
+    tomorrow:   _i18nEl ? _i18nEl.dataset.tomorrow    : 'Jutro',
+    days:       _i18nEl ? _i18nEl.dataset.days.split('|') : ['Ndz','Pon','Wt','Śr','Czw','Pt','Sob'],
+    noMatches:  _i18nEl ? _i18nEl.dataset.noMatches   : 'Brak meczów na ten dzień',
+    noUpcoming: _i18nEl ? _i18nEl.dataset.noUpcoming  : 'Brak nadchodzących meczów na ten dzień.',
+    loading:    _i18nEl ? _i18nEl.dataset.loading      : 'Ładowanie meczów...',
+    error:      _i18nEl ? _i18nEl.dataset.error        : 'Błąd ładowania meczów. Spróbuj odświeżyć stronę.',
+};
+
 // Currently selected date in YYYY-MM-DD format
 let activeDateStr = '';
 
@@ -47,15 +61,15 @@ function buildDayPicker() {
     if (!picker) return;
 
     const now = new Date();
-    const dayNames = ['Ndz', 'Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob'];
+    const dayNames = _i18n.days;
 
     for (let delta = 0; delta < 5; delta++) {
         const d = new Date(now);
         d.setDate(now.getDate() + delta);
 
         const dateStr = toLocalDateStr(d);
-        const dayName = delta === 0 ? 'Dziś'
-                      : delta === 1 ? 'Jutro'
+        const dayName = delta === 0 ? _i18n.today
+                      : delta === 1 ? _i18n.tomorrow
                       : dayNames[d.getDay()];
         const dayDate = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
 
@@ -122,7 +136,7 @@ function buildLeagueSection(league) {
         matchesHtml = `
             <div class="no-matches-msg">
                 <i class="fa-regular fa-calendar-xmark"></i>
-                Brak meczów na ten dzień
+                ${_i18n.noMatches}
             </div>
         `;
     }
@@ -155,7 +169,7 @@ function renderCalendar(leagueList, itemsOnPageCount) {
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fa-solid fa-calendar-xmark"></i>
-                <p>Brak nadchodzących meczów na ten dzień.</p>
+                <p>${_i18n.noUpcoming}</p>
             </div>`;
         return;
     }
@@ -175,7 +189,7 @@ function loadUpcomingMatches() {
     container.innerHTML = `
         <div class="loading-state" id="loading-state">
             <i class="fa-solid fa-circle-notch fa-spin"></i>
-            <p>Ładowanie meczów...</p>
+            <p>${_i18n.loading}</p>
         </div>
     `;
 
@@ -248,7 +262,7 @@ function loadUpcomingMatches() {
             document.getElementById('calendar-container').innerHTML = `
                 <div class="empty-state">
                     <i class="fa-solid fa-triangle-exclamation"></i>
-                    <p>Błąd ładowania meczów. Spróbuj odświeżyć stronę.</p>
+                    <p>${_i18n.error}</p>
                 </div>`;
         });
 }

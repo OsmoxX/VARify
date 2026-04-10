@@ -36,15 +36,15 @@ def has_access(user: "AbstractBaseUser | AnonymousUser", required_tier: "Subscri
         return False
 
     try:
-        # KLUCZOWA ZMIANA 2: Używamy getattr(), co omija błąd Mypy [attr-defined]
         profile = getattr(user, 'profile')
-        user_tier: str = profile.tier
+        user_tier = profile.tier
     except (AttributeError, ObjectDoesNotExist):
-        # Profil nie istnieje (np. stary użytkownik) → traktujemy jak FREE
         return _tier_value(required_tier) == SubscriptionTier.FREE.value
 
-    # Teraz oba pobrania ze słownika na pewno zadziałają poprawnie
-    user_level = TIER_LEVEL.get(_tier_value(user_tier), 0)
-    required_level = TIER_LEVEL.get(_tier_value(required_tier), 0)
-
+    val_user = _tier_value(user_tier)
+    val_req = _tier_value(required_tier)
+    
+    user_level = TIER_LEVEL.get(val_user, 0)
+    required_level = TIER_LEVEL.get(val_req, 0)
+  
     return user_level >= required_level

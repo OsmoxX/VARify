@@ -1,5 +1,6 @@
 {% extends 'matches/base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/match_detail.css' %}">
@@ -10,7 +11,7 @@
 {% block content %}
 <div class="detail-wrapper" data-api-id="{{ api_id }}">
     <a class="back-btn-modern" href="/">
-        <i class="fa-solid fa-chevron-left"></i> Powrót
+        <i class="fa-solid fa-chevron-left"></i> {% trans "Powrót" %}
     </a>
 
     <!-- NAGŁÓWEK DRUŻYNY -->
@@ -20,7 +21,7 @@
             <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div class="team-name-section">
-            <h1 id="team-name">Ładowanie...</h1>
+            <h1 id="team-name">{% trans "Ładowanie..." %}</h1>
             <div class="team-meta" id="team-meta"></div>
         </div>
     </div>
@@ -28,23 +29,23 @@
     <!-- SYSTEM ZAKŁADEK -->
     <div class="tabs-container">
         <button class="tab-btn active" onclick="switchTab('matches', this)">
-            <i class="fa-regular fa-calendar-days"></i> Mecze
+            <i class="fa-regular fa-calendar-days"></i> {% trans "Mecze" %}
         </button>
         <button class="tab-btn" onclick="switchTab('standings', this)">
-            <i class="fa-solid fa-list-ol"></i> Tabela ligi
+            <i class="fa-solid fa-list-ol"></i> {% trans "Tabela ligi" %}
         </button>
     </div>
 
     <!-- ZAKŁADKA 1: MECZE + SKŁAD -->
     <div id="tab-matches" class="tab-content active">
         <div class="team-section">
-            <h2><i class="fa-solid fa-clock-rotate-left"></i> Ostatnie mecze</h2>
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> {% trans "Ostatnie mecze" %}</h2>
             <div id="recent-matches-list">
                 <div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
             </div>
         </div>
         <div class="team-section" id="squad-section" style="display:none;">
-            <h2><i class="fa-solid fa-users"></i> Skład (z ostatniego meczu)</h2>
+            <h2><i class="fa-solid fa-users"></i> {% trans "Skład (z ostatniego meczu)" %}</h2>
             <div class="squad-grid" id="squad-grid"></div>
         </div>
     </div>
@@ -52,20 +53,20 @@
     <!-- ZAKŁADKA 2: TABELA -->
     <div id="tab-standings" class="tab-content" style="display: none;">
         <div class="team-section">
-            <h2><i class="fa-solid fa-list-ol"></i> Tabela ligowa <span id="standings-league-name"></span></h2>
+            <h2><i class="fa-solid fa-list-ol"></i> {% trans "Tabela ligowa" %} <span id="standings-league-name"></span></h2>
             <div class="table-container">
                 <table class="standings-table">
                     <thead>
                         <tr>
                             <th class="col-pos">#</th>
-                            <th class="col-team">Drużyna</th>
-                            <th class="col-num" title="Mecze Rozegrane">M</th>
-                            <th class="col-num" title="Wygrane">W</th>
-                            <th class="col-num" title="Remisy">R</th>
-                            <th class="col-num" title="Porażki">P</th>
-                            <th class="col-num" title="Bramki">B+ / B-</th>
-                            <th class="col-num" title="Różnica Bramek">+/-</th>
-                            <th class="col-pts">Pkt</th>
+                            <th class="col-team">{% trans "Drużyna" %}</th>
+                            <th class="col-num" title="{% trans 'Mecze Rozegrane' %}">M</th>
+                            <th class="col-num" title="{% trans 'Wygrane' %}">W</th>
+                            <th class="col-num" title="{% trans 'Remisy' %}">R</th>
+                            <th class="col-num" title="{% trans 'Porażki' %}">P</th>
+                            <th class="col-num" title="{% trans 'Bramki' %}">B+ / B-</th>
+                            <th class="col-num" title="{% trans 'Różnica Bramek' %}">+/-</th>
+                            <th class="col-pts">{% trans "Pkt" %}</th>
                         </tr>
                     </thead>
                     <tbody id="standings-body">

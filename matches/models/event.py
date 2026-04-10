@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from .match import LiveMatch
 
 
@@ -122,11 +123,11 @@ class MatchEvent(models.Model):
             ic = self.incident_type
 
         labels = {
-            'ownGoal': 'samobój',
-            'penalty': 'karny',
-            'missedPenalty': 'niestrzelony karny',
-            'penaltyNotAwarded': 'karny nie uznany',
-            'yellowRed': '2× żółta',
+            'ownGoal': _('samobój'),
+            'penalty': _('karny'),
+            'missedPenalty': _('niestrzelony karny'),
+            'penaltyNotAwarded': _('karny nie uznany'),
+            'yellowRed': _('2× żółta'),
         }
         return labels.get(ic or '', '')
 

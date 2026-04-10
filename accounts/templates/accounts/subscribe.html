@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -33,7 +34,7 @@
             VAR<span>ify</span>
         </a>
         <a href="/" class="sub-nav-back">
-            <i class="fa-solid fa-arrow-left"></i> Wróć do aplikacji
+            <i class="fa-solid fa-arrow-left"></i> {% trans "Wróć do aplikacji" %}
         </a>
     </nav>
 
@@ -42,10 +43,10 @@
         {# ── Nagłówek ── #}
         <div class="sub-header">
             <div class="sub-badge">
-                <i class="fa-solid fa-trophy"></i> Odblokuj pełen potencjał
+                <i class="fa-solid fa-trophy"></i> {% trans "Odblokuj pełen potencjał" %}
             </div>
-            <h1>Wybierz swój plan</h1>
-            <p class="sub-subtitle">Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców.</p>
+            <h1>{% trans "Wybierz swój plan" %}</h1>
+            <p class="sub-subtitle">{% trans "Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców." %}</p>
 
             {# Messages (np. po przekierowaniu z widoku z tieram) #}
             {% if messages %}
@@ -69,21 +70,21 @@
                     <div class="plan-label">Free</div>
                     <div class="plan-price">
                         <span class="plan-amount">0 zł</span>
-                        <span class="plan-period">/miesiąc</span>
+                        <span class="plan-period">{% trans "/miesiąc" %}</span>
                     </div>
                     <ul class="feature-list">
-                        <li class="ok"><i class="fa-solid fa-check"></i> Mecze na żywo</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Nadchodzące spotkania</li>
-                        <li class="locked"><i class="fa-solid fa-lock"></i> Wyszukiwarka klubów</li>
-                        <li class="locked"><i class="fa-solid fa-lock"></i> Składy i historia spotkań</li>
-                        <li class="locked"><i class="fa-solid fa-lock"></i> Własny Nick w aplikacji</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Mecze na żywo" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Nadchodzące spotkania" %}</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Wyszukiwarka klubów" %}</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Składy i historia spotkań" %}</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Własny Nick w aplikacji" %}</li>
                     </ul>
                     {% if user.profile.tier == 'FREE' %}
                     <button class="plan-btn plan-btn-current" disabled>
-                        <i class="fa-solid fa-circle-check"></i> Twój obecny plan
+                        <i class="fa-solid fa-circle-check"></i> {% trans "Twój obecny plan" %}
                     </button>
                     {% else %}
-                    <a href="/" class="plan-btn plan-btn-free">Pozostań na Free</a>
+                    <a href="/" class="plan-btn plan-btn-free">{% trans "Pozostań na Free" %}</a>
                     {% endif %}
                 </div>
             </div>
@@ -91,30 +92,30 @@
             {# ─── PLUS (highlighted) ─── #}
             <div class="sub-card sub-card-plus">
                 <div class="popular-badge">
-                    <i class="fa-solid fa-star"></i> Najczęściej wybierany
+                    <i class="fa-solid fa-star"></i> {% trans "Najczęściej wybierany" %}
                 </div>
                 <div class="sub-card-inner">
                     <div class="plan-label plan-label-plus">Plus</div>
                     <div class="plan-price">
                         <span class="plan-amount">9,99 zł</span>
-                        <span class="plan-period">/miesiąc</span>
+                        <span class="plan-period">{% trans "/miesiąc" %}</span>
                     </div>
                     <ul class="feature-list">
-                        <li class="ok"><i class="fa-solid fa-check"></i> Mecze na żywo i terminarz</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Wyszukiwarka klubów</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Składy i historia spotkań</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Zmiana Nicku w aplikacji</li>
-                        <li class="locked"><i class="fa-solid fa-lock"></i> Zaawansowane statystyki graczy</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Mecze na żywo i terminarz" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Wyszukiwarka klubów" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Składy i historia spotkań" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Zmiana Nicku w aplikacji" %}</li>
+                        <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Zaawansowane statystyki graczy" %}</li>
                     </ul>
                     {% if user.profile.tier == 'PLUS' %}
                     <button class="plan-btn plan-btn-current" disabled>
-                        <i class="fa-solid fa-circle-check"></i> Twój obecny plan
+                        <i class="fa-solid fa-circle-check"></i> {% trans "Twój obecny plan" %}
                     </button>
                     {% else %}
                     <form action="{% url 'create-checkout-session' 'plus' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="plan-btn plan-btn-plus">
-                            <i class="fa-solid fa-bolt"></i> Zacznij z PLUS
+                            <i class="fa-solid fa-bolt"></i> {% trans "Zacznij z PLUS" %}
                         </button>
                     </form>
                     {% endif %}
@@ -128,24 +129,24 @@
                     <div class="plan-label plan-label-premium">Premium</div>
                     <div class="plan-price">
                         <span class="plan-amount">19,99 zł</span>
-                        <span class="plan-period">/miesiąc</span>
+                        <span class="plan-period">{% trans "/miesiąc" %}</span>
                     </div>
                     <ul class="feature-list">
-                        <li class="ok"><i class="fa-solid fa-check"></i> Wszystko z pakietu PLUS</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Wyszukiwarka zawodników</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Zaawansowane statystyki XG</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Brak reklam</li>
-                        <li class="ok"><i class="fa-solid fa-check"></i> Priorytetowe wsparcie</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Wszystko z pakietu PLUS" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Wyszukiwarka zawodników" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Zaawansowane statystyki XG" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Brak reklam" %}</li>
+                        <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Priorytetowe wsparcie" %}</li>
                     </ul>
                     {% if user.profile.tier == 'PREMIUM' %}
                     <button class="plan-btn plan-btn-current" disabled>
-                        <i class="fa-solid fa-circle-check"></i> Twój obecny plan
+                        <i class="fa-solid fa-circle-check"></i> {% trans "Twój obecny plan" %}
                     </button>
                     {% else %}
                     <form action="{% url 'create-checkout-session' 'premium' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="plan-btn plan-btn-premium">
-                            <i class="fa-solid fa-crown"></i> Wybierz Premium
+                            <i class="fa-solid fa-crown"></i> {% trans "Wybierz Premium" %}
                         </button>
                     </form>
                     {% endif %}
@@ -158,7 +159,7 @@
 
         <p class="sub-footer-note">
             <i class="fa-solid fa-shield-halved"></i>
-            Bezpieczna płatność przez Stripe · Anuluj w dowolnym momencie · Brak ukrytych opłat
+            {% trans "Bezpieczna płatność przez Stripe · Anuluj w dowolnym momencie · Brak ukrytych opłat" %}
         </p>
 
     </main>

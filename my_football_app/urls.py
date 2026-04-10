@@ -20,9 +20,17 @@ from matches.views import match_detail_view, live_matches_view, HomeView, search
 from matches import views
 from django.contrib.auth import views as auth_views
 from matches import api_views
+from matches.views.ai_views import ai_chat_endpoint
 from django.views.generic.base import RedirectView
+from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 
 urlpatterns = [
+    path('i18n/', include('django.conf.urls.i18n')),
+    path('rosetta/', include('rosetta.urls')),
+]
+
+urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     path('live/', live_matches_view, name='live_matches'),
     path('league/<int:api_id>/', league_detail_view, name='league_detail'),
@@ -41,8 +49,6 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('account/', views.account_settings, name='account_settings'),
     path('', include('accounts.urls')),
-
-
     # ── REST API ────────────────────────────────────────────────────────────────
     # Leagues
     path('api/leagues/', api_views.get_leagues, name='api_leagues'),
@@ -75,6 +81,10 @@ urlpatterns = [
     # Włączamy wszystkie domyślne ścieżki z Allauth
     # To daje nam gotowe endpointy: /accounts/login/, /accounts/register/, /accounts/logout/ itd.
     path('accounts/', include('allauth.urls')), 
-]
+
+
+    # ── AI AGENT ────────────────────────────────────────────────────────────────
+    path('api/ai-chat/', ai_chat_endpoint, name='ai_chat_api'),
+)
 
 

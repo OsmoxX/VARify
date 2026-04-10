@@ -1,7 +1,8 @@
 {% extends 'matches/base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}VARify - Nadchodzące mecze{% endblock %}
+{% block title %}VARify - {% trans "Nadchodzące mecze" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/live_match_list.css' %}">
@@ -11,31 +12,31 @@
 {% block content %}
 <div class="controls-wrapper">
     <div class="title-section">
-        <h1 class="main-title">Nadchodzące mecze</h1>
+        <h1 class="main-title">{% trans "Nadchodzące mecze" %}</h1>
         <i class="fa-solid fa-calendar-days calendar-icon-title"></i>
     </div>
 
     <div class="actions-section">
         <div class="filter-wrapper">
             <button class="filter-btn" onclick="toggleFilterMenu()">
-                <i class="fa-solid fa-filter"></i> Filtruj ligi
+                <i class="fa-solid fa-filter"></i> {% trans "Filtruj ligi" %}
             </button>
 
             <div id="filter-menu" class="filter-menu">
                 <div class="filter-menu-header">
-                    <strong>Filtruj ligi</strong>
+                    <strong>{% trans "Filtruj ligi" %}</strong>
                     <i class="fa-solid fa-xmark close-filter" onclick="toggleFilterMenu()"></i>
                 </div>
 
                 <div class="filter-search-box">
                     <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
-                    <input type="text" id="league-search-input" placeholder="Szukaj ligi..."
+                    <input type="text" id="league-search-input" placeholder="{% trans 'Szukaj ligi...' %}"
                         oninput="filterLeagueCheckboxes(this.value)" autocomplete="off">
                 </div>
 
                 <div class="filter-actions-bar">
-                    <button class="filter-select-btn" onclick="selectAllVisible()">Zaznacz wszystkie</button>
-                    <button class="filter-select-btn" onclick="deselectAllVisible()">Odznacz wszystkie</button>
+                    <button class="filter-select-btn" onclick="selectAllVisible()">{% trans "Zaznacz wszystkie" %}</button>
+                    <button class="filter-select-btn" onclick="deselectAllVisible()">{% trans "Odznacz wszystkie" %}</button>
                 </div>
 
                 <div class="filter-content" id="league-filter-list">
@@ -44,13 +45,13 @@
 
                 <div class="filter-no-results" id="filter-no-results" style="display:none;">
                     <i class="fa-solid fa-circle-exclamation"></i>
-                    Nie znaleziono lig
+                    {% trans "Nie znaleziono lig" %}
                 </div>
             </div>
         </div>
 
         <div class="global-toggle">
-            <span class="toggle-text">Rozwiń wszystkie</span>
+            <span class="toggle-text">{% trans "Rozwiń wszystkie" %}</span>
             <label class="switch">
                 <input type="checkbox" id="global-toggle-input" checked onchange="toggleAllLeagues(this)">
                 <span class="slider"></span>
@@ -67,12 +68,21 @@
     <!-- Dynamicznie wypełniane przez JS -->
     <div class="loading-state" id="loading-state">
         <i class="fa-solid fa-circle-notch fa-spin"></i>
-        <p>Ładowanie meczów...</p>
+        <p>{% trans "Ładowanie meczów..." %}</p>
     </div>
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
+<div id="calendar-i18n" aria-hidden="true" style="display:none;"
+    data-today="{% trans 'Dziś' %}"
+    data-tomorrow="{% trans 'Jutro' %}"
+    data-days="{% trans 'Ndz' %}|{% trans 'Pon' %}|{% trans 'Wt' %}|{% trans 'Śr' %}|{% trans 'Czw' %}|{% trans 'Pt' %}|{% trans 'Sob' %}"
+    data-no-matches="{% trans 'Brak meczów na ten dzień' %}"
+    data-no-upcoming="{% trans 'Brak nadchodzących meczów na ten dzień.' %}"
+    data-loading="{% trans 'Ładowanie meczów...' %}"
+    data-error="{% trans 'Błąd ładowania meczów. Spróbuj odświeżyć stronę.' %}"
+></div>
 <script src="{% static 'matches/js/calendar.js' %}"></script>
 {% endblock %}

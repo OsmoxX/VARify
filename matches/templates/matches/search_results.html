@@ -1,25 +1,32 @@
 {% extends 'matches/base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/search_results.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="calendar-container search-container">
+<div class="calendar-container search-container" id="search-container-data"
+     data-title-template="{% trans 'Wyniki dla:' %} {query}"
+     data-empty-teams="{% trans 'Brak drużyn pasujących do zapytania.' %}"
+     data-empty-players="{% trans 'Brak zawodników pasujących do zapytania.' %}"
+     data-heading-teams="{% trans 'Drużyny' %}"
+     data-heading-players="{% trans 'Zawodnicy' %}"
+     data-error-msg="{% trans 'Błąd wyszukiwania. Spróbuj ponownie.' %}">
     <div class="header-section search-header">
         <h1 class="page-title" id="search-title">
-            <i class="fa-solid fa-magnifying-glass"></i> Wyniki wyszukiwania
+            <i class="fa-solid fa-magnifying-glass"></i> {% trans "Wyniki wyszukiwania" %}
         </h1>
         <a href="javascript:history.back()" class="back-btn-modern">
-            <i class="fa-solid fa-arrow-left"></i> Wróć
+            <i class="fa-solid fa-arrow-left"></i> {% trans "Wróć" %}
         </a>
     </div>
 
     <div id="search-results">
         <div class="loading-state">
             <i class="fa-solid fa-circle-notch fa-spin"></i>
-            <p>Wyszukiwanie...</p>
+            <p>{% trans "Wyszukiwanie..." %}</p>
         </div>
     </div>
 </div>

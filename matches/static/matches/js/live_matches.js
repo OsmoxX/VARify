@@ -6,6 +6,21 @@
  */
 
 // ────────────────────────────────────────────────
+// i18n strings injected from Django template
+// ────────────────────────────────────────────────
+const _liveI18nEl = document.getElementById('live-i18n');
+const _liveI18n = {
+    bellOff:       _liveI18nEl ? _liveI18nEl.dataset.bellOff    : 'Wyłącz powiadomienia',
+    bellOn:        _liveI18nEl ? _liveI18nEl.dataset.bellOn     : 'Włącz powiadomienia',
+    notifOn:       _liveI18nEl ? _liveI18nEl.dataset.notifOn    : 'Powiadomienia włączone',
+    notifOff:      _liveI18nEl ? _liveI18nEl.dataset.notifOff   : 'Powiadomienia wyłączone',
+    otherLeagues:  _liveI18nEl ? _liveI18nEl.dataset.otherLeagues : 'Inne ligi',
+    noLive:        _liveI18nEl ? _liveI18nEl.dataset.noLive     : 'Brak meczów na żywo w tym momencie.',
+    loadingText:   _liveI18nEl ? _liveI18nEl.dataset.loadingText : 'Ładowanie meczów...',
+    errorLoad:     _liveI18nEl ? _liveI18nEl.dataset.errorLoad  : 'Błąd ładowania meczów. Spróbuj odświeżyć stronę.',
+};
+
+// ────────────────────────────────────────────────
 // CSRF HELPER
 // ────────────────────────────────────────────────
 
@@ -112,8 +127,8 @@ function buildMatchRow(match) {
             <div class="team team-away">${match.away_team}</div>
         </a>
         <button class="bell-btn ${isBellActive}" data-match-id="${match.api_id}"
-            title="${isBellActive ? 'Wyłącz powiadomienia' : 'Włącz powiadomienia'}"
-            aria-label="Włącz powiadomienia">
+            title="${isBellActive ? _liveI18n.bellOff : _liveI18n.bellOn}"
+            aria-label="${_liveI18n.bellOn}">
             <i class="fa-solid fa-bell"></i>
         </button>
     `;
@@ -132,19 +147,23 @@ function buildMatchRow(match) {
         .then(data => {
             if (data.status === 'added') {
                 btn.classList.add('bell-active');
-                btn.title = 'Wyłącz powiadomienia';
-                showMatchToast('🔔', 'Powiadomienia włączone', 'info');
+                btn.title = _liveI18n.bellOff;
+                showMatchToast('\uD83D\uDD14', _liveI18n.notifOn, 'info');
                 if (window.VarifyWS) window.VarifyWS.subscribe(matchId);
             } else if (data.status === 'removed') {
                 btn.classList.remove('bell-active');
-                btn.title = 'Włącz powiadomienia';
-                showMatchToast('🔕', 'Powiadomienia wyłączone', 'info');
+                btn.title = _liveI18n.bellOn;
+                showMatchToast('\uD83D\uDD15', _liveI18n.notifOff, 'info');
                 if (window.VarifyWS) window.VarifyWS.unsubscribe(matchId);
             } else {
                 showMatchToast('❌', data.message || 'Błąd', 'error');
             }
         })
-        .catch(() => showMatchToast('❌', 'Błąd połączenia. Spróbuj ponownie.', 'error'));
+        .catch(() => {
+            const container = document.getElementById('leagues-container');
+            const errorMsg = container && container.dataset.connError ? container.dataset.connError : 'Błąd połączenia. Spróbuj ponownie.';
+            showMatchToast('❌', errorMsg, 'error');
+        });
     });
 
     return wrapper;
@@ -231,7 +250,7 @@ function renderLeagues(leagueList) {
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fa-solid fa-circle-nodes"></i>
-                <p>Brak meczów na żywo w tym momencie.</p>
+                <p>${_liveI18n.noLive}</p>
             </div>`;
         return;
     }
@@ -241,7 +260,7 @@ function renderLeagues(leagueList) {
         if (!league.isTop && !dividerAdded) {
             const sep = document.createElement('div');
             sep.className = 'other-leagues-divider';
-            sep.innerHTML = '<span>Inne ligi</span>';
+        sep.innerHTML = `<span>${_liveI18n.otherLeagues}</span>`;
             container.appendChild(sep);
             dividerAdded = true;
         }
@@ -269,7 +288,7 @@ function showLoading() {
         container.insertAdjacentHTML('beforeend', `
             <div class="loading-state" id="loading-state">
                 <i class="fa-solid fa-circle-notch fa-spin"></i>
-                <p>Ładowanie meczów...</p>
+                <p>${_liveI18n.loadingText}</p>
             </div>
         `);
     }
@@ -285,7 +304,7 @@ function showError() {
     container.innerHTML = `
         <div class="empty-state">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            <p>Błąd ładowania meczów. Spróbuj odświeżyć stronę.</p>
+            <p>${_liveI18n.errorLoad}</p>
         </div>`;
 }
 
@@ -313,7 +332,7 @@ function initBells() {
             const btn = document.querySelector('.bell-btn[data-match-id="' + apiId + '"]');
             if (btn) {
                 btn.classList.add('bell-active');
-                btn.title = 'Wyłącz powiadomienia';
+                btn.title = _liveI18n.bellOff;
             }
         });
     }

@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from .models import SubscriptionTier
 from django.contrib.auth.decorators import login_not_required
+from django.utils.translation import get_language
 
 # Create your views here.
 def subscribe_view(request):
@@ -33,6 +34,10 @@ def create_checkout_session(request, plan):
     success_url = domain_url + reverse('home') + '?payment=success'
     cancel_url = domain_url + reverse('subscribe') + '?payment=cancelled'
 
+    current_lang = get_language()
+    locale_map = {'pl': 'pl', 'en': 'en', 'uk': 'auto'} # Stripe might not fully support 'uk', use 'auto' as fallback
+    stripe_locale = locale_map.get(current_lang, 'auto')
+
     try:
         # 3. Gadamy ze Stripe'em - prosimy o utworzenie sesji kasy
         checkout_session = stripe.checkout.Session.create(
@@ -49,6 +54,7 @@ def create_checkout_session(request, plan):
             # Przekazujemy ID użytkownika z Django do Stripe, żebyśmy wiedzieli kto płaci
             client_reference_id=request.user.id,
             metadata={'tier': plan},
+            locale=stripe_locale,
         )
         # 4. Przekierowujemy klienta na wygenerowany przez Stripe bezpieczny adres
         return redirect(checkout_session.url or reverse('subscribe'), code=303)

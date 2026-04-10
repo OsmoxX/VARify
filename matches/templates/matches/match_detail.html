@@ -1,5 +1,6 @@
 {% extends 'matches/base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/match_detail.css' %}">
@@ -12,7 +13,7 @@
 {% block content %}
 <div class="detail-wrapper">
     <a href="{% url 'home' %}" class="back-btn-modern" data-testid="back-to-results-btn">
-        <i class="fa-solid fa-chevron-left"></i> Wróć do wyników
+        <i class="fa-solid fa-chevron-left"></i> {% trans "Wróć do wyników" %}
     </a>
 
     <div class="match-card-premium">
@@ -37,9 +38,9 @@
         </div>
 
         <div class="match-tabs">
-            <button class="tab-btn active" onclick="openTab(event, 'timeline-tab')" data-testid="tab-timeline">Oś czasu</button>
-            <button class="tab-btn" onclick="openTab(event, 'lineups-tab')" data-testid="tab-lineups">Składy</button>
-            <button class="tab-btn" onclick="openTab(event, 'stats-tab')" data-testid="tab-stats">Statystyki</button>
+            <button class="tab-btn active" onclick="openTab(event, 'timeline-tab')" data-testid="tab-timeline">{% trans "Oś czasu" %}</button>
+            <button class="tab-btn" onclick="openTab(event, 'lineups-tab')" data-testid="tab-lineups">{% trans "Składy" %}</button>
+            <button class="tab-btn" onclick="openTab(event, 'stats-tab')" data-testid="tab-stats">{% trans "Statystyki" %}</button>
         </div>
 
         {# ======================= OŚ CZASU ======================= #}
@@ -59,13 +60,13 @@
                     </div>
                     <div class="feed-info period-info">
                         {% if event.text == 'HT' or event.time == 45 %}
-                        Koniec pierwszej połowy
+                        {% trans "Koniec pierwszej połowy" %}
                         {% elif event.text == 'FT' or event.time == 90 %}
-                        Koniec meczu
+                        {% trans "Koniec meczu" %}
                         {% elif event.text %}
                         {{ event.text }}
                         {% else %}
-                        Przerwa
+                        {% trans "Przerwa" %}
                         {% endif %}
                         {% if event.running_score %}
                         <span class="period-score">{{ event.running_score }}</span>
@@ -78,7 +79,7 @@
                         <i class="fa-regular fa-clock"></i>
                     </div>
                     <div class="feed-info injurytime-info">
-                        Sędzia dolicza: <strong>+{{ event.length|default:event.added_time }} min</strong>
+                        {% blocktrans with length=event.length|default:event.added_time %}Sędzia dolicza: <strong>+{{ length }} min</strong>{% endblocktrans %}
                     </div>
 
                     {# ---------- VAR DECISION ---------- #}
@@ -92,11 +93,11 @@
                             <span class="var-label">
                                 VAR:
                                 {% if event.confirmed %}
-                                <span class="var-confirmed"><i class="fa-solid fa-check"></i> Potwierdzone</span>
+                                <span class="var-confirmed"><i class="fa-solid fa-check"></i> {% trans "Potwierdzone" %}</span>
                                 {% elif event.confirmed == False %}
-                                <span class="var-overturned"><i class="fa-solid fa-xmark"></i> Odrzucone</span>
+                                <span class="var-overturned"><i class="fa-solid fa-xmark"></i> {% trans "Odrzucone" %}</span>
                                 {% else %}
-                                <span class="var-pending">W trakcie analizy</span>
+                                <span class="var-pending">{% trans "W trakcie analizy" %}</span>
                                 {% endif %}
                             </span>
                             {% if event.incident_class_label %}
@@ -161,7 +162,7 @@
                             <span class="player-name">
                                 {{ event.player_name }}
                                 {% if event.rescinded %}
-                                <span class="rescinded-tag">ANULOWANA</span>
+                                <span class="rescinded-tag">{% trans "ANULOWANA" %}</span>
                                 {% endif %}
                             </span>
                             {% if event.reason %}
@@ -196,7 +197,7 @@
                                 {% endif %}
                             </span>
                             {% if event.reason == 'goalkeeperSave' %}
-                            <span class="sub-info"><i class="fa-solid fa-hands"></i> Obrona bramkarza</span>
+                            <span class="sub-info"><i class="fa-solid fa-hands"></i> {% trans "Obrona bramkarza" %}</span>
                             {% elif event.reason %}
                             <span class="sub-info">{{ event.reason }}</span>
                             {% endif %}
@@ -212,7 +213,7 @@
                     {% endif %}
                 </div>
                 {% empty %}
-                <p class="no-data">Brak zdarzeń.</p>
+                <p class="no-data">{% trans "Brak zdarzeń." %}</p>
                 {% endfor %}
             </div>
         </div>{# /timeline-tab #}
@@ -296,7 +297,7 @@
                     {% if not pitch_home and not pitch_away %}
                     <div class="pitch-empty-state">
                         <div class="pitch-empty-icon"><i class="fa-solid fa-people-group"></i></div>
-                        <div class="pitch-empty-text">Składy na boisku niedostępne</div>
+                        <div class="pitch-empty-text">{% trans "Składy na boisku niedostępne" %}</div>
                     </div>
                     {% endif %}
                 </div>
@@ -305,7 +306,7 @@
             {# ══════ REZERWA ══════ #}
             <div class="subs-section">
                 <div class="subs-half">
-                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa – {{ match.home_team.name }}</div>
+                    {% blocktrans with team=match.home_team.name %}<div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa – {{ team }}</div>{% endblocktrans %}
                     <div class="subs-grid">
                         {% for player in lineups.home_subs %}
                         <div class="sub-card">
@@ -320,12 +321,12 @@
                             <span class="sub-pos">{{ player.position_label }}</span>
                         </div>
                         {% empty %}
-                        <p class="no-data">Brak danych.</p>
+                        <p class="no-data">{% trans "Brak danych." %}</p>
                         {% endfor %}
                     </div>
                 </div>
                 <div class="subs-half">
-                    <div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa - {{ match.away_team.name }}</div>
+                    {% blocktrans with team=match.away_team.name %}<div class="subs-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> Rezerwa - {{ team }}</div>{% endblocktrans %}
                     <div class="subs-grid">
                         {% for player in lineups.away_subs %}
                         <div class="sub-card">
@@ -340,7 +341,7 @@
                             <span class="sub-pos">{{ player.position_label }}</span>
                         </div>
                         {% empty %}
-                        <p class="no-data">Brak danych.</p>
+                        <p class="no-data">{% trans "Brak danych." %}</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -395,11 +396,11 @@
                 <div class="paywall-overlay" data-testid="paywall-lineups-overlay">
                     <div class="paywall-overlay-box">
                         <div class="paywall-icon"><i class="fa-solid fa-lock"></i></div>
-                        <h3>Odblokuj składy i historię H2H</h3>
-                        <p>Szczegółowe składy, rezerwowi, kontuzjowani gracze<br>oraz historia bezpośrednich spotkań &mdash; dostępne od planu <strong>PLUS</strong>.</p>
+                        <h3>{% trans "Odblokuj składy i historię H2H" %}</h3>
+                        <p>{% trans "Szczegółowe składy, rezerwowi, kontuzjowani gracze" %}<br>{% trans "oraz historia bezpośrednich spotkań" %} &mdash; {% blocktrans %}dostępne od planu <strong>PLUS</strong>.{% endblocktrans %}</p>
                         <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn"
                            data-testid="paywall-lineups-upgrade-btn">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Sprawdź cennik
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> {% trans "Sprawdź cennik" %}
                         </a>
                     </div>
                 </div>
@@ -418,7 +419,7 @@
                 <div class="stats-period-tabs">
                     {% for period in stats_periods %}
                     <button class="period-btn{% if forloop.first %} active{% endif %}" onclick="openPeriod(event, 'period-{{ forloop.counter }}')">
-                        {% if period.period == 'ALL' %}Cały mecz{% elif period.period == '1ST' %}1. połowa{% elif period.period == '2ND' %}2. połowa{% else %}{{ period.period }}{% endif %}
+                        {% if period.period == 'ALL' %}{% trans "Cały mecz" %}{% elif period.period == '1ST' %}{% trans "1. połowa" %}{% elif period.period == '2ND' %}{% trans "2. połowa" %}{% else %}{{ period.period }}{% endif %}
                     </button>
                     {% endfor %}
                 </div>
@@ -443,7 +444,7 @@
             </div>
             {% else %}
             <div class="stats-empty">
-                <i class="fa-solid fa-chart-bar"></i> Statystyki niedostępne
+                <i class="fa-solid fa-chart-bar"></i> {% trans "Statystyki niedostępne" %}
             </div>
             {% endif %}
 
@@ -451,22 +452,21 @@
             {# ██ FREE/PLUS: paywall PREMIUM — korona ██ #}
             <div class="paywall-premium-banner" data-testid="paywall-stats">
                 <div class="paywall-premium-crown"><i class="fa-solid fa-crown"></i></div>
-                <h3>Statystyki xG i zaawansowane dane</h3>
+                <h3>{% trans "Statystyki xG i zaawansowane dane" %}</h3>
                 <p>
-                    Oczekiwane bramki (xG), posiadanie piłki, strzały celne<br>
-                    i dziesiątki innych wskaźników &mdash; dostępne wyłącznie w planie <strong>PREMIUM</strong>.
+                    {% trans "Oczekiwane bramki (xG), posiadanie piłki, strzały celne" %}<br>
+                    {% trans "i dziesiątki innych wskaźników" %} &mdash; {% blocktrans %}dostępne wyłącznie w planie <strong>PREMIUM</strong>.{% endblocktrans %}
                 </p>
-                <p class="paywall-premium-tagline">Wznieś swoje analizy na najwyższy poziom.</p>
+                <p class="paywall-premium-tagline">{% trans "Wznieś swoje analizy na najwyższy poziom." %}</p>
                 <a href="{% url 'subscribe' %}" class="paywall-upgrade-btn paywall-upgrade-premium"
                    data-testid="paywall-stats-upgrade-btn">
-                    <i class="fa-solid fa-crown"></i> Wybierz Premium
+                    <i class="fa-solid fa-crown"></i> {% trans "Wybierz Premium" %}
                 </a>
             </div>
             {% endif %}
 
         </div>{# /stats-tab #}
 
-    </div>{# /match-card-premium #}
 </div>{# /detail-wrapper #}
 
 <script src="{% static 'matches/js/match_detail.js' %}"></script>

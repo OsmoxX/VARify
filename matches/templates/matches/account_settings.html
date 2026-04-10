@@ -1,7 +1,8 @@
 {% extends 'matches/base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}VARify – Ustawienia konta{% endblock %}
+{% block title %}VARify – {% trans "Ustawienia konta" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/account_settings.css' %}">
@@ -11,7 +12,7 @@
 <div class="account-wrapper">
 
     <a class="back-btn-modern" href="/">
-        <i class="fa-solid fa-chevron-left"></i> Powrót
+        <i class="fa-solid fa-chevron-left"></i> {% trans "Powrót" %}
     </a>
 
     <div class="account-header">
@@ -20,7 +21,7 @@
         </div>
         <div>
             <h1 class="account-title">{{ user.username }}</h1>
-            <p class="account-subtitle">Ustawienia konta</p>
+            <p class="account-subtitle">{% trans "Ustawienia konta" %}</p>
         </div>
     </div>
 
@@ -37,34 +38,34 @@
     <!-- ── TWOJA SUBSKRYPCJA ──────────────────────── -->
     <div class="account-card">
         <h2 class="account-card-title sub-card-header">
-            <span><i class="fa-solid fa-credit-card"></i> Twoja Subskrypcja</span>
+            <span><i class="fa-solid fa-credit-card"></i> {% trans "Twoja Subskrypcja" %}</span>
             {% if user.profile.tier == 'PREMIUM' %}
-                <span class="sub-card-badge premium"><i class="fa-solid fa-crown"></i> Wyższy Plan PREMIUM</span>
+                <span class="sub-card-badge premium"><i class="fa-solid fa-crown"></i> {% trans "Wyższy Plan PREMIUM" %}</span>
             {% elif user.profile.tier == 'PLUS' %}
-                <span class="sub-card-badge plus"><i class="fa-solid fa-star"></i> Aktywny Plan PLUS</span>
+                <span class="sub-card-badge plus"><i class="fa-solid fa-star"></i> {% trans "Aktywny Plan PLUS" %}</span>
             {% else %}
-                <span class="sub-card-badge free">Darmowy Plan FREE</span>
+                <span class="sub-card-badge free">{% trans "Darmowy Plan FREE" %}</span>
             {% endif %}
         </h2>
         <div class="sub-info-container">
             <div class="sub-info-box">
-                <p class="sub-info-label">Status Konta</p>
+                <p class="sub-info-label">{% trans "Status Konta" %}</p>
                 <div class="sub-info-status">
                     <span class="status-dot"></span>
                     <span class="status-text">
-                        Aktywne (Zgodne z regulaminem)
+                        {% trans "Aktywne (Zgodne z regulaminem)" %}
                     </span>
                 </div>
             </div>
             
             {% if user.profile.tier != 'FREE' %}
             <div class="sub-info-box">
-                <p class="sub-info-label">Cykl Rozliczeniowy</p>
+                <p class="sub-info-label">{% trans "Cykl Rozliczeniowy" %}</p>
                 <p class="sub-info-value">
-                    Odświeżane automatycznie (co miesiąc)
+                    {% trans "Odświeżane automatycznie (co miesiąc)" %}
                 </p>
                 <p class="sub-info-footer">
-                    <i class="fa-brands fa-stripe"></i> Bezpieczne płatności obsługiwane i chronione przez Stripe.
+                    <i class="fa-brands fa-stripe"></i> {% trans "Bezpieczne płatności obsługiwane i chronione przez Stripe." %}
                 </p>
             </div>
             {% endif %}
@@ -72,11 +73,11 @@
             <div class="sub-action-wrapper">
                 <a href="{% url 'subscribe' %}" class="btn-sub-action {% if user.profile.tier == 'FREE' %}free{% else %}active-sub{% endif %}">
                     {% if user.profile.tier == 'FREE' %}
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Poznaj możliwości ulepszenia planu
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> {% trans "Poznaj możliwości ulepszenia planu" %}
                     {% elif user.profile.tier == 'PLUS' %}
-                        <i class="fa-solid fa-crown"></i> Przełącz na Premium
+                        <i class="fa-solid fa-crown"></i> {% trans "Przełącz na Premium" %}
                     {% else %}
-                        <i class="fa-solid fa-gear"></i> Zapoznaj się z ofertami
+                        <i class="fa-solid fa-gear"></i> {% trans "Zapoznaj się z ofertami" %}
                     {% endif %}
                 </a>
             </div>
@@ -86,14 +87,14 @@
     <!-- ── DANE PROFILU ───────────────────────────── -->
     <div class="account-card">
         <h2 class="account-card-title">
-            <i class="fa-solid fa-user-pen"></i> Dane profilu
+            <i class="fa-solid fa-user-pen"></i> {% trans "Dane profilu" %}
         </h2>
         <form method="post" class="account-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="update_profile">
 
             <div class="form-group">
-                <label for="username">Nazwa użytkownika</label>
+                <label for="username">{% trans "Nazwa użytkownika" %}</label>
                 {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
                 {# PLUS/PREMIUM: pole odblokowane #}
                 <input type="text" id="username" name="username" value="{{ user.username }}"
@@ -104,12 +105,12 @@
                 <div class="input-locked-wrapper">
                     <input type="text" id="username" value="{{ user.username }}"
                         class="form-input input-locked"
-                        disabled title="Zmiana nicku wymaga planu PLUS">
+                        disabled title="{% trans 'Zmiana nicku wymaga planu PLUS' %}">
                     <i class="fa-solid fa-lock input-lock-icon" style="color: #f59e0b;"></i>
                 </div>
                 <span class="form-hint-locked">
                     <i class="fa-solid fa-lock" style="font-size:0.7rem;"></i>
-                    Zmiana nicku dostępna od planu
+                    {% trans "Zmiana nicku dostępna od planu" %}
                     <a href="{% url 'subscribe' %}" class="hint-upgrade-link">PLUS →</a>
                 </span>
                 {% endif %}
@@ -120,13 +121,13 @@
 
 
             <div class="form-group">
-                <label for="email">Adres e-mail</label>
+                <label for="email">{% trans "Adres e-mail" %}</label>
                 <input type="email" id="email" name="email" value="{{ user.email }}"
                     class="form-input" autocomplete="email">
             </div>
 
             <button type="submit" class="btn-save">
-                <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
+                <i class="fa-solid fa-floppy-disk"></i> {% trans "Zapisz zmiany" %}
             </button>
         </form>
     </div>
@@ -134,14 +135,14 @@
     <!-- ── ZMIANA HASŁA ───────────────────────────── -->
     <div class="account-card">
         <h2 class="account-card-title">
-            <i class="fa-solid fa-lock"></i> Zmiana hasła
+            <i class="fa-solid fa-lock"></i> {% trans "Zmiana hasła" %}
         </h2>
         <form method="post" class="account-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="change_password">
 
             <div class="form-group">
-                <label for="current_password">Obecne hasło</label>
+                <label for="current_password">{% trans "Obecne hasło" %}</label>
                 <div class="input-eye-wrapper">
                     <input type="password" id="current_password" name="current_password"
                         class="form-input {% if errors.current_password %}input-error{% endif %}"
@@ -156,7 +157,7 @@
             </div>
 
             <div class="form-group">
-                <label for="new_password">Nowe hasło <small>(min. 8 znaków)</small></label>
+                <label for="new_password">{% trans "Nowe hasło" %} <small>({% trans "min. 8 znaków" %})</small></label>
                 <div class="input-eye-wrapper">
                     <input type="password" id="new_password" name="new_password"
                         class="form-input {% if errors.new_password %}input-error{% endif %}"
@@ -171,7 +172,7 @@
             </div>
 
             <div class="form-group">
-                <label for="confirm_password">Powtórz nowe hasło</label>
+                <label for="confirm_password">{% trans "Powtórz nowe hasło" %}</label>
                 <div class="input-eye-wrapper">
                     <input type="password" id="confirm_password" name="confirm_password"
                         class="form-input {% if errors.confirm_password %}input-error{% endif %}"
@@ -186,7 +187,7 @@
             </div>
 
             <button type="submit" class="btn-save btn-save-danger">
-                <i class="fa-solid fa-key"></i> Zmień hasło
+                <i class="fa-solid fa-key"></i> {% trans "Zmień hasło" %}
             </button>
         </form>
     </div>

@@ -1,0 +1,786 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-10 14:34+0200\n"
+"PO-Revision-Date: 2026-04-10 11:59+0000\n"
+"Last-Translator:   <>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Translated-Using: django-rosetta 0.10.3\n"
+
+#: accounts/templates/accounts/subscribe.html:37
+msgid "Wróć do aplikacji"
+msgstr "Back to app"
+
+#: accounts/templates/accounts/subscribe.html:46
+msgid "Odblokuj pełen potencjał"
+msgstr "Unlock full potential"
+
+#: accounts/templates/accounts/subscribe.html:48
+msgid "Wybierz swój plan"
+msgstr "Choose your plan"
+
+#: accounts/templates/accounts/subscribe.html:49
+msgid "Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców."
+msgstr "Get full access to statistics and stay ahead of other fans."
+
+#: accounts/templates/accounts/subscribe.html:73
+#: accounts/templates/accounts/subscribe.html:101
+#: accounts/templates/accounts/subscribe.html:132
+msgid "/miesiąc"
+msgstr "/month"
+
+#: accounts/templates/accounts/subscribe.html:76
+#: matches/templates/matches/base.html:52
+#: matches/templates/matches/live_match_list.html:14
+msgid "Mecze na żywo"
+msgstr "Live Matches"
+
+#: accounts/templates/accounts/subscribe.html:77
+msgid "Nadchodzące spotkania"
+msgstr "Upcoming matches"
+
+#: accounts/templates/accounts/subscribe.html:78
+#: accounts/templates/accounts/subscribe.html:105
+#, fuzzy
+#| msgid "Wyszukiwarka klubów wymaga planu"
+msgid "Wyszukiwarka klubów"
+msgstr "Club search requires plan"
+
+#: accounts/templates/accounts/subscribe.html:79
+#: accounts/templates/accounts/subscribe.html:106
+msgid "Składy i historia spotkań"
+msgstr "Lineups and H2H history"
+
+#: accounts/templates/accounts/subscribe.html:80
+msgid "Własny Nick w aplikacji"
+msgstr "Custom Nickname in app"
+
+#: accounts/templates/accounts/subscribe.html:84
+#: accounts/templates/accounts/subscribe.html:112
+#: accounts/templates/accounts/subscribe.html:143
+msgid "Twój obecny plan"
+msgstr "Your current plan"
+
+#: accounts/templates/accounts/subscribe.html:87
+msgid "Pozostań na Free"
+msgstr "Stay on Free"
+
+#: accounts/templates/accounts/subscribe.html:95
+msgid "Najczęściej wybierany"
+msgstr "Most popular"
+
+#: accounts/templates/accounts/subscribe.html:104
+#, fuzzy
+#| msgid "Mecze na żywo"
+msgid "Mecze na żywo i terminarz"
+msgstr "Live Matches"
+
+#: accounts/templates/accounts/subscribe.html:107
+msgid "Zmiana Nicku w aplikacji"
+msgstr "Change Nickname in app"
+
+#: accounts/templates/accounts/subscribe.html:108
+msgid "Zaawansowane statystyki graczy"
+msgstr "Advanced player stats"
+
+#: accounts/templates/accounts/subscribe.html:118
+msgid "Zacznij z PLUS"
+msgstr "Start with PLUS"
+
+#: accounts/templates/accounts/subscribe.html:135
+msgid "Wszystko z pakietu PLUS"
+msgstr "Everything in PLUS"
+
+#: accounts/templates/accounts/subscribe.html:136
+msgid "Wyszukiwarka zawodników"
+msgstr "Player search engine"
+
+#: accounts/templates/accounts/subscribe.html:137
+msgid "Zaawansowane statystyki XG"
+msgstr "Advanced xG stats"
+
+#: accounts/templates/accounts/subscribe.html:138
+msgid "Brak reklam"
+msgstr "Ad-free experience"
+
+#: accounts/templates/accounts/subscribe.html:139
+msgid "Priorytetowe wsparcie"
+msgstr "Priority support"
+
+#: accounts/templates/accounts/subscribe.html:149
+#: matches/templates/matches/match_detail.html:463
+msgid "Wybierz Premium"
+msgstr "Choose Premium"
+
+#: accounts/templates/accounts/subscribe.html:162
+msgid ""
+"Bezpieczna płatność przez Stripe · Anuluj w dowolnym momencie · Brak "
+"ukrytych opłat"
+msgstr "Secure payment via Stripe · Cancel anytime · No hidden fees"
+
+#: matches/models/event.py:126
+msgid "samobój"
+msgstr "own goal"
+
+#: matches/models/event.py:127
+msgid "karny"
+msgstr "penalty"
+
+#: matches/models/event.py:128
+msgid "niestrzelony karny"
+msgstr "missed penalty"
+
+#: matches/models/event.py:129
+msgid "karny nie uznany"
+msgstr "penalty not awarded"
+
+#: matches/models/event.py:130
+msgid "2× żółta"
+msgstr "2× yellow"
+
+#: matches/templates/matches/account_settings.html:5
+#: matches/templates/matches/account_settings.html:24
+#: matches/templates/matches/base.html:86
+msgid "Ustawienia konta"
+msgstr "Account settings"
+
+#: matches/templates/matches/account_settings.html:15
+#: matches/templates/matches/team_detail.html:14
+msgid "Powrót"
+msgstr "Back"
+
+#: matches/templates/matches/account_settings.html:41
+msgid "Twoja Subskrypcja"
+msgstr "Your Subscription"
+
+#: matches/templates/matches/account_settings.html:43
+msgid "Wyższy Plan PREMIUM"
+msgstr "Higher PREMIUM Plan"
+
+#: matches/templates/matches/account_settings.html:45
+msgid "Aktywny Plan PLUS"
+msgstr "Active PLUS Plan"
+
+#: matches/templates/matches/account_settings.html:47
+msgid "Darmowy Plan FREE"
+msgstr "Free Plan"
+
+#: matches/templates/matches/account_settings.html:52
+msgid "Status Konta"
+msgstr "Account Status"
+
+#: matches/templates/matches/account_settings.html:56
+msgid "Aktywne (Zgodne z regulaminem)"
+msgstr "Active (In good standing)"
+
+#: matches/templates/matches/account_settings.html:63
+msgid "Cykl Rozliczeniowy"
+msgstr "Billing Cycle"
+
+#: matches/templates/matches/account_settings.html:65
+msgid "Odświeżane automatycznie (co miesiąc)"
+msgstr "Renews automatically (monthly)"
+
+#: matches/templates/matches/account_settings.html:68
+msgid "Bezpieczne płatności obsługiwane i chronione przez Stripe."
+msgstr "Secure payments processed and protected by Stripe."
+
+#: matches/templates/matches/account_settings.html:76
+msgid "Poznaj możliwości ulepszenia planu"
+msgstr "Explore upgrade options"
+
+#: matches/templates/matches/account_settings.html:78
+msgid "Przełącz na Premium"
+msgstr "Switch to Premium"
+
+#: matches/templates/matches/account_settings.html:80
+msgid "Zapoznaj się z ofertami"
+msgstr "View offers"
+
+#: matches/templates/matches/account_settings.html:90
+msgid "Dane profilu"
+msgstr "Profile details"
+
+#: matches/templates/matches/account_settings.html:97
+#, fuzzy
+#| msgid "Menu użytkownika"
+msgid "Nazwa użytkownika"
+msgstr "User menu"
+
+#: matches/templates/matches/account_settings.html:108
+#, fuzzy
+#| msgid "Wymaga planu PLUS"
+msgid "Zmiana nicku wymaga planu PLUS"
+msgstr "Requires PLUS plan"
+
+#: matches/templates/matches/account_settings.html:113
+msgid "Zmiana nicku dostępna od planu"
+msgstr "Nickname change available from plan"
+
+#: matches/templates/matches/account_settings.html:124
+#, fuzzy
+#| msgid "brak e-mail"
+msgid "Adres e-mail"
+msgstr "no email"
+
+#: matches/templates/matches/account_settings.html:130
+msgid "Zapisz zmiany"
+msgstr "Save changes"
+
+#: matches/templates/matches/account_settings.html:138
+msgid "Zmiana hasła"
+msgstr "Change password"
+
+#: matches/templates/matches/account_settings.html:145
+msgid "Obecne hasło"
+msgstr "Current password"
+
+#: matches/templates/matches/account_settings.html:160
+msgid "Nowe hasło"
+msgstr "New password"
+
+#: matches/templates/matches/account_settings.html:160
+msgid "min. 8 znaków"
+msgstr "min. 8 characters"
+
+#: matches/templates/matches/account_settings.html:175
+msgid "Powtórz nowe hasło"
+msgstr "Repeat new password"
+
+#: matches/templates/matches/account_settings.html:190
+msgid "Zmień hasło"
+msgstr "Change password"
+
+#: matches/templates/matches/base.html:30
+msgid "Szukaj drużyny (Enter)"
+msgstr "Search team (Enter)"
+
+#: matches/templates/matches/base.html:36
+msgid "Wymaga planu PLUS"
+msgstr "Requires PLUS plan"
+
+#: matches/templates/matches/base.html:38
+msgid "Szukaj drużyny..."
+msgstr "Search team..."
+
+#: matches/templates/matches/base.html:42
+msgid "Wyszukiwarka klubów wymaga planu"
+msgstr "Club search requires plan"
+
+#: matches/templates/matches/base.html:44
+msgid "Ulepsz teraz"
+msgstr "Upgrade now"
+
+#: matches/templates/matches/base.html:55
+msgid "Kalendarz"
+msgstr "Calendar"
+
+#: matches/templates/matches/base.html:61
+msgid "Menu użytkownika"
+msgstr "User menu"
+
+#: matches/templates/matches/base.html:70
+msgid "brak e-mail"
+msgstr "no email"
+
+#: matches/templates/matches/base.html:91
+msgid "Wyloguj się"
+msgstr "Logout"
+
+#: matches/templates/matches/base.html:97
+msgid "Zaloguj"
+msgstr "Login"
+
+#: matches/templates/matches/base.html:103
+#: matches/templates/matches/base.html:109
+msgid "Powiadomienia"
+msgstr "Notifications"
+
+#: matches/templates/matches/base.html:110
+msgid "Wyczyść wszystkie"
+msgstr "Clear all"
+
+#: matches/templates/matches/base.html:117
+msgid "Brak powiadomień"
+msgstr "No notifications"
+
+#: matches/templates/matches/base.html:126
+msgid "Zmień język"
+msgstr "Change language"
+
+#: matches/templates/matches/base.html:193
+msgid "Gotowy do analizy"
+msgstr "Ready to analyse"
+
+#: matches/templates/matches/base.html:198
+#, fuzzy
+#| msgid "Wymaga planu PLUS"
+msgid "Wymaga planu Premium"
+msgstr "Requires PLUS plan"
+
+#: matches/templates/matches/base.html:205
+msgid "Zamknij"
+msgstr "Close"
+
+#: matches/templates/matches/base.html:205
+msgid "Zamknij panel AI"
+msgstr "Close AI panel"
+
+#: matches/templates/matches/base.html:209
+msgid "Wyczyść historię czatu"
+msgstr "Clear chat history"
+
+#: matches/templates/matches/base.html:223
+msgid "Cześć! Jestem Twoim AI Analitykiem sportowym."
+msgstr "Hi! I am your AI Sports Analyst."
+
+#: matches/templates/matches/base.html:224
+msgid "Zapytaj mnie o dowolny mecz, statystyki lub drużyny."
+msgstr "Ask me about any match, stats or teams."
+
+#: matches/templates/matches/base.html:240
+msgid "Zapytaj o mecz, drużynę, statystyki..."
+msgstr "Ask about a match, team, stats..."
+
+#: matches/templates/matches/base.html:242
+msgid "Wiadomość do AI Analityka"
+msgstr "Message to AI Analyst"
+
+#: matches/templates/matches/base.html:246
+msgid "Zatrzymaj generowanie"
+msgstr "Stop generating"
+
+#: matches/templates/matches/base.html:249
+msgid "Wyślij (Enter)"
+msgstr "Send (Enter)"
+
+#: matches/templates/matches/base.html:249
+#: matches/templates/matches/base.html:314
+msgid "Wyślij wiadomość"
+msgstr "Send message"
+
+#: matches/templates/matches/base.html:289
+msgid "AI Analityk Sportowy"
+msgstr "AI Sports Analyst"
+
+#: matches/templates/matches/base.html:291
+msgid ""
+"Zadawaj pytania o mecze, drużyny i statystyki\n"
+"                            swojemu personalnemu asystentowi AI napędzonemu\n"
+"                            przez <strong style=\"color:#e2e8f0;\">Gemini "
+"2.5 Flash</strong>.\n"
+"                            Dostępne wyłącznie w planie <strong "
+"style=\"color:#f59e0b;\">Premium</strong>."
+msgstr ""
+
+#: matches/templates/matches/base.html:298
+msgid "Odblokuj AI Analityka"
+msgstr "Unlock AI Analyst"
+
+#: matches/templates/matches/base.html:309
+msgid "Dostępne tylko dla Premium..."
+msgstr "Available for Premium only..."
+
+#: matches/templates/matches/base.html:312
+msgid "Input zablokowany — wymagane Premium"
+msgstr "Input locked — Premium required"
+
+#: matches/templates/matches/calendar.html:5
+#: matches/templates/matches/calendar.html:15
+msgid "Nadchodzące mecze"
+msgstr "Upcoming matches"
+
+#: matches/templates/matches/calendar.html:22
+#: matches/templates/matches/calendar.html:27
+#: matches/templates/matches/live_match_list.html:21
+#: matches/templates/matches/live_match_list.html:26
+msgid "Filtruj ligi"
+msgstr "Filter leagues"
+
+#: matches/templates/matches/calendar.html:33
+#: matches/templates/matches/live_match_list.html:32
+msgid "Szukaj ligi..."
+msgstr "Search league..."
+
+#: matches/templates/matches/calendar.html:38
+#: matches/templates/matches/live_match_list.html:37
+msgid "Zaznacz wszystkie"
+msgstr "Select all"
+
+#: matches/templates/matches/calendar.html:39
+#: matches/templates/matches/live_match_list.html:38
+msgid "Odznacz wszystkie"
+msgstr "Deselect all"
+
+#: matches/templates/matches/calendar.html:48
+#: matches/templates/matches/live_match_list.html:47
+msgid "Nie znaleziono lig"
+msgstr "No leagues found"
+
+#: matches/templates/matches/calendar.html:54
+#: matches/templates/matches/live_match_list.html:53
+msgid "Rozwiń wszystkie"
+msgstr "Expand all"
+
+#: matches/templates/matches/calendar.html:71
+#: matches/templates/matches/calendar.html:84
+#: matches/templates/matches/live_match_list.html:66
+#: matches/templates/matches/live_match_list.html:84
+msgid "Ładowanie meczów..."
+msgstr "Loading matches..."
+
+#: matches/templates/matches/calendar.html:79
+msgid "Dziś"
+msgstr "Today"
+
+#: matches/templates/matches/calendar.html:80
+msgid "Jutro"
+msgstr "Tomorrow"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Ndz"
+msgstr "Sun"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Pon"
+msgstr "Mon"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Wt"
+msgstr "Tue"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Śr"
+msgstr "Wed"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Czw"
+msgstr "Thu"
+
+#: matches/templates/matches/calendar.html:81
+#, fuzzy
+#| msgid "Pkt"
+msgid "Pt"
+msgstr "Pts"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Sob"
+msgstr "Sat"
+
+#: matches/templates/matches/calendar.html:82
+msgid "Brak meczów na ten dzień"
+msgstr "No matches on this day"
+
+#: matches/templates/matches/calendar.html:83
+msgid "Brak nadchodzących meczów na ten dzień."
+msgstr "No upcoming matches on this day."
+
+#: matches/templates/matches/calendar.html:85
+#: matches/templates/matches/live_match_list.html:85
+msgid "Błąd ładowania meczów. Spróbuj odświeżyć stronę."
+msgstr "Error loading matches. Try refreshing the page."
+
+#: matches/templates/matches/live_match_list.html:5
+msgid "Centrum Wyników"
+msgstr "Livescore Center"
+
+#: matches/templates/matches/live_match_list.html:62
+#, fuzzy
+#| msgid "Błąd wyszukiwania. Spróbuj ponownie."
+msgid "Błąd połączenia. Spróbuj ponownie."
+msgstr "Search error. Try again."
+
+#: matches/templates/matches/live_match_list.html:78
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Wyłącz powiadomienia"
+msgstr "Notifications"
+
+#: matches/templates/matches/live_match_list.html:79
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Włącz powiadomienia"
+msgstr "Notifications"
+
+#: matches/templates/matches/live_match_list.html:80
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Powiadomienia włączone"
+msgstr "Notifications"
+
+#: matches/templates/matches/live_match_list.html:81
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Powiadomienia wyłączone"
+msgstr "Notifications"
+
+#: matches/templates/matches/live_match_list.html:82
+#, fuzzy
+#| msgid "Tabela ligi"
+msgid "Inne ligi"
+msgstr "League table"
+
+#: matches/templates/matches/live_match_list.html:83
+msgid "Brak meczów na żywo w tym momencie."
+msgstr "No live matches at this moment."
+
+#: matches/templates/matches/match_detail.html:16
+msgid "Wróć do wyników"
+msgstr "Back to results"
+
+#: matches/templates/matches/match_detail.html:41
+msgid "Oś czasu"
+msgstr "Timeline"
+
+#: matches/templates/matches/match_detail.html:42
+msgid "Składy"
+msgstr "Lineups"
+
+#: matches/templates/matches/match_detail.html:43
+msgid "Statystyki"
+msgstr "Stats"
+
+#: matches/templates/matches/match_detail.html:63
+msgid "Koniec pierwszej połowy"
+msgstr "End of first half"
+
+#: matches/templates/matches/match_detail.html:65
+msgid "Koniec meczu"
+msgstr "End of match"
+
+#: matches/templates/matches/match_detail.html:69
+msgid "Przerwa"
+msgstr "Half-time"
+
+#: matches/templates/matches/match_detail.html:82
+#, python-format
+msgid "Sędzia dolicza: <strong>+%(length)s min</strong>"
+msgstr "Added time: <strong>+%(length)s min</strong>"
+
+#: matches/templates/matches/match_detail.html:96
+msgid "Potwierdzone"
+msgstr "Confirmed"
+
+#: matches/templates/matches/match_detail.html:98
+msgid "Odrzucone"
+msgstr "Overturned"
+
+#: matches/templates/matches/match_detail.html:100
+msgid "W trakcie analizy"
+msgstr "Under review"
+
+#: matches/templates/matches/match_detail.html:165
+msgid "ANULOWANA"
+msgstr "RESCINDED"
+
+#: matches/templates/matches/match_detail.html:200
+msgid "Obrona bramkarza"
+msgstr "Goalkeeper save"
+
+#: matches/templates/matches/match_detail.html:216
+msgid "Brak zdarzeń."
+msgstr "No events."
+
+#: matches/templates/matches/match_detail.html:300
+msgid "Składy na boisku niedostępne"
+msgstr "Pitch lineups unavailable"
+
+#: matches/templates/matches/match_detail.html:309
+#, python-format
+msgid ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Rezerwa – %(team)s</div>"
+msgstr ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Substitutes – %(team)s</div>"
+
+#: matches/templates/matches/match_detail.html:324
+#: matches/templates/matches/match_detail.html:344
+msgid "Brak danych."
+msgstr "No data."
+
+#: matches/templates/matches/match_detail.html:329
+#, python-format
+msgid ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Rezerwa - %(team)s</div>"
+msgstr ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Substitutes - %(team)s</div>"
+
+#: matches/templates/matches/match_detail.html:399
+msgid "Odblokuj składy i historię H2H"
+msgstr "Unlock lineups and H2H history"
+
+#: matches/templates/matches/match_detail.html:400
+msgid "Szczegółowe składy, rezerwowi, kontuzjowani gracze"
+msgstr "Detailed lineups, substitutes, injured players"
+
+#: matches/templates/matches/match_detail.html:400
+msgid "oraz historia bezpośrednich spotkań"
+msgstr "and head-to-head history"
+
+#: matches/templates/matches/match_detail.html:400
+msgid "dostępne od planu <strong>PLUS</strong>."
+msgstr "available from <strong>PLUS</strong> plan."
+
+#: matches/templates/matches/match_detail.html:403
+msgid "Sprawdź cennik"
+msgstr "View pricing"
+
+#: matches/templates/matches/match_detail.html:422
+msgid "Cały mecz"
+msgstr "Full match"
+
+#: matches/templates/matches/match_detail.html:422
+msgid "1. połowa"
+msgstr "1st half"
+
+#: matches/templates/matches/match_detail.html:422
+msgid "2. połowa"
+msgstr "2nd half"
+
+#: matches/templates/matches/match_detail.html:447
+msgid "Statystyki niedostępne"
+msgstr "Stats unavailable"
+
+#: matches/templates/matches/match_detail.html:455
+msgid "Statystyki xG i zaawansowane dane"
+msgstr "xG Stats and advanced data"
+
+#: matches/templates/matches/match_detail.html:457
+msgid "Oczekiwane bramki (xG), posiadanie piłki, strzały celne"
+msgstr "Expected goals (xG), ball possession, shots on target"
+
+#: matches/templates/matches/match_detail.html:458
+msgid "i dziesiątki innych wskaźników"
+msgstr "and dozens of other metrics"
+
+#: matches/templates/matches/match_detail.html:458
+msgid "dostępne wyłącznie w planie <strong>PREMIUM</strong>."
+msgstr "available exclusively in the <strong>PREMIUM</strong> plan."
+
+#: matches/templates/matches/match_detail.html:460
+msgid "Wznieś swoje analizy na najwyższy poziom."
+msgstr "Elevate your analysis to the highest level."
+
+#: matches/templates/matches/search_results.html:11
+msgid "Wyniki dla:"
+msgstr "Results for:"
+
+#: matches/templates/matches/search_results.html:12
+msgid "Brak drużyn pasujących do zapytania."
+msgstr "No teams matching the query."
+
+#: matches/templates/matches/search_results.html:13
+msgid "Brak zawodników pasujących do zapytania."
+msgstr "No players matching the query."
+
+#: matches/templates/matches/search_results.html:14
+#, fuzzy
+#| msgid "Drużyna"
+msgid "Drużyny"
+msgstr "Team"
+
+#: matches/templates/matches/search_results.html:15
+msgid "Zawodnicy"
+msgstr "Players"
+
+#: matches/templates/matches/search_results.html:16
+msgid "Błąd wyszukiwania. Spróbuj ponownie."
+msgstr "Search error. Try again."
+
+#: matches/templates/matches/search_results.html:19
+msgid "Wyniki wyszukiwania"
+msgstr "Search Results"
+
+#: matches/templates/matches/search_results.html:22
+msgid "Wróć"
+msgstr ""
+
+#: matches/templates/matches/search_results.html:29
+msgid "Wyszukiwanie..."
+msgstr "Searching..."
+
+#: matches/templates/matches/team_detail.html:24
+msgid "Ładowanie..."
+msgstr "Loading..."
+
+#: matches/templates/matches/team_detail.html:32
+msgid "Mecze"
+msgstr "Matches"
+
+#: matches/templates/matches/team_detail.html:35
+msgid "Tabela ligi"
+msgstr "League table"
+
+#: matches/templates/matches/team_detail.html:42
+msgid "Ostatnie mecze"
+msgstr "Recent matches"
+
+#: matches/templates/matches/team_detail.html:48
+msgid "Skład (z ostatniego meczu)"
+msgstr "Lineup (from last match)"
+
+#: matches/templates/matches/team_detail.html:56
+msgid "Tabela ligowa"
+msgstr "League standings"
+
+#: matches/templates/matches/team_detail.html:62
+msgid "Drużyna"
+msgstr "Team"
+
+#: matches/templates/matches/team_detail.html:63
+msgid "Mecze Rozegrane"
+msgstr "Matches Played"
+
+#: matches/templates/matches/team_detail.html:64
+msgid "Wygrane"
+msgstr "Wins"
+
+#: matches/templates/matches/team_detail.html:65
+msgid "Remisy"
+msgstr "Draws"
+
+#: matches/templates/matches/team_detail.html:66
+msgid "Porażki"
+msgstr "Losses"
+
+#: matches/templates/matches/team_detail.html:67
+msgid "Bramki"
+msgstr "Goals"
+
+#: matches/templates/matches/team_detail.html:68
+msgid "Różnica Bramek"
+msgstr "Goal Difference"
+
+#: matches/templates/matches/team_detail.html:69
+msgid "Pkt"
+msgstr "Pts"
+
+#: my_football_app/settings.py:296
+msgid "Polski"
+msgstr "Polish"
+
+#: my_football_app/settings.py:297
+msgid "English"
+msgstr "English"
+
+#: my_football_app/settings.py:298
+msgid "Ukrainian"
+msgstr "Ukrainian"
+
+#~ msgid "Witaj w VARify"
+#~ msgstr "Welcome to VARify"

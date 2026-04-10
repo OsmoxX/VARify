@@ -252,3 +252,37 @@ window.VarifyWS = {
         })
         .catch(() => ids.forEach(id => openMatchWS(id)));
 })();
+
+
+// ── LANGUAGE SWITCHER DROPDOWN ─────────────────────────────────────────────
+(function () {
+    'use strict';
+    const btn      = document.getElementById('lang-switcher-btn');
+    const dropdown = document.getElementById('lang-dropdown');
+    if (!btn || !dropdown) return;
+
+    function openLang() {
+        dropdown.classList.add('lang-dropdown-open');
+        btn.classList.add('lang-open');
+    }
+
+    function closeLang() {
+        dropdown.classList.remove('lang-dropdown-open');
+        btn.classList.remove('lang-open');
+    }
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.contains('lang-dropdown-open') ? closeLang() : openLang();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+            closeLang();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeLang();
+    });
+})();

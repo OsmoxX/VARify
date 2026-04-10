@@ -1,0 +1,790 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-10 14:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != "
+"11 ? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % "
+"100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || "
+"(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
+
+#: accounts/templates/accounts/subscribe.html:37
+msgid "Wróć do aplikacji"
+msgstr "Повернутися до додатку"
+
+#: accounts/templates/accounts/subscribe.html:46
+msgid "Odblokuj pełen potencjał"
+msgstr "Розблокуйте повний потенціал"
+
+#: accounts/templates/accounts/subscribe.html:48
+msgid "Wybierz swój plan"
+msgstr "Виберіть свій план"
+
+#: accounts/templates/accounts/subscribe.html:49
+msgid "Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców."
+msgstr ""
+"Отримайте повний доступ до статистики та випереджайте інших вболівальників."
+
+#: accounts/templates/accounts/subscribe.html:73
+#: accounts/templates/accounts/subscribe.html:101
+#: accounts/templates/accounts/subscribe.html:132
+msgid "/miesiąc"
+msgstr "/місяць"
+
+#: accounts/templates/accounts/subscribe.html:76
+#: matches/templates/matches/base.html:52
+#: matches/templates/matches/live_match_list.html:14
+msgid "Mecze na żywo"
+msgstr "Матчі наживо"
+
+#: accounts/templates/accounts/subscribe.html:77
+msgid "Nadchodzące spotkania"
+msgstr "Майбутні матчі"
+
+#: accounts/templates/accounts/subscribe.html:78
+#: accounts/templates/accounts/subscribe.html:105
+#, fuzzy
+#| msgid "Wyszukiwarka klubów wymaga planu"
+msgid "Wyszukiwarka klubów"
+msgstr "Пошук клубів потребує плану"
+
+#: accounts/templates/accounts/subscribe.html:79
+#: accounts/templates/accounts/subscribe.html:106
+msgid "Składy i historia spotkań"
+msgstr "Склади та історія зустрічей"
+
+#: accounts/templates/accounts/subscribe.html:80
+msgid "Własny Nick w aplikacji"
+msgstr "Власний нік у додатку"
+
+#: accounts/templates/accounts/subscribe.html:84
+#: accounts/templates/accounts/subscribe.html:112
+#: accounts/templates/accounts/subscribe.html:143
+msgid "Twój obecny plan"
+msgstr "Ваш поточний план"
+
+#: accounts/templates/accounts/subscribe.html:87
+msgid "Pozostań na Free"
+msgstr "Залишатися на Free"
+
+#: accounts/templates/accounts/subscribe.html:95
+msgid "Najczęściej wybierany"
+msgstr "Найчастіше обирають"
+
+#: accounts/templates/accounts/subscribe.html:104
+#, fuzzy
+#| msgid "Mecze na żywo"
+msgid "Mecze na żywo i terminarz"
+msgstr "Матчі наживо"
+
+#: accounts/templates/accounts/subscribe.html:107
+msgid "Zmiana Nicku w aplikacji"
+msgstr "Зміна ніку у додатку"
+
+#: accounts/templates/accounts/subscribe.html:108
+msgid "Zaawansowane statystyki graczy"
+msgstr "Розширена статистика гравців"
+
+#: accounts/templates/accounts/subscribe.html:118
+msgid "Zacznij z PLUS"
+msgstr "Почати з PLUS"
+
+#: accounts/templates/accounts/subscribe.html:135
+msgid "Wszystko z pakietu PLUS"
+msgstr "Все з пакету PLUS"
+
+#: accounts/templates/accounts/subscribe.html:136
+msgid "Wyszukiwarka zawodników"
+msgstr "Пошук гравців"
+
+#: accounts/templates/accounts/subscribe.html:137
+msgid "Zaawansowane statystyki XG"
+msgstr "Розширена xG статистика"
+
+#: accounts/templates/accounts/subscribe.html:138
+msgid "Brak reklam"
+msgstr "Без реклами"
+
+#: accounts/templates/accounts/subscribe.html:139
+msgid "Priorytetowe wsparcie"
+msgstr "Пріоритетна підтримка"
+
+#: accounts/templates/accounts/subscribe.html:149
+#: matches/templates/matches/match_detail.html:463
+msgid "Wybierz Premium"
+msgstr "Вибрати Premium"
+
+#: accounts/templates/accounts/subscribe.html:162
+msgid ""
+"Bezpieczna płatność przez Stripe · Anuluj w dowolnym momencie · Brak "
+"ukrytych opłat"
+msgstr ""
+"Безпечна оплата через Stripe · Скасувати будь-коли · Без прихованих комісій"
+
+#: matches/models/event.py:126
+msgid "samobój"
+msgstr "автогол"
+
+#: matches/models/event.py:127
+msgid "karny"
+msgstr "пенальті"
+
+#: matches/models/event.py:128
+msgid "niestrzelony karny"
+msgstr "незабитий пенальті"
+
+#: matches/models/event.py:129
+msgid "karny nie uznany"
+msgstr "пенальті не зараховано"
+
+#: matches/models/event.py:130
+msgid "2× żółta"
+msgstr "2× жовта"
+
+#: matches/templates/matches/account_settings.html:5
+#: matches/templates/matches/account_settings.html:24
+#: matches/templates/matches/base.html:86
+msgid "Ustawienia konta"
+msgstr "Налаштування облікового запису"
+
+#: matches/templates/matches/account_settings.html:15
+#: matches/templates/matches/team_detail.html:14
+msgid "Powrót"
+msgstr "Назад"
+
+#: matches/templates/matches/account_settings.html:41
+msgid "Twoja Subskrypcja"
+msgstr "Ваша підписка"
+
+#: matches/templates/matches/account_settings.html:43
+msgid "Wyższy Plan PREMIUM"
+msgstr "Вищий план PREMIUM"
+
+#: matches/templates/matches/account_settings.html:45
+msgid "Aktywny Plan PLUS"
+msgstr "Активний план PLUS"
+
+#: matches/templates/matches/account_settings.html:47
+msgid "Darmowy Plan FREE"
+msgstr "Безкоштовний план FREE"
+
+#: matches/templates/matches/account_settings.html:52
+msgid "Status Konta"
+msgstr "Статус акаунту"
+
+#: matches/templates/matches/account_settings.html:56
+msgid "Aktywne (Zgodne z regulaminem)"
+msgstr "Активний (відповідно до правил)"
+
+#: matches/templates/matches/account_settings.html:63
+msgid "Cykl Rozliczeniowy"
+msgstr "Платіжний цикл"
+
+#: matches/templates/matches/account_settings.html:65
+msgid "Odświeżane automatycznie (co miesiąc)"
+msgstr "Автоматичне поновлення (щомісяця)"
+
+#: matches/templates/matches/account_settings.html:68
+msgid "Bezpieczne płatności obsługiwane i chronione przez Stripe."
+msgstr "Безпечні платежі обробляються та захищені Stripe."
+
+#: matches/templates/matches/account_settings.html:76
+msgid "Poznaj możliwości ulepszenia planu"
+msgstr "Ознайомтеся з можливостями покращення плану"
+
+#: matches/templates/matches/account_settings.html:78
+msgid "Przełącz na Premium"
+msgstr "Перейти на Premium"
+
+#: matches/templates/matches/account_settings.html:80
+msgid "Zapoznaj się z ofertami"
+msgstr "Ознайомитися з пропозиціями"
+
+#: matches/templates/matches/account_settings.html:90
+msgid "Dane profilu"
+msgstr "Дані профілю"
+
+#: matches/templates/matches/account_settings.html:97
+#, fuzzy
+#| msgid "Menu użytkownika"
+msgid "Nazwa użytkownika"
+msgstr "Меню користувача"
+
+#: matches/templates/matches/account_settings.html:108
+#, fuzzy
+#| msgid "Wymaga planu PLUS"
+msgid "Zmiana nicku wymaga planu PLUS"
+msgstr "Потрібен план PLUS"
+
+#: matches/templates/matches/account_settings.html:113
+msgid "Zmiana nicku dostępna od planu"
+msgstr "Зміна ніка доступна від плану"
+
+#: matches/templates/matches/account_settings.html:124
+#, fuzzy
+#| msgid "brak e-mail"
+msgid "Adres e-mail"
+msgstr "немає e-mail"
+
+#: matches/templates/matches/account_settings.html:130
+msgid "Zapisz zmiany"
+msgstr "Зберегти зміни"
+
+#: matches/templates/matches/account_settings.html:138
+msgid "Zmiana hasła"
+msgstr "Змінити пароль"
+
+#: matches/templates/matches/account_settings.html:145
+msgid "Obecne hasło"
+msgstr "Поточний пароль"
+
+#: matches/templates/matches/account_settings.html:160
+msgid "Nowe hasło"
+msgstr "Новий пароль"
+
+#: matches/templates/matches/account_settings.html:160
+msgid "min. 8 znaków"
+msgstr "мін. 8 символів"
+
+#: matches/templates/matches/account_settings.html:175
+msgid "Powtórz nowe hasło"
+msgstr "Повторіть новий пароль"
+
+#: matches/templates/matches/account_settings.html:190
+msgid "Zmień hasło"
+msgstr "Змінити пароль"
+
+#: matches/templates/matches/base.html:30
+msgid "Szukaj drużyny (Enter)"
+msgstr "Пошук команди (Enter)"
+
+#: matches/templates/matches/base.html:36
+msgid "Wymaga planu PLUS"
+msgstr "Потрібен план PLUS"
+
+#: matches/templates/matches/base.html:38
+msgid "Szukaj drużyny..."
+msgstr "Пошук команди..."
+
+#: matches/templates/matches/base.html:42
+msgid "Wyszukiwarka klubów wymaga planu"
+msgstr "Пошук клубів потребує плану"
+
+#: matches/templates/matches/base.html:44
+msgid "Ulepsz teraz"
+msgstr "Оновити зараз"
+
+#: matches/templates/matches/base.html:55
+msgid "Kalendarz"
+msgstr "Календар"
+
+#: matches/templates/matches/base.html:61
+msgid "Menu użytkownika"
+msgstr "Меню користувача"
+
+#: matches/templates/matches/base.html:70
+msgid "brak e-mail"
+msgstr "немає e-mail"
+
+#: matches/templates/matches/base.html:91
+msgid "Wyloguj się"
+msgstr "Вийти"
+
+#: matches/templates/matches/base.html:97
+msgid "Zaloguj"
+msgstr "Увійти"
+
+#: matches/templates/matches/base.html:103
+#: matches/templates/matches/base.html:109
+msgid "Powiadomienia"
+msgstr "Сповіщення"
+
+#: matches/templates/matches/base.html:110
+msgid "Wyczyść wszystkie"
+msgstr "Очистити все"
+
+#: matches/templates/matches/base.html:117
+msgid "Brak powiadomień"
+msgstr "Немає сповіщень"
+
+#: matches/templates/matches/base.html:126
+msgid "Zmień język"
+msgstr "Змінити мову"
+
+#: matches/templates/matches/base.html:193
+msgid "Gotowy do analizy"
+msgstr "Готовий до аналізу"
+
+#: matches/templates/matches/base.html:198
+#, fuzzy
+#| msgid "Wymaga planu PLUS"
+msgid "Wymaga planu Premium"
+msgstr "Потрібен план PLUS"
+
+#: matches/templates/matches/base.html:205
+msgid "Zamknij"
+msgstr "Закрити"
+
+#: matches/templates/matches/base.html:205
+msgid "Zamknij panel AI"
+msgstr "Закрити панель AI"
+
+#: matches/templates/matches/base.html:209
+msgid "Wyczyść historię czatu"
+msgstr "Очистити історію чату"
+
+#: matches/templates/matches/base.html:223
+msgid "Cześć! Jestem Twoim AI Analitykiem sportowym."
+msgstr "Привіт! Я ваш AI-аналітик спорту."
+
+#: matches/templates/matches/base.html:224
+msgid "Zapytaj mnie o dowolny mecz, statystyki lub drużyny."
+msgstr "Запитайте мене про будь-який матч, статистику чи команди."
+
+#: matches/templates/matches/base.html:240
+msgid "Zapytaj o mecz, drużynę, statystyki..."
+msgstr "Запитайте про матч, команду, статистику..."
+
+#: matches/templates/matches/base.html:242
+msgid "Wiadomość do AI Analityka"
+msgstr "Повідомлення для AI-аналітика"
+
+#: matches/templates/matches/base.html:246
+msgid "Zatrzymaj generowanie"
+msgstr "Зупинити генерацію"
+
+#: matches/templates/matches/base.html:249
+msgid "Wyślij (Enter)"
+msgstr "Надіслати (Enter)"
+
+#: matches/templates/matches/base.html:249
+#: matches/templates/matches/base.html:314
+msgid "Wyślij wiadomość"
+msgstr "Надіслати повідомлення"
+
+#: matches/templates/matches/base.html:289
+msgid "AI Analityk Sportowy"
+msgstr "AI Спортивний Аналітик"
+
+#: matches/templates/matches/base.html:291
+msgid ""
+"Zadawaj pytania o mecze, drużyny i statystyki\n"
+"                            swojemu personalnemu asystentowi AI napędzonemu\n"
+"                            przez <strong style=\"color:#e2e8f0;\">Gemini "
+"2.5 Flash</strong>.\n"
+"                            Dostępne wyłącznie w planie <strong "
+"style=\"color:#f59e0b;\">Premium</strong>."
+msgstr ""
+
+#: matches/templates/matches/base.html:298
+msgid "Odblokuj AI Analityka"
+msgstr "Розблокувати AI аналітика"
+
+#: matches/templates/matches/base.html:309
+msgid "Dostępne tylko dla Premium..."
+msgstr "Доступно лише для Premium..."
+
+#: matches/templates/matches/base.html:312
+msgid "Input zablokowany — wymagane Premium"
+msgstr "Введення заблоковано — потрібен Premium"
+
+#: matches/templates/matches/calendar.html:5
+#: matches/templates/matches/calendar.html:15
+msgid "Nadchodzące mecze"
+msgstr "Майбутні матчі"
+
+#: matches/templates/matches/calendar.html:22
+#: matches/templates/matches/calendar.html:27
+#: matches/templates/matches/live_match_list.html:21
+#: matches/templates/matches/live_match_list.html:26
+msgid "Filtruj ligi"
+msgstr "Фільтр ліг"
+
+#: matches/templates/matches/calendar.html:33
+#: matches/templates/matches/live_match_list.html:32
+msgid "Szukaj ligi..."
+msgstr "Пошук ліги..."
+
+#: matches/templates/matches/calendar.html:38
+#: matches/templates/matches/live_match_list.html:37
+msgid "Zaznacz wszystkie"
+msgstr "Вибрати все"
+
+#: matches/templates/matches/calendar.html:39
+#: matches/templates/matches/live_match_list.html:38
+msgid "Odznacz wszystkie"
+msgstr "Скасувати вибір"
+
+#: matches/templates/matches/calendar.html:48
+#: matches/templates/matches/live_match_list.html:47
+msgid "Nie znaleziono lig"
+msgstr "Ліг не знайдено"
+
+#: matches/templates/matches/calendar.html:54
+#: matches/templates/matches/live_match_list.html:53
+msgid "Rozwiń wszystkie"
+msgstr "Розгорнути всі"
+
+#: matches/templates/matches/calendar.html:71
+#: matches/templates/matches/calendar.html:84
+#: matches/templates/matches/live_match_list.html:66
+#: matches/templates/matches/live_match_list.html:84
+msgid "Ładowanie meczów..."
+msgstr "Завантаження матчів..."
+
+#: matches/templates/matches/calendar.html:79
+msgid "Dziś"
+msgstr "Сьогодні"
+
+#: matches/templates/matches/calendar.html:80
+msgid "Jutro"
+msgstr "Завтра"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Ndz"
+msgstr "Нд"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Pon"
+msgstr "Пн"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Wt"
+msgstr "Вт"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Śr"
+msgstr "Ср"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Czw"
+msgstr "Чт"
+
+#: matches/templates/matches/calendar.html:81
+#, fuzzy
+#| msgid "Pkt"
+msgid "Pt"
+msgstr "Очки"
+
+#: matches/templates/matches/calendar.html:81
+msgid "Sob"
+msgstr "Сб"
+
+#: matches/templates/matches/calendar.html:82
+msgid "Brak meczów na ten dzień"
+msgstr "Немає матчів на цей день"
+
+#: matches/templates/matches/calendar.html:83
+msgid "Brak nadchodzących meczów na ten dzień."
+msgstr "Немає майбутніх матчів на цей день."
+
+#: matches/templates/matches/calendar.html:85
+#: matches/templates/matches/live_match_list.html:85
+msgid "Błąd ładowania meczów. Spróbuj odświeżyć stronę."
+msgstr "Помилка завантаження матчів. Спробуйте оновити сторінку."
+
+#: matches/templates/matches/live_match_list.html:5
+msgid "Centrum Wyników"
+msgstr "Центр результатів"
+
+#: matches/templates/matches/live_match_list.html:62
+#, fuzzy
+#| msgid "Błąd wyszukiwania. Spróbuj ponownie."
+msgid "Błąd połączenia. Spróbuj ponownie."
+msgstr "Помилка пошуку. Спробуйте ще раз."
+
+#: matches/templates/matches/live_match_list.html:78
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Wyłącz powiadomienia"
+msgstr "Сповіщення"
+
+#: matches/templates/matches/live_match_list.html:79
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Włącz powiadomienia"
+msgstr "Сповіщення"
+
+#: matches/templates/matches/live_match_list.html:80
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Powiadomienia włączone"
+msgstr "Сповіщення"
+
+#: matches/templates/matches/live_match_list.html:81
+#, fuzzy
+#| msgid "Powiadomienia"
+msgid "Powiadomienia wyłączone"
+msgstr "Сповіщення"
+
+#: matches/templates/matches/live_match_list.html:82
+#, fuzzy
+#| msgid "Tabela ligi"
+msgid "Inne ligi"
+msgstr "Таблиця ліги"
+
+#: matches/templates/matches/live_match_list.html:83
+msgid "Brak meczów na żywo w tym momencie."
+msgstr "Наразі немає матчів наживо."
+
+#: matches/templates/matches/match_detail.html:16
+msgid "Wróć do wyników"
+msgstr "Повернутися до результатів"
+
+#: matches/templates/matches/match_detail.html:41
+msgid "Oś czasu"
+msgstr "Хронологія"
+
+#: matches/templates/matches/match_detail.html:42
+msgid "Składy"
+msgstr "Склади"
+
+#: matches/templates/matches/match_detail.html:43
+msgid "Statystyki"
+msgstr "Статистика"
+
+#: matches/templates/matches/match_detail.html:63
+msgid "Koniec pierwszej połowy"
+msgstr "Кінець першого тайму"
+
+#: matches/templates/matches/match_detail.html:65
+msgid "Koniec meczu"
+msgstr "Кінець матчу"
+
+#: matches/templates/matches/match_detail.html:69
+msgid "Przerwa"
+msgstr "Перерва"
+
+#: matches/templates/matches/match_detail.html:82
+#, python-format
+msgid "Sędzia dolicza: <strong>+%(length)s min</strong>"
+msgstr "Суддя додає: <strong>+%(length)s хв</strong>"
+
+#: matches/templates/matches/match_detail.html:96
+msgid "Potwierdzone"
+msgstr "Підтверджено"
+
+#: matches/templates/matches/match_detail.html:98
+msgid "Odrzucone"
+msgstr "Відхилено"
+
+#: matches/templates/matches/match_detail.html:100
+msgid "W trakcie analizy"
+msgstr "В процесі аналізу"
+
+#: matches/templates/matches/match_detail.html:165
+msgid "ANULOWANA"
+msgstr "СКАСОВАНО"
+
+#: matches/templates/matches/match_detail.html:200
+msgid "Obrona bramkarza"
+msgstr "Сейв воротаря"
+
+#: matches/templates/matches/match_detail.html:216
+msgid "Brak zdarzeń."
+msgstr "Немає подій."
+
+#: matches/templates/matches/match_detail.html:300
+msgid "Składy na boisku niedostępne"
+msgstr "Склади на полі недоступні"
+
+#: matches/templates/matches/match_detail.html:309
+#, python-format
+msgid ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Rezerwa – %(team)s</div>"
+msgstr ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Запасні – %(team)s</div>"
+
+#: matches/templates/matches/match_detail.html:324
+#: matches/templates/matches/match_detail.html:344
+msgid "Brak danych."
+msgstr "Немає даних."
+
+#: matches/templates/matches/match_detail.html:329
+#, python-format
+msgid ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Rezerwa - %(team)s</div>"
+msgstr ""
+"<div class=\"subs-title\"><i class=\"fa-solid fa-arrow-right-arrow-left\"></"
+"i> Запасні - %(team)s</div>"
+
+#: matches/templates/matches/match_detail.html:399
+msgid "Odblokuj składy i historię H2H"
+msgstr "Розблокувати склади та історію H2H"
+
+#: matches/templates/matches/match_detail.html:400
+msgid "Szczegółowe składy, rezerwowi, kontuzjowani gracze"
+msgstr "Детальні склади, запасні, травмовані гравці"
+
+#: matches/templates/matches/match_detail.html:400
+msgid "oraz historia bezpośrednich spotkań"
+msgstr "та історія очних зустрічей"
+
+#: matches/templates/matches/match_detail.html:400
+msgid "dostępne od planu <strong>PLUS</strong>."
+msgstr "доступно з плану <strong>PLUS</strong>."
+
+#: matches/templates/matches/match_detail.html:403
+msgid "Sprawdź cennik"
+msgstr "Переглянути ціни"
+
+#: matches/templates/matches/match_detail.html:422
+msgid "Cały mecz"
+msgstr "Весь матч"
+
+#: matches/templates/matches/match_detail.html:422
+msgid "1. połowa"
+msgstr "1-й тайм"
+
+#: matches/templates/matches/match_detail.html:422
+msgid "2. połowa"
+msgstr "2-й тайм"
+
+#: matches/templates/matches/match_detail.html:447
+msgid "Statystyki niedostępne"
+msgstr "Статистика недоступна"
+
+#: matches/templates/matches/match_detail.html:455
+msgid "Statystyki xG i zaawansowane dane"
+msgstr "xG Статистика та розширені дані"
+
+#: matches/templates/matches/match_detail.html:457
+msgid "Oczekiwane bramki (xG), posiadanie piłki, strzały celne"
+msgstr "Очікувані голи (xG), володіння м'ячем, удари в стул"
+
+#: matches/templates/matches/match_detail.html:458
+msgid "i dziesiątki innych wskaźników"
+msgstr "та десятки інших показників"
+
+#: matches/templates/matches/match_detail.html:458
+msgid "dostępne wyłącznie w planie <strong>PREMIUM</strong>."
+msgstr "доступно ексклюзивно у плані <strong>PREMIUM</strong>."
+
+#: matches/templates/matches/match_detail.html:460
+msgid "Wznieś swoje analizy na najwyższy poziom."
+msgstr "Підніміть ваші аналізи на найвищий рівень."
+
+#: matches/templates/matches/search_results.html:11
+msgid "Wyniki dla:"
+msgstr "Результати для:"
+
+#: matches/templates/matches/search_results.html:12
+msgid "Brak drużyn pasujących do zapytania."
+msgstr "Немає команд, що відповідають запиту."
+
+#: matches/templates/matches/search_results.html:13
+msgid "Brak zawodników pasujących do zapytania."
+msgstr "Немає гравців, що відповідають запиту."
+
+#: matches/templates/matches/search_results.html:14
+#, fuzzy
+#| msgid "Drużyna"
+msgid "Drużyny"
+msgstr "Команда"
+
+#: matches/templates/matches/search_results.html:15
+msgid "Zawodnicy"
+msgstr "Гравці"
+
+#: matches/templates/matches/search_results.html:16
+msgid "Błąd wyszukiwania. Spróbuj ponownie."
+msgstr "Помилка пошуку. Спробуйте ще раз."
+
+#: matches/templates/matches/search_results.html:19
+msgid "Wyniki wyszukiwania"
+msgstr "Результати пошуку"
+
+#: matches/templates/matches/search_results.html:22
+msgid "Wróć"
+msgstr ""
+
+#: matches/templates/matches/search_results.html:29
+msgid "Wyszukiwanie..."
+msgstr "Пошук..."
+
+#: matches/templates/matches/team_detail.html:24
+msgid "Ładowanie..."
+msgstr "Завантаження..."
+
+#: matches/templates/matches/team_detail.html:32
+msgid "Mecze"
+msgstr "Матчі"
+
+#: matches/templates/matches/team_detail.html:35
+msgid "Tabela ligi"
+msgstr "Таблиця ліги"
+
+#: matches/templates/matches/team_detail.html:42
+msgid "Ostatnie mecze"
+msgstr "Останні матчі"
+
+#: matches/templates/matches/team_detail.html:48
+msgid "Skład (z ostatniego meczu)"
+msgstr "Склад (з останнього матчу)"
+
+#: matches/templates/matches/team_detail.html:56
+msgid "Tabela ligowa"
+msgstr "Турнірна таблиця"
+
+#: matches/templates/matches/team_detail.html:62
+msgid "Drużyna"
+msgstr "Команда"
+
+#: matches/templates/matches/team_detail.html:63
+msgid "Mecze Rozegrane"
+msgstr "Зіграні матчі"
+
+#: matches/templates/matches/team_detail.html:64
+msgid "Wygrane"
+msgstr "Перемоги"
+
+#: matches/templates/matches/team_detail.html:65
+msgid "Remisy"
+msgstr "Нічиї"
+
+#: matches/templates/matches/team_detail.html:66
+msgid "Porażki"
+msgstr "Поразки"
+
+#: matches/templates/matches/team_detail.html:67
+msgid "Bramki"
+msgstr "Голи"
+
+#: matches/templates/matches/team_detail.html:68
+msgid "Różnica Bramek"
+msgstr "Різниця голів"
+
+#: matches/templates/matches/team_detail.html:69
+msgid "Pkt"
+msgstr "Очки"
+
+#: my_football_app/settings.py:296
+msgid "Polski"
+msgstr "Польська"
+
+#: my_football_app/settings.py:297
+msgid "English"
+msgstr "Англійська"
+
+#: my_football_app/settings.py:298
+msgid "Ukrainian"
+msgstr "Українська"
+
+#~ msgid "Witaj w VARify"
+#~ msgstr "Ласкаво просимо до VARify"

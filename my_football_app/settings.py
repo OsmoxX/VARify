@@ -15,6 +15,7 @@ import os
 from dotenv import load_dotenv
 import sentry_sdk
 from celery.schedules import crontab
+from django.utils.translation import gettext_lazy as _
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -61,7 +62,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'matches',
     'accounts',
-    'rest_framework'
+    'rest_framework',
+    'rosetta',
 ]
 SITE_ID = 1
 MIDDLEWARE = [
@@ -69,6 +71,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -76,6 +79,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.LoginRequiredMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'my_football_app.urls'
@@ -277,3 +281,25 @@ STRIPE_PRICE_ID_PLUS = os.getenv('STRIPE_PRICE_ID_PLUS', '')
 STRIPE_PRICE_ID_PREMIUM = os.getenv('STRIPE_PRICE_ID_PREMIUM', '')
 
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+
+
+# --- TŁUMACZENIA ---
+
+# 1. Włączenie i18n
+USE_I18N = True
+
+# 2. Język domyślny (jeśli Django nie wykryje języka przeglądarki)
+LANGUAGE_CODE = 'pl'
+
+# 3. Lista dostępnych języków
+LANGUAGES = [
+    ('pl', _('Polski')),
+    ('en', _('English')),
+    ('uk', _('Ukrainian')),
+]
+
+# 4. Folder, w którym będą trzymane pliki z tłumaczeniami
+# Ten folder musisz stworzyć ręcznie w głównym katalogu projektu!
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
