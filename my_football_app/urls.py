@@ -28,27 +28,6 @@ from typing import Any, cast
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('rosetta/', include('rosetta.urls')),
-]
-
-urlpatterns.extend(cast(Any, i18n_patterns(
-    path('admin/', admin.site.urls),
-    path('live/', live_matches_view, name='live_matches'),
-    path('league/<int:api_id>/', league_detail_view, name='league_detail'),
-    path('match/<int:match_id>/', match_detail_view, name='match_detail'),
-    path('team/<int:team_id>/', team_detail_view, name='team_detail'),
-    path('player/<int:api_id>/', player_detail, name='player_detail'),
-    path('', HomeView.as_view(), name='home'),
-    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
-    path('calendar/', upcoming_matches_view, name='calendar'),
-    path('search-api/', search_api_view, name='search_api'),
-    path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),
-    path('toggle-notifications/', views.toggle_notifications, name='toggle_notifications'),
-    path('api/active-match-ids/', views.active_match_ids, name='active_match_ids'),
-    path('register/', views.register, name='register'),
-    path('login/', auth_views.LoginView.as_view(template_name='matches/login.html', next_page='home'), name='login'),
-    path('logout/', views.logout_view, name='logout'),
-    path('account/', views.account_settings, name='account_settings'),
-    path('', include('accounts.urls')),
     # ── REST API ────────────────────────────────────────────────────────────────
     # Leagues
     path('api/leagues/', api_views.get_leagues, name='api_leagues'),
@@ -76,6 +55,27 @@ urlpatterns.extend(cast(Any, i18n_patterns(
 
     # Search
     path('api/search/', api_views.search, name='api_search'),
+]
+
+urlpatterns.extend(cast(Any, i18n_patterns(
+    path('admin/', admin.site.urls),
+    path('live/', live_matches_view, name='live_matches'),
+    path('league/<int:api_id>/', league_detail_view, name='league_detail'),
+    path('match/<int:match_id>/', match_detail_view, name='match_detail'),
+    path('team/<int:team_id>/', team_detail_view, name='team_detail'),
+    path('player/<int:api_id>/', player_detail, name='player_detail'),
+    path('', HomeView.as_view(), name='home'),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
+    path('calendar/', upcoming_matches_view, name='calendar'),
+    path('search-api/', search_api_view, name='search_api'),
+    path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),
+    path('toggle-notifications/', views.toggle_notifications, name='toggle_notifications'),
+    path('api/active-match-ids/', views.active_match_ids, name='active_match_ids'),
+    path('register/', views.register, name='register'),
+    path('login/', auth_views.LoginView.as_view(template_name='matches/login.html', next_page='home'), name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('account/', views.account_settings, name='account_settings'),
+    path('', include('accounts.urls')),
 
     # ── ALLAUTH ────────────────────────────────────────────────────────────────
     # Włączamy wszystkie domyślne ścieżki z Allauth

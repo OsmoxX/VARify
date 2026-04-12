@@ -266,7 +266,8 @@ LOGOUT_REDIRECT_URL = '/'
 
 # Konfiguracja Allauth
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email' # Można logować się i mailem, i loginem
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_REQUIRED = True # Wymagamy maila od użytkownika
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

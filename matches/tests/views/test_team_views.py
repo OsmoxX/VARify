@@ -1,5 +1,6 @@
 import pytest
 from django.test import Client
+from django.urls import reverse
 from django.contrib.auth.models import User
 from matches.models import Team
 from accounts.models import Profile, SubscriptionTier
@@ -23,7 +24,8 @@ def test_team_detail_view_success():
     client = Client()
     client.force_login(user)
 
-    response = client.get(f'/team/{team.id}/')
+    url = reverse('team_detail', args=[team.id])
+    response = client.get(url)
 
     assert response.status_code == 200
 
@@ -37,7 +39,8 @@ def test_team_detail_view_free_user_redirected():
     client = Client()
     client.force_login(user)
 
-    response = client.get(f'/team/{team.id}/')
+    url = reverse('team_detail', args=[team.id])
+    response = client.get(url)
 
     assert response.status_code == 302
     assert '/subscribe/' in response['Location']
