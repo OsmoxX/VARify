@@ -96,7 +96,7 @@ test.describe('/subscribe/ — pricing page renders', () => {
     const backLink = pageFree.locator('.sub-nav-back');
     await expect(backLink).toBeVisible();
     await backLink.click();
-    await expect(pageFree).toHaveURL(/^https?:\/\/(localhost|127\.0\.0\.1):8000\/?$/);
+    await expect(pageFree).toHaveURL(/^https?:\/\/(localhost|127\.0\.0\.1):8000\/[a-z]{2}\/?$/);
   });
 
   test('unauthenticated user is redirected to /login/ when visiting /subscribe/', async ({ browser }) => {

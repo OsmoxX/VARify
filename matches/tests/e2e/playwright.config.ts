@@ -33,6 +33,7 @@ export default defineConfig({
 
   use: {
     baseURL: process.env.BASE_URL ?? 'http://localhost:8000',
+    locale: 'pl-PL',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

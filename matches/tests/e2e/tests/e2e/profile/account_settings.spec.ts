@@ -64,7 +64,7 @@ test.describe('Account settings — page structure (FREE baseline)', () => {
     await expect(backBtn).toBeVisible();
     await backBtn.click();
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/^https?:\/\/(localhost|127\.0\.0\.1):8000\/?$/);
+    await expect(page).toHaveURL(/^https?:\/\/(localhost|127\.0\.0\.1):8000\/[a-z]{2}\/?$/);
   });
 });
 
