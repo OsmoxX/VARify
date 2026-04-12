@@ -9,7 +9,7 @@ Architektura: ChatGroq → llm.invoke(messages) → czysty string odpowiedzi.
 import os
 import time
 import logging
-
+from pydantic import SecretStr
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
@@ -155,9 +155,12 @@ def ask_ai_analyst(history: list[dict]) -> str:
     Raises:
         AIServiceError: gdy API jest niedostępne po wyczerpaniu prób.
     """
+    raw_api_key = os.getenv("GROQ_API_KEY")
+    safe_api_key = SecretStr(raw_api_key) if raw_api_key else None
+
     llm = ChatGroq(
         model="llama-3.1-8b-instant",
-        api_key=os.getenv("GROQ_API_KEY"),
+        api_key=safe_api_key,
         temperature=0,      # deterministyczny — brak kreatywnych halucynacji
         max_retries=2,      # auto-retry przy błędach JSON/API
     )

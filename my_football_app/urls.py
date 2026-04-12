@@ -7,7 +7,7 @@ Examples:
 Function views
     1. Add an import:  from my_app import views
     2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
+Class-based viewsx
     1. Add an import:  from other_app.views import Home
     2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
 Including another URLconf
@@ -22,15 +22,15 @@ from django.contrib.auth import views as auth_views
 from matches import api_views
 from matches.views.ai_views import ai_chat_endpoint
 from django.views.generic.base import RedirectView
-from django.conf import settings
 from django.conf.urls.i18n import i18n_patterns
+from typing import Any, cast
 
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('rosetta/', include('rosetta.urls')),
 ]
 
-urlpatterns += i18n_patterns(
+urlpatterns.extend(cast(Any, i18n_patterns(
     path('admin/', admin.site.urls),
     path('live/', live_matches_view, name='live_matches'),
     path('league/<int:api_id>/', league_detail_view, name='league_detail'),
@@ -85,6 +85,6 @@ urlpatterns += i18n_patterns(
 
     # ── AI AGENT ────────────────────────────────────────────────────────────────
     path('api/ai-chat/', ai_chat_endpoint, name='ai_chat_api'),
-)
+)))
 
 

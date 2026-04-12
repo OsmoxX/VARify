@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from .models import SubscriptionTier
 from django.contrib.auth.decorators import login_not_required
 from django.utils.translation import get_language
-
+from typing import Literal, cast
 # Create your views here.
 def subscribe_view(request):
     return render(request, 'accounts/subscribe.html')
@@ -33,10 +33,11 @@ def create_checkout_session(request, plan):
     domain_url = request.build_absolute_uri('/')[:-1] # Pobiera bazowy adres np. http://localhost:8000
     success_url = domain_url + reverse('home') + '?payment=success'
     cancel_url = domain_url + reverse('subscribe') + '?payment=cancelled'
-
-    current_lang = get_language()
-    locale_map = {'pl': 'pl', 'en': 'en', 'uk': 'auto'} # Stripe might not fully support 'uk', use 'auto' as fallback
-    stripe_locale = locale_map.get(current_lang, 'auto')
+    StripeLocale = Literal['auto', 'en', 'pl']
+    locale_map = {'pl': 'pl', 'en': 'en', 'uk': 'auto'} 
+    current_lang = get_language() or 'en'
+    raw_locale = locale_map.get(current_lang, 'auto')
+    stripe_locale = cast(StripeLocale, raw_locale)
 
     try:
         # 3. Gadamy ze Stripe'em - prosimy o utworzenie sesji kasy
