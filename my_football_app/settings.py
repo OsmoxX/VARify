@@ -197,15 +197,6 @@ LOCALE_PATHS = [
 ]
 
 # ==========================================
-# PLIKI STATYCZNE
-# ==========================================
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-WHITENOISE_USE_FINDERS = True 
-WHITENOISE_AUTOREFRESH = True 
-WHITENOISE_MANIFEST_STRICT = False
-
-# ==========================================
 # CELERY & REDIS
 # ==========================================
 CELERY_BROKER_URL = 'redis://redis:6379/0'
@@ -292,14 +283,14 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Ta zmienna mówi bibliotece WhiteNoise, żeby przejęła kontrolę nad plikami
-# kompresowała je i dodawała do nich unikalne hashe (dla cache'owania w przeglądarce).
+# Konfiguracja WhiteNoise
+WHITENOISE_MANIFEST_STRICT = False
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", 
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 # ==========================================

@@ -92,32 +92,30 @@ jobs:
 
       - name: Collect static files and RESTART
         run: |
+          # Zbieramy statyki (Django użyje STATIC_ROOT)
           docker compose exec -T web python manage.py collectstatic --noinput
+          # Restartujemy, aby WhiteNoise zaindeksował nowe pliki
           docker compose restart web
-          
-      - name: Verify static files exist
-        run: docker compose exec -T web ls -R staticfiles/matches/css || echo "CSS NOT FOUND!"
+          # Dajemy serwerowi 10 sekund na "wstanie" przed jakimkolwiek sprawdzeniem
+          sleep 10
+
+      - name: Verify static files exist (Absolute Path)
+        # Używamy /app/staticfiles, bo tam collectstatic je wysłał
+        run: docker compose exec -T web ls -R /app/staticfiles/matches/css || echo "CSS STILL NOT FOUND!"
 
       - name: Wait for app to be ready
         run: |
-          for i in {1..20}; do
-            # Używamy -w żeby wyciągnąć kod i zapisujemy ciało odpowiedzi do pliku html
-            STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" http://localhost:8000/)
+          for i in {1..30}; do
+            # Dodajemy -f (fail silently) i || true, aby curl nie zabijał skryptu błędem 56
+            STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" http://localhost:8000/ || echo "000")
             
             if [ "$STATUS" = "200" ]; then
               echo "App is up and responding with HTTP 200!"
               exit 0
             fi
             
-            echo "Waiting for app... HTTP $STATUS ($i/20)"
-            
-            # Jeśli dostaniemy twardy błąd serwera (500), wypisz zawartość, by odkryć przyczynę (Traceback z Django)
-            if [ "$STATUS" = "500" ]; then
-              echo "=== ERROR 500 DETECTED! Printing response snippet (Traceback) ==="
-              cat response.html | grep -i "Exception" -A 15 || head -n 50 response.html
-            fi
-            
-            sleep 3
+            echo "Waiting for app... HTTP $STATUS ($i/30)"
+            sleep 2
           done
           echo "Timed out waiting for app"
           exit 1
