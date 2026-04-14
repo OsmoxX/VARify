@@ -299,7 +299,7 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", 
     },
 }
-
+WHITENOISE_MANIFEST_STRICT = False
 # ==========================================
 # WEBPUSH SETTINGS (Powiadomienia PWA)
 # ==========================================
