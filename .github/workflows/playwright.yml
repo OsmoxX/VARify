@@ -90,8 +90,13 @@ jobs:
             -e E2E_USERNAME_PREMIUM -e E2E_PASSWORD_PREMIUM \
             web python manage.py create_e2e_users
 
-      - name: Collect static files (Inside Docker)
-        run: docker compose exec -T web python manage.py collectstatic --noinput
+      - name: Collect static files and RESTART
+        run: |
+          docker compose exec -T web python manage.py collectstatic --noinput
+          docker compose restart web
+          
+      - name: Verify static files exist
+        run: docker compose exec -T web ls -R staticfiles/matches/css || echo "CSS NOT FOUND!"
 
       - name: Wait for app to be ready
         run: |

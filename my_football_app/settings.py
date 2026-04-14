@@ -200,7 +200,10 @@ LOCALE_PATHS = [
 # PLIKI STATYCZNE
 # ==========================================
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+WHITENOISE_USE_FINDERS = True 
+WHITENOISE_AUTOREFRESH = True 
+WHITENOISE_MANIFEST_STRICT = False
 
 # ==========================================
 # CELERY & REDIS
@@ -299,7 +302,6 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", 
     },
 }
-WHITENOISE_MANIFEST_STRICT = False
 # ==========================================
 # WEBPUSH SETTINGS (Powiadomienia PWA)
 # ==========================================
