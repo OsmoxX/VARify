@@ -24,6 +24,7 @@ from matches.views.ai_views import ai_chat_endpoint
 from django.views.generic.base import RedirectView
 from django.conf.urls.i18n import i18n_patterns
 from typing import Any, cast
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
@@ -55,6 +56,9 @@ urlpatterns = [
 
     # Search
     path('api/search/', api_views.search, name='api_search'),
+
+    # PWA
+    path('sw.js', TemplateView.as_view(template_name='matches/sw.js', content_type='application/javascript'), name='sw.js'),
 ]
 
 urlpatterns.extend(cast(Any, i18n_patterns(
@@ -65,7 +69,7 @@ urlpatterns.extend(cast(Any, i18n_patterns(
     path('team/<int:team_id>/', team_detail_view, name='team_detail'),
     path('player/<int:api_id>/', player_detail, name='player_detail'),
     path('', HomeView.as_view(), name='home'),
-    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
+    path('favicon.ico', RedirectView.as_view(url='/static/matches/favicon.ico', permanent=True)),
     path('calendar/', upcoming_matches_view, name='calendar'),
     path('search-api/', search_api_view, name='search_api'),
     path('api/image/<str:entity_type>/<int:api_id>/', views.proxy_image_view, name='proxy_image'),

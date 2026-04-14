@@ -16,23 +16,48 @@ from dotenv import load_dotenv
 import sentry_sdk
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
+
+# Ładuje zmienne z pliku .env
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ==========================================
+# BEZPIECZEŃSTWO (Dostosowane pod produkcję)
+# ==========================================
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# Pobiera klucz z .env. Domyślny używany tylko lokalnie.
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-w#0c&!#4_gib+4(u!55*o%977%k-r_gbz$w-%9&@4t6)-j%i_$')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w#0c&!#4_gib+4(u!55*o%977%k-r_gbz$w-%9&@4t6)-j%i_$'
+# Jeśli w .env nie ma DEBUG=True, domyślnie będzie False (bezpieczne na serwerze)
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Dozwolone adresy IP i domeny
+ALLOWED_HOSTS = [
+    '13.62.58.123', 
+    '13.62.58.123.nip.io',
+    'localhost', 
+    '127.0.0.1'
+]
 
-ALLOWED_HOSTS = ['13.62.58.123', 'localhost', '127.0.0.1']
+# Dozwolone domeny dla zapytań z zewnętrznych aplikacji (CORS)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://13.62.58.123.nip.io",
+    "https://13.62.58.123.nip.io",
+]
 
+# Dozwolone domeny dla wysyłania formularzy logowania/rejestracji (CSRF)
+CSRF_TRUSTED_ORIGINS = [
+    "http://13.62.58.123.nip.io",
+    "https://13.62.58.123.nip.io",
+]
+
+# ==========================================
+# MONITOROWANIE
+# ==========================================
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN", "https://57fe3a4f7a85f4c31ec62748e24ee3a7@o4511019727388672.ingest.de.sentry.io/4511019742003280"),
     send_default_pii=True,
@@ -40,8 +65,9 @@ sentry_sdk.init(
     profiles_sample_rate=1.0,
 )
 
-# Application definition
-
+# ==========================================
+# APLIKACJE I MIDDLEWARE
+# ==========================================
 INSTALLED_APPS = [
     'daphne',
     'channels',
@@ -65,7 +91,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rosetta',
 ]
+
 SITE_ID = 1
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -79,7 +107,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.LoginRequiredMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    
 ]
 
 ROOT_URLCONF = 'my_football_app.urls'
@@ -99,115 +126,105 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'my_football_app.wsgi.application'
 ASGI_APPLICATION = 'my_football_app.asgi.application'
 
-# Silence W042: use BigAutoField as the default primary key type for all models
+# ==========================================
+# BAZA DANYCH
+# ==========================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# Mówimy Django, jak nazywa się nasz adres logowania
 LOGIN_URL = 'login'
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'varify_db',             # Zgadza się z docker-compose
-        'USER': 'root',                  # Domyślny użytkownik
-        'PASSWORD': 'supertajnehaslo',   # Zgadza się z docker-compose
-        'HOST': 'db',                    # Magia Dockera! Szukamy kontenera o nazwie "db"
+        'NAME': 'varify_db',             
+        'USER': 'root',                  
+        # Pobiera hasło z .env, domyślnie używa 'supertajnehaslo'
+        'PASSWORD': os.getenv('DB_PASSWORD', 'supertajnehaslo'),   
+        'HOST': 'db',                    
         'PORT': '3306',
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
+# ==========================================
+# AUTORYZACJA I HASŁA
+# ==========================================
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 AUTHENTICATION_BACKENDS = [
-    # Logowanie klasyczne (nazwa użytkownika / hasło)
     'django.contrib.auth.backends.ModelBackend',
-    # Logowanie przez dostawców OAuth (Google, itp.)
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# Gdzie przekierować po udanym logowaniu/wylogowaniu
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
-LANGUAGE_CODE = 'en-us'
+# Konfiguracja Allauth
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_REQUIRED = True 
 
+# ZMIANA: Wyłączone wymaganie weryfikacji maila, dopóki nie ma serwera SMTP
+ACCOUNT_EMAIL_VERIFICATION = 'none' 
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'VARify Team <noreply@varify.pl>'
+
+# ==========================================
+# TŁUMACZENIA (i18n)
+# ==========================================
+LANGUAGE_CODE = 'pl'
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
+LANGUAGES = [
+    ('pl', _('Polski')),
+    ('en', _('English')),
+    ('uk', _('Ukrainian')),
+]
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
+# ==========================================
+# PLIKI STATYCZNE
+# ==========================================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # ==========================================
-# CELERY & REDIS SETTINGS
+# CELERY & REDIS
 # ==========================================
-# Gdzie Celery ma szukać nowych zadań (nasz lokalny Redis)
 CELERY_BROKER_URL = 'redis://redis:6379/0'
-# Gdzie Celery ma zapisywać wyniki zakończonych zadań
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
-# Bezpieczeństwo - format danych do komunikacji to JSON
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-
 CELERY_TIMEZONE = 'Europe/Warsaw'
 
-# ==========================================
-# CELERY BEAT (Harmonogram zadań)
-# ==========================================
 CELERY_BEAT_SCHEDULE = {
     'update-live-matches-every-30-seconds': {
         'task': 'matches.tasks.sync_live_matches',
-        'schedule': 30.0, # Wykonuj co 30 sekund
+        'schedule': 30.0, 
     },
     'fetch-upcoming-matches': {
         'task': 'matches.tasks.fetch_upcoming_matches',
-        'schedule': crontab(hour=11, minute=00), # Wykonuj o 
+        'schedule': crontab(hour=11, minute=00), 
     },
     'fetch-top-leagues-standings': {
         'task': 'matches.tasks.fetch_top_leagues_standings_task',
-        'schedule': crontab(hour=13, minute=19), # Codziennie o zadanej godzinie (według czasu lokalnego polskiego zachowanego w bazie)
+        'schedule': crontab(hour=13, minute=19), 
     },
 }
-
 
 CACHES = {  
     'default': {
@@ -224,6 +241,10 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+# ==========================================
+# REST FRAMEWORK & LOGOWANIE BŁĘDÓW
+# ==========================================
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -240,67 +261,37 @@ LOGGING = {
 }
 
 REST_FRAMEWORK = {
-    # 1. Konfiguracja Throttlingu
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle', # Dla niezalogowanych (anonimowych)
-        'rest_framework.throttling.UserRateThrottle'  # Dla zalogowanych użytkowników
+        'rest_framework.throttling.AnonRateThrottle', 
+        'rest_framework.throttling.UserRateThrottle'  
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '5/minute',  # Niezalogowany może wysłać max 30 zapytań na minutę
-        'user': '20/minute',  # Zalogowany ma większy limit
+        'anon': '5/minute',  
+        'user': '20/minute',  
     },
-    # 2. Konfiguracja Pagination (stronicowania)
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20 # Zwraca maksymalnie 20 elementów na jedno zapytanie
+    'PAGE_SIZE': 20 
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    # "https://twoja-domena.com",
-]
-
-# Gdzie przekierować po udanym logowaniu/wylogowaniu
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
-# Konfiguracja Allauth
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_LOGIN_METHODS = {'email', 'username'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_REQUIRED = True # Wymagamy maila od użytkownika
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'VARify Team <noreply@varify.pl>'
-
-
-# --- STRIPE CONFIGURATION ---
+# ==========================================
+# STRIPE CONFIGURATION
+# ==========================================
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
-
 STRIPE_PRICE_ID_PLUS = os.getenv('STRIPE_PRICE_ID_PLUS', '')
 STRIPE_PRICE_ID_PREMIUM = os.getenv('STRIPE_PRICE_ID_PREMIUM', '')
-
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 
+# ==========================================
+# PLIKI STATYCZNE (Dostosowane pod WhiteNoise)
+# ==========================================
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# --- TŁUMACZENIA ---
-
-# 1. Włączenie i18n
-USE_I18N = True
-
-# 2. Język domyślny (jeśli Django nie wykryje języka przeglądarki)
-LANGUAGE_CODE = 'pl'
-
-# 3. Lista dostępnych języków
-LANGUAGES = [
-    ('pl', _('Polski')),
-    ('en', _('English')),
-    ('uk', _('Ukrainian')),
-]
-
-# 4. Folder, w którym będą trzymane pliki z tłumaczeniami
-# Ten folder musisz stworzyć ręcznie w głównym katalogu projektu!
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
-]
+# Ta zmienna mówi bibliotece WhiteNoise, żeby przejęła kontrolę nad plikami
+# kompresowała je i dodawała do nich unikalne hashe (dla cache'owania w przeglądarce).
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
