@@ -1,0 +1,13 @@
+from webpush import send_user_notification
+from django.contrib.auth.models import User
+
+# Pobieramy Twoje konto
+user = User.objects.get(username='magda') 
+
+payload = {
+    "head": "VARify AWS LIVE! ⚽",
+    "body": "Cześć Kochanie",
+    "url": "/"
+}
+
+send_user_notification(user=user, payload=payload, ttl=1000)

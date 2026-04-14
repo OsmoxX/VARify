@@ -90,6 +90,9 @@ jobs:
             -e E2E_USERNAME_PREMIUM -e E2E_PASSWORD_PREMIUM \
             web python manage.py create_e2e_users
 
+      - name: Collect static files (Inside Docker)
+        run: docker compose exec -T web python manage.py collectstatic --noinput
+
       - name: Wait for app to be ready
         run: |
           for i in {1..20}; do
