@@ -88,6 +88,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'matches',
     'accounts',
+    'webpush',
     'rest_framework',
     'rosetta',
 ]
@@ -294,4 +295,13 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+}
+
+# ==========================================
+# WEBPUSH SETTINGS (Powiadomienia PWA)
+# ==========================================
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": os.environ.get('VAPID_PUBLIC_KEY'),
+    "VAPID_PRIVATE_KEY": os.environ.get('VAPID_PRIVATE_KEY'),
+    "VAPID_ADMIN_EMAIL": os.environ.get('VAPID_ADMIN_EMAIL')
 }

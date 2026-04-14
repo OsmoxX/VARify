@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from .models import League, Team, LiveMatch, MatchEvent, MatchLineup
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-
+from webpush.models import PushInformation
 
 class LeagueAdmin(admin.ModelAdmin):
     list_display = ('name', 'api_id')
@@ -46,7 +46,6 @@ class CustomUserAdmin(BaseUserAdmin):
     list_filter = ('is_staff', 'is_superuser', 'groups')
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)
-
 
 admin.site.register(League, LeagueAdmin)
 admin.site.register(Team, TeamAdmin)

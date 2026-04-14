@@ -61,3 +61,4 @@ langchain-google-genai>=0.0.9
 langchain-community>=0.0.20
 langgraph
 langchain-groq
+django-webpush

@@ -59,6 +59,9 @@ urlpatterns = [
 
     # PWA
     path('sw.js', TemplateView.as_view(template_name='matches/sw.js', content_type='application/javascript'), name='sw.js'),
+
+    # WebPush
+    path('webpush/', include('webpush.urls')),
 ]
 
 urlpatterns.extend(cast(Any, i18n_patterns(
