@@ -132,6 +132,23 @@
         </form>
     </div>
 
+    <!-- ── POWIADOMIENIA PUSH ──────────────────────── -->
+    <div class="account-card">
+        <h2 class="account-card-title">
+            <i class="fa-solid fa-bell"></i> {% trans "Powiadomienia (Push)" %}
+        </h2>
+        <div class="push-settings-container">
+            <div class="push-settings-text">
+                <p><strong>{% trans "Wyniki na żywo i powiadomienia" %}</strong></p>
+                <p class="text-muted">{% trans "Bądź na bieżąco, nawet gdy aplikacja jest zamknięta." %}</p>
+            </div>
+            <label class="push-switch" title="Włącz powiadomienia na tym urządzeniu">
+                <input type="checkbox" id="push-settings-toggle" disabled>
+                <span class="push-slider"></span>
+            </label>
+        </div>
+    </div>
+
     <!-- ── ZMIANA HASŁA ───────────────────────────── -->
     <div class="account-card">
         <h2 class="account-card-title">

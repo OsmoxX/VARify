@@ -34,10 +34,26 @@ jobs:
       - name: Install Node dependencies
         working-directory: ${{ env.PW_DIR }}
         run: npm ci
+      
+      # 1. Dodaj ten krok przed instalacją przeglądarek
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
 
+      # 2. Zmień instalację na taką, która sprawdza cache
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.PW_DIR }}
         run: npx playwright install --with-deps
+
+      # 3. Jeśli cache był trafiony, musimy zainstalować TYLKO zależności systemowe (szybkie)
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: ${{ env.PW_DIR }}
+        run: npx playwright install-deps
 
       # ── Tworzymy plik .env z GitHub Secrets przed startem Dockera ──────────
       - name: Create .env file from secrets

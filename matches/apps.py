@@ -30,3 +30,5 @@ class MatchesConfig(AppConfig):
             admin.site.register(PushInformation, VarifyPushAdmin)
         except Exception as e:
             logger.error("Błąd podczas rejestracji panelu WebPush: %s", e)
+
+

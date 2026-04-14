@@ -1,0 +1,195 @@
+/* Modals dla WebPush */
+.push-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInPush 0.3s ease forwards;
+}
+
+@keyframes fadeInPush {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.push-modal {
+    background: #1e1e2d;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    color: #fff;
+    transform: translateY(20px);
+    animation: slideUpPush 0.4s ease forwards;
+}
+
+@keyframes slideUpPush {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.push-icon-wrapper {
+    background: rgba(16, 185, 129, 0.15); /* VARify minty green */
+    color: #10b981;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.5rem auto;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+.push-modal h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.push-modal p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.push-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.push-btn-primary {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 0.85rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    outline: none;
+}
+
+.push-btn-primary:hover {
+    background: #059669; /* ciemniejszy zielony */
+    transform: translateY(-2px);
+}
+
+.push-btn-outline {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    padding: 0.85rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    outline: none;
+}
+
+.push-btn-outline:hover {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+/* ================================= */
+/* Toggle Switch w Account Settings  */
+/* ================================= */
+.push-settings-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.push-settings-text {
+    text-align: left;
+}
+
+.push-settings-text p {
+    margin: 0;
+}
+
+.push-settings-text p strong {
+    color: #f8fafc;
+    font-size: 1.05rem;
+}
+
+.push-settings-text .text-muted {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
+.push-switch {
+    position: relative;
+    display: inline-block;
+    width: 54px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.push-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.push-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #334155;
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.push-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.push-switch input:checked + .push-slider {
+    background-color: #10b981;
+}
+
+.push-switch input:checked + .push-slider:before {
+    transform: translateX(26px);
+}
+
+.push-switch input:disabled + .push-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.push-switch.loading .push-slider:before {
+    animation: pushSwitchPulse 1s infinite alternate;
+}
+
+@keyframes pushSwitchPulse {
+    0% { transform: scale(1) translateX(0); }
+    100% { transform: scale(0.7) translateX(2px); }
+}

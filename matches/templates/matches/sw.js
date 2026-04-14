@@ -47,20 +47,3 @@ self.addEventListener('notificationclick', function (event) {
     );
 });
 
-
-
-
-
-from webpush import send_user_notification
-from django.contrib.auth.models import User
-
-# Pobieramy Twoje konto
-user = User.objects.get(username='magda') 
-
-payload = {
-    "head": "Sigma sigma boy",
-    "body": "Kylian Mbappe strzelił gola!!!!",
-    "url": "/"
-}
-
-send_user_notification(user=user, payload=payload, ttl=1000)

@@ -2,7 +2,7 @@ from webpush import send_user_notification
 from django.contrib.auth.models import User
 
 # Pobieramy Twoje konto
-user = User.objects.get(username='magda') 
+user = User.objects.get(username='admin') 
 
 payload = {
     "head": "VARify AWS LIVE! ⚽",
@@ -11,3 +11,6 @@ payload = {
 }
 
 send_user_notification(user=user, payload=payload, ttl=1000)
+
+
+git remote set-url origin git@github.com:OsmoxX/VARify.git

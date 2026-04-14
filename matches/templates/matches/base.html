@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{% static 'matches/base.css' %}">
     <link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
     <link rel="stylesheet" href="{% static 'matches/ai_chat.css' %}">
+    <link rel="stylesheet" href="{% static 'matches/push_ui.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="{% static 'matches/manifest.json' %}">
     <link rel="apple-touch-icon" href="{% static 'matches/apple-touch-icon.png' %}">
@@ -27,7 +28,9 @@
         <a href="/" class="nav-brand">
             <i class="fa-solid fa-futbol"></i> VAR<span>ify</span>
         </a>
-        {% webpush_button with_class="btn btn-warning" %}
+        <div style="display: none;">
+            {% webpush_button with_class="btn btn-warning" %}
+        </div>
         
         {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
             {# ── PLUS/PREMIUM: pełna wyszukiwarka ── #}
@@ -341,6 +344,24 @@
             });
         }
     </script>
+
+    <!-- PUSH MODAL -->
+    {% if user.is_authenticated %}
+    <div id="push-custom-modal" class="push-modal-overlay">
+        <div class="push-modal">
+            <div class="push-icon-wrapper">
+                <i class="fa-solid fa-bell-ring"></i>
+            </div>
+            <h3>{% trans "Bądź na bieżąco z bramkami!" %}</h3>
+            <p>{% trans "Włącz powiadomienia, aby otrzymywać wyniki na żywo i analizy AI prosto na Twój telefon." %}</p>
+            <div class="push-modal-actions">
+                <button id="push-accept-btn" class="push-btn-primary">{% trans "Włącz powiadomienia" %}</button>
+                <button id="push-later-btn" class="push-btn-outline">{% trans "Może później" %}</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <script src="{% static 'matches/js/push_ui.js' %}"></script>
 
 </body>
 
