@@ -84,6 +84,12 @@ jobs:
         run: |
           sudo echo "127.0.0.1 db" | sudo tee -a /etc/hosts
           sudo echo "127.0.0.1 redis" | sudo tee -a /etc/hosts
+      - name: Collect static files
+        env:
+          DEBUG: "False"
+          SECRET_KEY: "ci-secret-key"
+          DATABASE_URL: "mysql://root:supertajnehaslo@127.0.0.1:3306/varify_db"
+        run: python manage.py collectstatic --noinput
       - name: Run Pytest
         env:
           DEBUG: "False"

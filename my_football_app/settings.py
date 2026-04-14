@@ -292,8 +292,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Ta zmienna mówi bibliotece WhiteNoise, żeby przejęła kontrolę nad plikami
 # kompresowała je i dodawała do nich unikalne hashe (dla cache'owania w przeglądarce).
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", 
     },
 }
 
