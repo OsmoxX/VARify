@@ -661,7 +661,7 @@ a.search-item:hover {
 /* ── Mobile ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .lang-drawer {
-        top: 68px;
+        top: 120px;
     }
     .lang-drawer-trigger {
         font-size: 1.2rem;
