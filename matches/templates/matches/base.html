@@ -11,6 +11,7 @@
         <link rel="icon" type="image/x-icon" href="{% static 'matches/favicon.ico' %}">
 
         <link rel="stylesheet" href="{% static 'matches/base.css' %}">
+        <link rel="stylesheet" href="{% static 'matches/pwa_install.css' %}">
         <link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
         <link rel="stylesheet" href="{% static 'matches/ai_chat.css' %}">
         <link rel="stylesheet" href="{% static 'matches/push_ui.css' %}">
@@ -352,6 +353,55 @@
             </div>
         {% endif %}
         <script src="{% static 'matches/js/push_ui.js' %}"></script>
+
+    {# ====================== PWA INSTALL BANNER ====================== #}
+        <div id="pwa-install-banner" class="pwa-install-banner" role="alert" aria-live="polite">
+            <div class="pwa-banner-content">
+                <div class="pwa-banner-icon">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <div class="pwa-banner-text">
+                    <strong>VARify</strong>
+                    <span>{% trans "Zainstaluj aplikację na swoim urządzeniu!" %}</span>
+                </div>
+                <button id="pwa-install-btn" class="pwa-banner-btn-install">
+                    {% trans "Instaluj" %}
+                </button>
+                <button id="pwa-install-dismiss" class="pwa-banner-btn-dismiss" aria-label="{% trans 'Zamknij' %}">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+    {# ====================== PWA IOS MODAL ========================= #}
+        <div id="pwa-ios-modal" class="pwa-ios-modal" role="dialog" aria-modal="true" aria-label="{% trans 'Instrukcja instalacji' %}">
+            <div class="pwa-ios-modal-box">
+                <button id="pwa-ios-modal-close" class="pwa-ios-close-btn" aria-label="{% trans 'Zamknij' %}">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="pwa-ios-icon">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <h3>{% trans "Zainstaluj VARify" %}</h3>
+                <p>{% trans "Dodaj aplikację do ekranu głównego, aby mieć ją zawsze pod ręką." %}</p>
+                <ol class="pwa-ios-steps">
+                    <li>
+                        <span class="pwa-ios-step-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>
+                        <span>{% trans "Naciśnij ikonę" %} <strong>{% trans "Udostępnij" %}</strong> w Safari</span>
+                    </li>
+                    <li>
+                        <span class="pwa-ios-step-icon"><i class="fa-solid fa-square-plus"></i></span>
+                        <span>{% trans "Wybierz" %} <strong>"{% trans "Dodaj do ekranu początkowego" %}"</strong></span>
+                    </li>
+                    <li>
+                        <span class="pwa-ios-step-icon"><i class="fa-solid fa-check"></i></span>
+                        <span>{% trans "Naciśnij" %} <strong>"{% trans "Dodaj" %}"</strong> {% trans "w prawym górnym rogu" %}</span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <script src="{% static 'matches/js/pwa_install.js' %}"></script>
 
     </body>
 

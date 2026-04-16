@@ -1,21 +1,44 @@
 {
+  "id": "/",
   "name": "VARify - Mecze i Wyniki na żywo",
   "short_name": "VARify",
+  "description": "Najlepsze statystyki, mecze na żywo i analityk AI.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
-  "description": "Najlepsze statystyki, mecze na żywo i analityk AI.",
   "icons": [
-  {
-    "src": "/static/matches/icon-192x192.png",
-    "sizes": "192x192",
-    "type": "image/png"
-  },
-  {
-    "src": "/static/matches/icon-512x512.png",
-    "sizes": "512x512",
-    "type": "image/png"
-  }
-]
+    {
+      "src": "/static/matches/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/matches/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/matches/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/images/pwa-screenshot-mobile.png",
+      "sizes": "930x1714",
+      "type": "image/png",
+      "label": "VARify – Mecze na żywo (Mobile)"
+    },
+    {
+      "src": "/static/images/pwa-screenshot-wide.png",
+      "sizes": "2904x1714",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "VARify – Mecze na żywo (Desktop)"
+    }
+  ]
 }

@@ -1,0 +1,259 @@
+/* =========================================================
+   VARify — PWA Install Prompt Styles
+   Baner dolny + Modal iOS
+   ========================================================= */
+
+/* ── BANER INSTALACJI ──────────────────────────────────── */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3000;
+    background: linear-gradient(135deg, #1a1a2e 0%, #1e1e2e 100%);
+    border-top: 1px solid rgba(16, 185, 129, 0.25);
+    box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.6);
+
+    /* Domyślnie ukryty – wsuwa się od dołu po dodaniu klasy */
+    transform: translateY(110%);
+    transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.pwa-install-banner.pwa-banner-visible {
+    transform: translateY(0);
+}
+
+.pwa-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Ikona piłki */
+.pwa-banner-icon {
+    font-size: 1.6rem;
+    color: #10b981;   /* accent */
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* Tekst: nazwa + podpis */
+.pwa-banner-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pwa-banner-text strong {
+    font-size: 0.95rem;
+    color: #f3f4f6;
+    letter-spacing: 0.02em;
+}
+
+.pwa-banner-text span {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Przycisk "Instaluj" */
+.pwa-banner-btn-install {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    border: none;
+    border-radius: 22px;
+    padding: 9px 22px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 3px 14px rgba(16, 185, 129, 0.35);
+}
+
+.pwa-banner-btn-install:hover {
+    opacity: 0.9;
+    transform: scale(1.03);
+}
+
+.pwa-banner-btn-install:active {
+    transform: scale(0.97);
+}
+
+/* Przycisk "X" */
+.pwa-banner-btn-dismiss {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 1.1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+}
+
+.pwa-banner-btn-dismiss:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+}
+
+/* ── MODAL iOS ─────────────────────────────────────────── */
+.pwa-ios-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-end;       /* wysuwa się od dołu jak sheet */
+    justify-content: center;
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+
+    /* domyślnie ukryty */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.pwa-ios-modal.pwa-ios-modal-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.pwa-ios-modal-box {
+    background: #1e1e2e;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 36px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+
+    transform: translateY(40px);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pwa-ios-modal-visible .pwa-ios-modal-box {
+    transform: translateY(0);
+}
+
+/* Przycisk zamknięcia (X) */
+.pwa-ios-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.07);
+    border: none;
+    color: #9ca3af;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+}
+
+.pwa-ios-close-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #e5e7eb;
+}
+
+/* Ikona aplikacji */
+.pwa-ios-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #10b981, #047857);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #fff;
+    margin: 0 auto 18px;
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+}
+
+.pwa-ios-modal-box h3 {
+    text-align: center;
+    color: #f3f4f6;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+
+.pwa-ios-modal-box p {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.88rem;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+/* Lista kroków */
+.pwa-ios-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pwa-ios-steps li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #d1d5db;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.pwa-ios-step-icon {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pwa-ios-steps li strong {
+    color: #f3f4f6;
+}
+
+/* ── Responsive tweaks ────────────────────────────────── */
+@media (max-width: 480px) {
+    .pwa-banner-text span {
+        display: none;    /* Ukryj opis na bardzo małych ekranach, zostaje tylko "VARify" */
+    }
+
+    .pwa-banner-btn-install {
+        padding: 8px 16px;
+        font-size: 0.82rem;
+    }
+}
