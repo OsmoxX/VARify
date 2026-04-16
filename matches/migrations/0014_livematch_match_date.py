@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0013_livematch_minute_livematch_updated_at'),
+        ("matches", "0013_livematch_minute_livematch_updated_at"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='livematch',
-            name='match_date',
-            field=models.DateField(blank=True, help_text='Data meczu (z API startTimestamp)', null=True),
+            model_name="livematch",
+            name="match_date",
+            field=models.DateField(
+                blank=True, help_text="Data meczu (z API startTimestamp)", null=True
+            ),
         ),
     ]

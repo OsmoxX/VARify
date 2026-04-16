@@ -7,20 +7,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0018_rename_preffered_foot_player_preferred_foot_and_more'),
+        ("matches", "0018_rename_preffered_foot_player_preferred_foot_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MatchSubscription',
+            name="MatchSubscription",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('session_key', models.CharField(max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('match', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='matches.livematch')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("session_key", models.CharField(max_length=100)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "match",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subscriptions",
+                        to="matches.livematch",
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('session_key', 'match')},
+                "unique_together": {("session_key", "match")},
             },
         ),
     ]

@@ -4,352 +4,355 @@
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'pl' }}">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}VARify{% endblock %}</title>
-    <link rel="icon" type="image/x-icon" href="{% static 'matches/favicon.ico' %}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}VARify{% endblock %}</title>
+        <link rel="icon" type="image/x-icon" href="{% static 'matches/favicon.ico' %}">
 
-    <link rel="stylesheet" href="{% static 'matches/base.css' %}">
-    <link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
-    <link rel="stylesheet" href="{% static 'matches/ai_chat.css' %}">
-    <link rel="stylesheet" href="{% static 'matches/push_ui.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="{% static 'matches/manifest.json' %}">
-    <link rel="apple-touch-icon" href="{% static 'matches/apple-touch-icon.png' %}">
-    <meta name="theme-color" content="#121212">
-    {% block extra_css %}{% endblock %}
-    {% webpush_header %}
-</head>
+        <link rel="stylesheet" href="{% static 'matches/base.css' %}">
+        <link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
+        <link rel="stylesheet" href="{% static 'matches/ai_chat.css' %}">
+        <link rel="stylesheet" href="{% static 'matches/push_ui.css' %}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="manifest" href="{% static 'matches/manifest.json' %}">
+        <link rel="apple-touch-icon" href="{% static 'matches/apple-touch-icon.png' %}">
+        <meta name="theme-color" content="#121212">
+        {% block extra_css %}{% endblock %}
+        {% webpush_header %}
+    </head>
 
-<body>
+    <body>
 
-    <nav class="navbar">
-        <a href="/" class="nav-brand">
-            <i class="fa-solid fa-futbol"></i> VAR<span>ify</span>
-        </a>
-        <div style="display: none;">
-            {% webpush_button with_class="btn btn-warning" %}
-        </div>
-        
-        {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
+        <nav class="navbar">
+            <a href="/" class="nav-brand">
+                <i class="fa-solid fa-futbol"></i> VAR<span>ify</span>
+            </a>
+            <div style="display: none;">
+                {% webpush_button with_class="btn btn-warning" %}
+            </div>
+
+            {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
             {# ── PLUS/PREMIUM: pełna wyszukiwarka ── #}
-            <div class="nav-search-container">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="live-search-input" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny (Enter)' %}" autocomplete="off">
-                <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
-            </div>
-        {% else %}
-            {# ── FREE: zablokowana wyszukiwarka (soft paywall) ── #}
-            <div class="nav-search-container nav-search-locked" id="locked-search-bar"
-                 data-testid="locked-search-bar" title="{% trans 'Wymaga planu PLUS' %}">
-                <i class="fa-solid fa-lock search-icon" style="color: #f59e0b;"></i>
-                <input type="text" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny...' %}"
-                       disabled data-testid="search-input-locked">
-                <div class="search-lock-tooltip" data-testid="search-lock-tooltip">
-                    <i class="fa-solid fa-lock"></i>
-                    <span>{% trans "Wyszukiwarka klubów wymaga planu" %} <strong>PLUS</strong></span>
-                    <a href="{% url 'subscribe' %}" class="tooltip-upgrade-btn"
-                       data-testid="search-upgrade-btn">{% trans "Ulepsz teraz" %} →</a>
+                <div class="nav-search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="live-search-input" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny (Enter)' %}" autocomplete="off">
+                    <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
                 </div>
-            </div>
-        {% endif %}
-
-
-        <div class="nav-links">
-            <a href="/" class="nav-link">
-                <i class="fa-solid fa-tower-broadcast"></i> {% trans "Mecze na żywo" %}
-            </a>
-            <a href="{% url 'calendar' %}" class="nav-link">
-                <i class="fa-solid fa-calendar-days"></i> {% trans "Kalendarz" %}
-            </a>
-            {% if user.is_authenticated %}
-            <!-- ========== DROPDOWN KONTA UŻYTKOWNIKA ========== -->
-            <div class="user-menu-wrapper" id="user-menu-wrapper">
-                <button class="user-avatar-btn" id="user-avatar-btn" title="{{ user.username }}" aria-label="{% trans 'Menu użytkownika' %}" data-testid="user-menu-btn">
-                    <i class="fa-solid fa-circle-user"></i>
-                </button>
-                <div class="user-dropdown" id="user-dropdown">
-                    <div class="user-dropdown-header">
-                        <i class="fa-solid fa-circle-user user-dropdown-icon"></i>
-                        <div>
-                            <div class="user-dropdown-name">{{ user.username }}</div>
-                            <div class="user-dropdown-email">
-                                {% if user.email %}{{ user.email }}{% else %}{% trans "brak e-mail" %}{% endif %}
-                            </div>
-                            <div class="user-dropdown-tier">
-                                {% if user.profile.tier == 'PREMIUM' %}
-                                    <span class="user-tier-badge premium"><i class="fa-solid fa-crown"></i> PREMIUM</span>
-                                {% elif user.profile.tier == 'PLUS' %}
-                                    <span class="user-tier-badge plus"><i class="fa-solid fa-star"></i> PLUS</span>
-                                {% else %}
-                                    <span class="user-tier-badge free">FREE</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="user-dropdown-divider"></div>
-                    <a href="{% url 'account_settings' %}" class="user-dropdown-item">
-                        <i class="fa-solid fa-gear"></i>
-                        {% trans "Ustawienia konta" %}
-                    </a>
-                    <div class="user-dropdown-divider"></div>
-                    <a href="{% url 'logout' %}" class="user-dropdown-item user-dropdown-logout" data-testid="logout-link">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        {% trans "Wyloguj się" %}
-                    </a>
-                </div>
-            </div>
             {% else %}
-            <a href="{% url 'login' %}" class="nav-link">
-                <i class="fa-solid fa-right-to-bracket"></i> {% trans "Zaloguj" %}
-            </a>
+            {# ── FREE: zablokowana wyszukiwarka (soft paywall) ── #}
+                <div class="nav-search-container nav-search-locked" id="locked-search-bar"
+                     data-testid="locked-search-bar" title="{% trans 'Wymaga planu PLUS' %}">
+                    <i class="fa-solid fa-lock search-icon" style="color: #f59e0b;"></i>
+                    <input type="text" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny...' %}"
+                           disabled data-testid="search-input-locked">
+                    <div class="search-lock-tooltip" data-testid="search-lock-tooltip">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>{% trans "Wyszukiwarka klubów wymaga planu" %} <strong>PLUS</strong></span>
+                        <a href="{% url 'subscribe' %}" class="tooltip-upgrade-btn"
+                           data-testid="search-upgrade-btn">{% trans "Ulepsz teraz" %} →</a>
+                    </div>
+                </div>
             {% endif %}
 
-            <!-- ========== PANEL POWIADOMIEŃ ========== -->
-            <div class="notif-wrapper" id="notif-wrapper">
-                <button class="notif-bell-btn" id="notif-bell-btn" title="{% trans 'Powiadomienia' %}" aria-label="{% trans 'Powiadomienia' %}">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="notif-badge" id="notif-badge" style="display:none;"></span>
-                </button>
-                <div class="notif-panel" id="notif-panel">
-                    <div class="notif-panel-header">
-                        <span>{% trans "Powiadomienia" %}</span>
-                        <button class="notif-clear-btn" id="notif-clear-btn" title="{% trans 'Wyczyść wszystkie' %}">
-                            <i class="fa-solid fa-trash-can"></i>
+
+            <div class="nav-links">
+                <a href="/" class="nav-link">
+                    <i class="fa-solid fa-tower-broadcast"></i> {% trans "Mecze na żywo" %}
+                </a>
+                <a href="{% url 'calendar' %}" class="nav-link">
+                    <i class="fa-solid fa-calendar-days"></i> {% trans "Kalendarz" %}
+                </a>
+                {% if user.is_authenticated %}
+            <!-- ========== DROPDOWN KONTA UŻYTKOWNIKA ========== -->
+                    <div class="user-menu-wrapper" id="user-menu-wrapper">
+                        <button class="user-avatar-btn" id="user-avatar-btn" title="{{ user.username }}" aria-label="{% trans 'Menu użytkownika' %}" data-testid="user-menu-btn">
+                            <i class="fa-solid fa-circle-user"></i>
                         </button>
+                        <div class="user-dropdown" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <i class="fa-solid fa-circle-user user-dropdown-icon"></i>
+                                <div>
+                                    <div class="user-dropdown-name">{{ user.username }}</div>
+                                    <div class="user-dropdown-email">
+                                        {% if user.email %}{{ user.email }}{% else %}{% trans "brak e-mail" %}{% endif %}
+                                    </div>
+                                    <div class="user-dropdown-tier">
+                                        {% if user.profile.tier == 'PREMIUM' %}
+                                            <span class="user-tier-badge premium"><i class="fa-solid fa-crown"></i> PREMIUM</span>
+                                        {% elif user.profile.tier == 'PLUS' %}
+                                            <span class="user-tier-badge plus"><i class="fa-solid fa-star"></i> PLUS</span>
+                                        {% else %}
+                                            <span class="user-tier-badge free">FREE</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="{% url 'account_settings' %}" class="user-dropdown-item">
+                                <i class="fa-solid fa-gear"></i>
+                                {% trans "Ustawienia konta" %}
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="{% url 'logout' %}" class="user-dropdown-item user-dropdown-logout" data-testid="logout-link">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                {% trans "Wyloguj się" %}
+                            </a>
+                        </div>
                     </div>
-                    <div class="notif-panel-body" id="notif-panel-body">
-                        <div class="notif-empty" id="notif-empty">
-                            <i class="fa-solid fa-bell-slash"></i>
-                            <p>{% trans "Brak powiadomień" %}</p>
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-link">
+                        <i class="fa-solid fa-right-to-bracket"></i> {% trans "Zaloguj" %}
+                    </a>
+                {% endif %}
+
+            <!-- ========== PANEL POWIADOMIEŃ (skrajnie po prawej) ========== -->
+                <div class="notif-wrapper" id="notif-wrapper">
+                    <button class="notif-bell-btn" id="notif-bell-btn" title="{% trans 'Powiadomienia' %}" aria-label="{% trans 'Powiadomienia' %}">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notif-badge" id="notif-badge" style="display:none;"></span>
+                    </button>
+                    <div class="notif-panel" id="notif-panel">
+                        <div class="notif-panel-header">
+                            <span>{% trans "Powiadomienia" %}</span>
+                            <button class="notif-clear-btn" id="notif-clear-btn" title="{% trans 'Wyczyść wszystkie' %}">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <div class="notif-panel-body" id="notif-panel-body">
+                            <div class="notif-empty" id="notif-empty">
+                                <i class="fa-solid fa-bell-slash"></i>
+                                <p>{% trans "Brak powiadomień" %}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {# ========== LANGUAGE SWITCHER ========== #}
-            <div class="lang-switcher-wrapper" id="lang-switcher-wrapper">
-                <button class="lang-switcher-btn" id="lang-switcher-btn"
-                        title="{% trans 'Zmień język' %}" aria-label="{% trans 'Zmień język' %}">
-                    {% if LANGUAGE_CODE == 'pl' %}🇵🇱
-                    {% elif LANGUAGE_CODE == 'en' %}🇬🇧
-                    {% elif LANGUAGE_CODE == 'uk' %}🇺🇦
-                    {% else %}🌐
-                    {% endif %}
-                    <i class="fa-solid fa-chevron-down lang-chevron"></i>
-                </button>
-                <div class="lang-dropdown" id="lang-dropdown">
-                    {% get_current_language as CURRENT_LANG %}
-                    <form action="{% url 'set_language' %}" method="post" id="lang-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ request.path }}">
+            </div>
+        </nav>
+
+    {# ========== LANGUAGE DRAWER (przyklejony do prawej krawędzi) ========== #}
+        {% get_current_language as CURRENT_LANG %}
+        <div class="lang-drawer" id="lang-drawer" aria-label="{% trans 'Przełącznik języka' %}">
+        {# Opcje — wysuwają się z lewej strony triggera #}
+            <div class="lang-drawer-options" id="lang-drawer-options">
+                <form action="{% url 'set_language' %}" method="post" id="lang-drawer-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    {% if CURRENT_LANG != 'pl' %}
                         <button type="submit" name="language" value="pl"
-                                class="lang-option {% if CURRENT_LANG == 'pl' %}lang-option-active{% endif %}">
-                            🇵🇱 <span>Polski</span>
-                        </button>
+                                class="lang-drawer-option" title="Polski">🇵🇱</button>
+                    {% endif %}
+                    {% if CURRENT_LANG != 'en' %}
                         <button type="submit" name="language" value="en"
-                                class="lang-option {% if CURRENT_LANG == 'en' %}lang-option-active{% endif %}">
-                            🇬🇧 <span>English</span>
-                        </button>
+                                class="lang-drawer-option" title="English">🇬🇧</button>
+                    {% endif %}
+                    {% if CURRENT_LANG != 'uk' %}
                         <button type="submit" name="language" value="uk"
-                                class="lang-option {% if CURRENT_LANG == 'uk' %}lang-option-active{% endif %}">
-                            🇺🇦 <span>Українська</span>
-                        </button>
-                    </form>
-                </div>
+                                class="lang-drawer-option" title="Українська">🇺🇦</button>
+                    {% endif %}
+                </form>
             </div>
-
+        {# Separator — pojawia się po otwarciu szufladki #}
+            <div class="lang-drawer-separator" aria-hidden="true"></div>
+        {# Trigger — skrajnie po prawej, widoczny zawsze #}
+            <button class="lang-drawer-trigger" id="lang-drawer-trigger"
+                    title="{% trans 'Zmień język' %}" aria-expanded="false">
+                {% if CURRENT_LANG == 'pl' %}🇵🇱
+                {% elif CURRENT_LANG == 'en' %}🇬🇧
+                {% elif CURRENT_LANG == 'uk' %}🇺🇦
+                {% else %}🌐
+                {% endif %}
+            </button>
         </div>
-    </nav>
 
 
-    <main class="main-content">
-        {% block content %}
-        {% endblock %}
-    </main>
 
-    <script src="{% static 'matches/js/base.js' %}"></script>
+        <main class="main-content">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <script src="{% static 'matches/js/base.js' %}"></script>
 
 
-    {% block extra_js %}{% endblock %}
+        {% block extra_js %}{% endblock %}
 
     {# ======================= FLOATING AI CHAT WIDGET ======================= #}
-    {% if user.is_authenticated %}
+        {% if user.is_authenticated %}
 
     {# ── FAB (przycisk otwierający) ── #}
-    <button id="ai-chat-fab" title="VARify AI Analyst" aria-label="Otwórz AI Analityka" aria-expanded="false">
-        <i class="fa-solid fa-robot"></i>
-    </button>
+            <button id="ai-chat-fab" title="VARify AI Analyst" aria-label="Otwórz AI Analityka" aria-expanded="false">
+                <i class="fa-solid fa-robot"></i>
+            </button>
 
     {# ── Overlay (tło za panelem) ── #}
-    <div id="ai-chat-overlay"></div>
+            <div id="ai-chat-overlay"></div>
 
     {# ── Sliding Panel ── #}
-    <div id="ai-chat-panel" role="dialog" aria-label="VARify AI Analyst" data-api-url="{% url 'ai_chat_api' %}">
+            <div id="ai-chat-panel" role="dialog" aria-label="VARify AI Analyst" data-api-url="{% url 'ai_chat_api' %}">
 
         {# NAGŁÓWEK #}
-        <div class="ai-chat-header">
-            <div class="ai-chat-header-icon">
-                <i class="fa-solid fa-robot"></i>
-            </div>
-            <div class="ai-chat-header-text">
-                <h4>VARify AI Analyst</h4>
-                {% if user.profile.tier == 'PREMIUM' %}
-                <span>
-                    <span class="ai-status-dot"></span>
-                    {% trans "Gotowy do analizy" %}
-                </span>
-                {% else %}
-                <span style="color:#64748b;">
-                    <i class="fa-solid fa-lock" style="font-size:0.65rem;"></i>
-                    {% trans "Wymaga planu Premium" %}
-                </span>
-                {% endif %}
-            </div>
-            <div class="ai-premium-badge">
-                <i class="fa-solid fa-crown"></i> Premium
-            </div>
-            <button id="ai-chat-close-btn" title="{% trans 'Zamknij' %}" aria-label="{% trans 'Zamknij panel AI' %}">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            {% if user.profile.tier == 'PREMIUM' %}
-            <button id="ai-chat-clear-btn" title="{% trans 'Wyczyść historię czatu' %}" aria-label="{% trans 'Wyczyść historię czatu' %}">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-            {% endif %}
-        </div>
-
-        {# TREŚĆ — rozgałęzienie Premium vs Free/Plus #}
-        {% if user.profile.tier == 'PREMIUM' %}
-
-            {# ██ PREMIUM: pełny czat ██ #}
-            <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite">
-                <div class="chat-welcome">
-                    <i class="fa-solid fa-robot"></i>
-                    <p>
-                        {% trans "Cześć! Jestem Twoim AI Analitykiem sportowym." %}<br>
-                        {% trans "Zapytaj mnie o dowolny mecz, statystyki lub drużyny." %}
-                    </p>
-                </div>
-                <div class="typing-indicator" id="ai-typing-indicator" aria-label="AI pisze...">
-                    <div class="ai-typing-avatar">
+                <div class="ai-chat-header">
+                    <div class="ai-chat-header-icon">
                         <i class="fa-solid fa-robot"></i>
                     </div>
-                    <div class="typing-dots">
-                        <span></span><span></span><span></span>
+                    <div class="ai-chat-header-text">
+                        <h4>VARify AI Analyst</h4>
+                        {% if user.profile.tier == 'PREMIUM' %}
+                            <span>
+                                <span class="ai-status-dot"></span>
+                                {% trans "Gotowy do analizy" %}
+                            </span>
+                        {% else %}
+                            <span style="color:#64748b;">
+                                <i class="fa-solid fa-lock" style="font-size:0.65rem;"></i>
+                                {% trans "Wymaga planu Premium" %}
+                            </span>
+                        {% endif %}
                     </div>
+                    <div class="ai-premium-badge">
+                        <i class="fa-solid fa-crown"></i> Premium
+                    </div>
+                    <button id="ai-chat-close-btn" title="{% trans 'Zamknij' %}" aria-label="{% trans 'Zamknij panel AI' %}">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    {% if user.profile.tier == 'PREMIUM' %}
+                        <button id="ai-chat-clear-btn" title="{% trans 'Wyczyść historię czatu' %}" aria-label="{% trans 'Wyczyść historię czatu' %}">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    {% endif %}
                 </div>
-            </div>
 
-            <div class="ai-chat-input-area">
-                <textarea
-                    id="ai-chat-input"
-                    placeholder="{% trans 'Zapytaj o mecz, drużynę, statystyki...' %}"
-                    rows="1"
-                    aria-label="{% trans 'Wiadomość do AI Analityka' %}"
-                    maxlength="500"
-                    autocomplete="off"
-                ></textarea>
-                <button id="ai-chat-stop-btn" title="{% trans 'Zatrzymaj generowanie' %}" aria-label="{% trans 'Zatrzymaj generowanie' %}" style="display:none;">
-                    <i class="fa-solid fa-square"></i>
-                </button>
-                <button id="ai-chat-send-btn" title="{% trans 'Wyślij (Enter)' %}" aria-label="{% trans 'Wyślij wiadomość' %}">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </div>
+        {# TREŚĆ — rozgałęzienie Premium vs Free/Plus #}
+                {% if user.profile.tier == 'PREMIUM' %}
 
-        {% else %}
+            {# ██ PREMIUM: pełny czat ██ #}
+                    <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite">
+                        <div class="chat-welcome">
+                            <i class="fa-solid fa-robot"></i>
+                            <p>
+                                {% trans "Cześć! Jestem Twoim AI Analitykiem sportowym." %}<br>
+                                {% trans "Zapytaj mnie o dowolny mecz, statystyki lub drużyny." %}
+                            </p>
+                        </div>
+                        <div class="typing-indicator" id="ai-typing-indicator" aria-label="AI pisze...">
+                            <div class="ai-typing-avatar">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="typing-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ai-chat-input-area">
+                        <textarea
+                            id="ai-chat-input"
+                            placeholder="{% trans 'Zapytaj o mecz, drużynę, statystyki...' %}"
+                            rows="1"
+                            aria-label="{% trans 'Wiadomość do AI Analityka' %}"
+                            maxlength="500"
+                            autocomplete="off"
+                        ></textarea>
+                        <button id="ai-chat-stop-btn" title="{% trans 'Zatrzymaj generowanie' %}" aria-label="{% trans 'Zatrzymaj generowanie' %}" style="display:none;">
+                            <i class="fa-solid fa-square"></i>
+                        </button>
+                        <button id="ai-chat-send-btn" title="{% trans 'Wyślij (Enter)' %}" aria-label="{% trans 'Wyślij wiadomość' %}">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                {% else %}
 
             {# ██ FREE / PLUS: zamglony podgląd + paywall overlay ██ #}
-            <div class="ai-chat-paywall-panel">
+                    <div class="ai-chat-paywall-panel">
 
                 {# Zamglone "fałszywe" bańki czatu #}
-                <div class="ai-chat-paywall-preview" aria-hidden="true">
-                    <div class="paywall-fake-msg">
-                        <div class="paywall-fake-avatar"></div>
-                        <div class="paywall-fake-bubble long"></div>
-                    </div>
-                    <div class="paywall-fake-msg right">
-                        <div class="paywall-fake-avatar"></div>
-                        <div class="paywall-fake-bubble short"></div>
-                    </div>
-                    <div class="paywall-fake-msg">
-                        <div class="paywall-fake-avatar"></div>
-                        <div class="paywall-fake-bubble"></div>
-                    </div>
-                    <div class="paywall-fake-msg right">
-                        <div class="paywall-fake-avatar"></div>
-                        <div class="paywall-fake-bubble long"></div>
-                    </div>
-                    <div class="paywall-fake-msg">
-                        <div class="paywall-fake-avatar"></div>
-                        <div class="paywall-fake-bubble short"></div>
-                    </div>
-                </div>
+                        <div class="ai-chat-paywall-preview" aria-hidden="true">
+                            <div class="paywall-fake-msg">
+                                <div class="paywall-fake-avatar"></div>
+                                <div class="paywall-fake-bubble long"></div>
+                            </div>
+                            <div class="paywall-fake-msg right">
+                                <div class="paywall-fake-avatar"></div>
+                                <div class="paywall-fake-bubble short"></div>
+                            </div>
+                            <div class="paywall-fake-msg">
+                                <div class="paywall-fake-avatar"></div>
+                                <div class="paywall-fake-bubble"></div>
+                            </div>
+                            <div class="paywall-fake-msg right">
+                                <div class="paywall-fake-avatar"></div>
+                                <div class="paywall-fake-bubble long"></div>
+                            </div>
+                            <div class="paywall-fake-msg">
+                                <div class="paywall-fake-avatar"></div>
+                                <div class="paywall-fake-bubble short"></div>
+                            </div>
+                        </div>
 
                 {# Overlay z CTA #}
-                <div class="ai-chat-paywall-overlay">
-                    <div class="ai-paywall-box">
-                        <div class="ai-paywall-crown">
-                            <i class="fa-solid fa-crown"></i>
+                        <div class="ai-chat-paywall-overlay">
+                            <div class="ai-paywall-box">
+                                <div class="ai-paywall-crown">
+                                    <i class="fa-solid fa-crown"></i>
+                                </div>
+                                <h4>{% trans "AI Analityk Sportowy" %}</h4>
+                                <p>
+                                    {% blocktrans %}Zadawaj pytania o mecze, drużyny i statystyki
+                                        swojemu personalnemu asystentowi AI napędzonemu
+                                        przez <strong style="color:#e2e8f0;">Gemini 2.5 Flash</strong>.
+                                        Dostępne wyłącznie w planie <strong style="color:#f59e0b;">Premium</strong>.{% endblocktrans %}
+                                </p>
+                                <a href="{% url 'subscribe' %}" class="ai-paywall-upgrade-btn"
+                                   data-testid="ai-chat-upgrade-btn">
+                                    <i class="fa-solid fa-crown"></i> {% trans "Odblokuj AI Analityka" %}
+                                </a>
+                            </div>
                         </div>
-                        <h4>{% trans "AI Analityk Sportowy" %}</h4>
-                        <p>
-                            {% blocktrans %}Zadawaj pytania o mecze, drużyny i statystyki
-                            swojemu personalnemu asystentowi AI napędzonemu
-                            przez <strong style="color:#e2e8f0;">Gemini 2.5 Flash</strong>.
-                            Dostępne wyłącznie w planie <strong style="color:#f59e0b;">Premium</strong>.{% endblocktrans %}
-                        </p>
-                        <a href="{% url 'subscribe' %}" class="ai-paywall-upgrade-btn"
-                           data-testid="ai-chat-upgrade-btn">
-                            <i class="fa-solid fa-crown"></i> {% trans "Odblokuj AI Analityka" %}
-                        </a>
-                    </div>
-                </div>
 
-            </div>{# /ai-chat-paywall-panel #}
+                    </div>{# /ai-chat-paywall-panel #}
 
             {# Zablokowany input #}
-            <div class="ai-chat-input-area locked">
-                <textarea
-                    id="ai-chat-input"
-                    placeholder="{% trans 'Dostępne tylko dla Premium...' %}"
-                    rows="1"
-                    disabled
-                    aria-label="{% trans 'Input zablokowany — wymagane Premium' %}"
-                ></textarea>
-                <button id="ai-chat-send-btn" disabled aria-label="{% trans 'Wyślij wiadomość' %}">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </div>
+                    <div class="ai-chat-input-area locked">
+                        <textarea
+                            id="ai-chat-input"
+                            placeholder="{% trans 'Dostępne tylko dla Premium...' %}"
+                            rows="1"
+                            disabled
+                            aria-label="{% trans 'Input zablokowany — wymagane Premium' %}"
+                        ></textarea>
+                        <button id="ai-chat-send-btn" disabled aria-label="{% trans 'Wyślij wiadomość' %}">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
 
+                {% endif %}
+
+            </div>{# /ai-chat-panel #}
+
+            <script src="{% static 'matches/ai_chat.js' %}"></script>
         {% endif %}
 
-    </div>{# /ai-chat-panel #}
-
-    <script src="{% static 'matches/ai_chat.js' %}"></script>
-    {% endif %}
-
-
     <!-- PUSH MODAL -->
-    {% if user.is_authenticated %}
-    <div id="push-custom-modal" class="push-modal-overlay">
-        <div class="push-modal">
-            <div class="push-icon-wrapper">
-                <i class="fa-solid fa-bell-ring"></i>
+        {% if user.is_authenticated %}
+            <div id="push-custom-modal" class="push-modal-overlay">
+                <div class="push-modal">
+                    <div class="push-icon-wrapper">
+                        <i class="fa-solid fa-bell-ring"></i>
+                    </div>
+                    <h3>{% trans "Bądź na bieżąco z bramkami!" %}</h3>
+                    <p>{% trans "Włącz powiadomienia, aby otrzymywać wyniki na żywo i analizy AI prosto na Twój telefon." %}</p>
+                    <div class="push-modal-actions">
+                        <button id="push-accept-btn" class="push-btn-primary">{% trans "Włącz powiadomienia" %}</button>
+                        <button id="push-later-btn" class="push-btn-outline">{% trans "Może później" %}</button>
+                    </div>
+                </div>
             </div>
-            <h3>{% trans "Bądź na bieżąco z bramkami!" %}</h3>
-            <p>{% trans "Włącz powiadomienia, aby otrzymywać wyniki na żywo i analizy AI prosto na Twój telefon." %}</p>
-            <div class="push-modal-actions">
-                <button id="push-accept-btn" class="push-btn-primary">{% trans "Włącz powiadomienia" %}</button>
-                <button id="push-later-btn" class="push-btn-outline">{% trans "Może później" %}</button>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    <script src="{% static 'matches/js/push_ui.js' %}"></script>
+        {% endif %}
+        <script src="{% static 'matches/js/push_ui.js' %}"></script>
 
-</body>
+    </body>
 
 </html>

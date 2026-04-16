@@ -6,43 +6,45 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0017_player'),
+        ("matches", "0017_player"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='player',
-            old_name='preffered_foot',
-            new_name='preferred_foot',
+            model_name="player",
+            old_name="preffered_foot",
+            new_name="preferred_foot",
         ),
         migrations.AddField(
-            model_name='player',
-            name='contract_until',
+            model_name="player",
+            name="contract_until",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='player',
-            name='first_name',
+            model_name="player",
+            name="first_name",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='player',
-            name='jersey_number',
+            model_name="player",
+            name="jersey_number",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='player',
-            name='last_name',
+            model_name="player",
+            name="last_name",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='player',
-            name='market_value',
+            model_name="player",
+            name="market_value",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='player',
-            name='retired',
-            field=models.BooleanField(default=False, help_text='Czy zawodnik jest emerytowany'),
+            model_name="player",
+            name="retired",
+            field=models.BooleanField(
+                default=False, help_text="Czy zawodnik jest emerytowany"
+            ),
         ),
     ]

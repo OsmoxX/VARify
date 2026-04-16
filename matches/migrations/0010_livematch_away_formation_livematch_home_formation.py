@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0009_alter_matchlineup_unique_together_and_more'),
+        ("matches", "0009_alter_matchlineup_unique_together_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='livematch',
-            name='away_formation',
-            field=models.CharField(blank=True, help_text="Formacja gości, np. '4-4-2'", max_length=20, null=True),
+            model_name="livematch",
+            name="away_formation",
+            field=models.CharField(
+                blank=True,
+                help_text="Formacja gości, np. '4-4-2'",
+                max_length=20,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='livematch',
-            name='home_formation',
-            field=models.CharField(blank=True, help_text="Formacja gospodarzy, np. '4-3-3'", max_length=20, null=True),
+            model_name="livematch",
+            name="home_formation",
+            field=models.CharField(
+                blank=True,
+                help_text="Formacja gospodarzy, np. '4-3-3'",
+                max_length=20,
+                null=True,
+            ),
         ),
     ]

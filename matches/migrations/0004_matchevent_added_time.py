@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0003_matchlineup_is_home_team_and_more'),
+        ("matches", "0003_matchlineup_is_home_team_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='matchevent',
-            name='added_time',
-            field=models.IntegerField(blank=True, help_text='Doliczone minuty', null=True),
+            model_name="matchevent",
+            name="added_time",
+            field=models.IntegerField(
+                blank=True, help_text="Doliczone minuty", null=True
+            ),
         ),
     ]

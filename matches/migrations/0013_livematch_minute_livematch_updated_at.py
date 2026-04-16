@@ -6,18 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0012_livematch_stats_json'),
+        ("matches", "0012_livematch_stats_json"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='livematch',
-            name='minute',
-            field=models.IntegerField(default=0, help_text='Minuta meczu z ostatniej synchronizacji'),
+            model_name="livematch",
+            name="minute",
+            field=models.IntegerField(
+                default=0, help_text="Minuta meczu z ostatniej synchronizacji"
+            ),
         ),
         migrations.AddField(
-            model_name='livematch',
-            name='updated_at',
+            model_name="livematch",
+            name="updated_at",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

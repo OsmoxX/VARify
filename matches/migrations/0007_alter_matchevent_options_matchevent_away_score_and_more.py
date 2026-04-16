@@ -6,52 +6,54 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0006_livematch_country_name'),
+        ("matches", "0006_livematch_country_name"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='matchevent',
-            options={'ordering': ['time', 'added_time', 'id']},
+            name="matchevent",
+            options={"ordering": ["time", "added_time", "id"]},
         ),
         migrations.AddField(
-            model_name='matchevent',
-            name='away_score',
+            model_name="matchevent",
+            name="away_score",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='matchevent',
-            name='home_score',
+            model_name="matchevent",
+            name="home_score",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='matchevent',
-            name='player_in_name',
+            model_name="matchevent",
+            name="player_in_name",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='matchevent',
-            name='player_out_name',
+            model_name="matchevent",
+            name="player_out_name",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='matchevent',
-            name='text',
+            model_name="matchevent",
+            name="text",
             field=models.CharField(blank=True, max_length=20, null=True),
         ),
         migrations.AlterField(
-            model_name='matchevent',
-            name='added_time',
-            field=models.IntegerField(blank=True, default=0, help_text='Doliczone minuty', null=True),
+            model_name="matchevent",
+            name="added_time",
+            field=models.IntegerField(
+                blank=True, default=0, help_text="Doliczone minuty", null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='matchevent',
-            name='player_name',
+            model_name="matchevent",
+            name="player_name",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='matchevent',
-            name='time',
-            field=models.IntegerField(help_text='Minuta podstawowa'),
+            model_name="matchevent",
+            name="time",
+            field=models.IntegerField(help_text="Minuta podstawowa"),
         ),
     ]

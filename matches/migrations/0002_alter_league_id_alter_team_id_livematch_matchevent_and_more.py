@@ -7,63 +7,132 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0001_initial'),
+        ("matches", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='league',
-            name='id',
-            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="league",
+            name="id",
+            field=models.AutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='team',
-            name='id',
-            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="team",
+            name="id",
+            field=models.AutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.CreateModel(
-            name='LiveMatch',
+            name="LiveMatch",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('api_id', models.CharField(max_length=100, unique=True)),
-                ('home_score', models.IntegerField(default=0)),
-                ('away_score', models.IntegerField(default=0)),
-                ('status', models.CharField(max_length=50)),
-                ('away_team', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='away_matches', to='matches.team')),
-                ('home_team', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='home_matches', to='matches.team')),
-                ('league', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='matches.league')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("api_id", models.CharField(max_length=100, unique=True)),
+                ("home_score", models.IntegerField(default=0)),
+                ("away_score", models.IntegerField(default=0)),
+                ("status", models.CharField(max_length=50)),
+                (
+                    "away_team",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="away_matches",
+                        to="matches.team",
+                    ),
+                ),
+                (
+                    "home_team",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="home_matches",
+                        to="matches.team",
+                    ),
+                ),
+                (
+                    "league",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="matches.league"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='MatchEvent',
+            name="MatchEvent",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('incident_type', models.CharField(max_length=50)),
-                ('time', models.IntegerField(help_text='Minuta zdarzenia')),
-                ('player_name', models.CharField(max_length=50)),
-                ('is_home_team', models.BooleanField(default=True)),
-                ('assist_player_name', models.CharField(blank=True, max_length=100, null=True)),
-                ('match', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='events', to='matches.livematch')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("incident_type", models.CharField(max_length=50)),
+                ("time", models.IntegerField(help_text="Minuta zdarzenia")),
+                ("player_name", models.CharField(max_length=50)),
+                ("is_home_team", models.BooleanField(default=True)),
+                (
+                    "assist_player_name",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                (
+                    "match",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="events",
+                        to="matches.livematch",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['time'],
+                "ordering": ["time"],
             },
         ),
         migrations.CreateModel(
-            name='MatchLineup',
+            name="MatchLineup",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('shirt_number', models.IntegerField(blank=True, null=True)),
-                ('position', models.CharField(blank=True, max_length=10, null=True)),
-                ('is_starting_xi', models.BooleanField(default=True)),
-                ('match', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='lineups', to='matches.livematch')),
-                ('player_name', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='matches.team')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("shirt_number", models.IntegerField(blank=True, null=True)),
+                ("position", models.CharField(blank=True, max_length=10, null=True)),
+                ("is_starting_xi", models.BooleanField(default=True)),
+                (
+                    "match",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="lineups",
+                        to="matches.livematch",
+                    ),
+                ),
+                (
+                    "player_name",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="matches.team"
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('match', 'player_name')},
+                "unique_together": {("match", "player_name")},
             },
         ),
         migrations.DeleteModel(
-            name='Match',
+            name="Match",
         ),
     ]

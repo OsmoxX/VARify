@@ -7,19 +7,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0010_livematch_away_formation_livematch_home_formation'),
+        ("matches", "0010_livematch_away_formation_livematch_home_formation"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MissingPlayer',
+            name="MissingPlayer",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('player_name', models.CharField(max_length=100)),
-                ('type', models.CharField(max_length=50)),
-                ('reason', models.CharField(blank=True, max_length=255, null=True)),
-                ('is_home_team', models.BooleanField(default=True)),
-                ('match', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='missing_players', to='matches.livematch')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("player_name", models.CharField(max_length=100)),
+                ("type", models.CharField(max_length=50)),
+                ("reason", models.CharField(blank=True, max_length=255, null=True)),
+                ("is_home_team", models.BooleanField(default=True)),
+                (
+                    "match",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="missing_players",
+                        to="matches.livematch",
+                    ),
+                ),
             ],
         ),
     ]

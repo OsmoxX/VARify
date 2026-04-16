@@ -51,7 +51,7 @@ def ai_chat_endpoint(request):
     for turn in history:
         if not isinstance(turn, dict):
             continue
-        role    = turn.get("role", "")
+        role = turn.get("role", "")
         content = turn.get("content", "")
         if role not in ("user", "assistant") or not isinstance(content, str):
             continue
@@ -61,16 +61,23 @@ def ai_chat_endpoint(request):
         validated.append({"role": role, "content": content})
 
     if not validated:
-        return JsonResponse({"error": "Historia nie zawiera prawidłowych wiadomości."}, status=400)
+        return JsonResponse(
+            {"error": "Historia nie zawiera prawidłowych wiadomości."}, status=400
+        )
 
     # Ostatnia wiadomość musi być od użytkownika
     if validated[-1]["role"] != "user":
-        return JsonResponse({"error": "Ostatnia wiadomość w historii musi być od użytkownika."}, status=400)
+        return JsonResponse(
+            {"error": "Ostatnia wiadomość w historii musi być od użytkownika."},
+            status=400,
+        )
 
     # Ostatnie zapytanie nie może być zbyt długie
     last_query = validated[-1]["content"]
     if len(last_query) > 500:
-        return JsonResponse({"error": "Zapytanie jest zbyt długie (maks. 500 znaków)."}, status=400)
+        return JsonResponse(
+            {"error": "Zapytanie jest zbyt długie (maks. 500 znaków)."}, status=400
+        )
 
     # ── 3. Wywołanie Agenta AI ──────────────────────────────────────
     try:
@@ -80,14 +87,16 @@ def ai_chat_endpoint(request):
     except AIServiceError as exc:
         logger.warning(
             "[VARify AI] AIServiceError dla użytkownika %s: %s",
-            request.user.username, exc.user_message,
+            request.user.username,
+            exc.user_message,
         )
         return JsonResponse({"error": exc.user_message}, status=503)
 
     except Exception as exc:
         logger.exception(
             "[VARify AI] Nieoczekiwany błąd dla użytkownika %s: %s",
-            request.user.username, exc,
+            request.user.username,
+            exc,
         )
         return JsonResponse(
             {"error": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie za chwilę."},

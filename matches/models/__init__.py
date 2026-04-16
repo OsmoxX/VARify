@@ -16,15 +16,15 @@ from .image import CachedImage
 from .standings import LeagueStandings
 
 __all__ = [
-    'League',
-    'Team',
-    'Player',
-    'LiveMatch',
-    'UpcomingMatch',
-    'MatchSubscription',
-    'MatchEvent',
-    'MatchLineup',
-    'MissingPlayer',
-    'CachedImage',
-    'LeagueStandings',
+    "League",
+    "Team",
+    "Player",
+    "LiveMatch",
+    "UpcomingMatch",
+    "MatchSubscription",
+    "MatchEvent",
+    "MatchLineup",
+    "MissingPlayer",
+    "CachedImage",
+    "LeagueStandings",
 ]

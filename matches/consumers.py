@@ -4,21 +4,15 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class MatchConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.match_id = self.scope['url_route']['kwargs']['match_id']
-        self.room_group_name = f'match_{self.match_id}'
+        self.match_id = self.scope["url_route"]["kwargs"]["match_id"]
+        self.room_group_name = f"match_{self.match_id}"
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     # Uniwersalny handler zdarzeń meczowych
     # Obsługuje: gole, kartki, zmiany, okresy (HT/FT)
@@ -35,12 +29,12 @@ class MatchConsumer(AsyncWebsocketConsumer):
         }
         """
         payload = {
-            'event_type': event.get('event_type', 'info'),
-            'icon': event.get('icon', 'ℹ️'),
-            'message': event.get('message', ''),
+            "event_type": event.get("event_type", "info"),
+            "icon": event.get("icon", "ℹ️"),
+            "message": event.get("message", ""),
         }
         # Przekaż opcjonalne pola do frontendu
-        for key in ('home_score', 'away_score', 'status'):
+        for key in ("home_score", "away_score", "status"):
             if key in event:
                 payload[key] = event[key]
         await self.send(text_data=json.dumps(payload))

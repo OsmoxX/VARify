@@ -22,7 +22,6 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from accounts.models import Profile, SubscriptionTier
 
-
 E2E_USERS = [
     {
         "username": os.environ.get("E2E_USERNAME_FREE", "e2e_free_user"),

@@ -538,105 +538,142 @@ a.search-item:hover {
 }
 
 /* =========================================
-   LANGUAGE SWITCHER
+   LANGUAGE DRAWER — horizontal pill, right edge
 ========================================= */
-.lang-switcher-wrapper {
-    position: relative;
+
+/*
+ * Cały drawer to jeden poziomy pasek przyklejony do prawej krawędzi.
+ * Struktura: [opcje (wysuwane)] [trigger (zawsze widoczny)]
+ * Animacja: max-width 0 → auto po stronie options + overflow: hidden
+ */
+.lang-drawer {
+    position: fixed;
+    right: 0;
+    top: 80px;
+    z-index: 1500;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;          /* jednakowa wysokość wszystkich dzieci */
+    background: #1e1e2e;           /* ciemne tło, ciut ciemniejsze od navbara */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: none;            /* przylega do prawej krawędzi ekranu */
+    border-radius: 50px 0 0 50px;  /* kształt pigułki od lewej */
+    box-shadow: -6px 4px 28px rgba(0, 0, 0, 0.55),
+                0 0 0 1px rgba(16, 185, 129, 0.08);
+    overflow: hidden;              /* niezbędne dla animacji max-width */
+    transition: box-shadow 0.25s ease;
 }
 
-.lang-switcher-btn {
+.lang-drawer:hover,
+.lang-drawer.lang-drawer-open {
+    box-shadow: -8px 4px 32px rgba(0, 0, 0, 0.65),
+                0 0 0 1px rgba(16, 185, 129, 0.18);
+}
+
+/* ── Panel opcji — zwinięty domyślnie ─────────────────────── */
+.lang-drawer-options {
+    max-width: 0;
+    overflow: hidden;
+    transition: max-width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity   0.28s ease;
+    opacity: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: 1px solid #444;
-    color: var(--text-muted);
-    font-size: 1rem;
-    padding: 6px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.lang-drawer.lang-drawer-open .lang-drawer-options {
+    max-width: 200px;   /* wystarczy na 2 flagi */
+    opacity: 1;
+}
+
+/* Form to poziomy rząd flag — zero flex-direction: column! */
+.lang-drawer-options form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    padding: 0 6px 0 12px;   /* padding: trochę luz z lewej */
     white-space: nowrap;
 }
 
-.lang-switcher-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: rgba(16, 185, 129, 0.08);
-}
-
-.lang-chevron {
-    font-size: 0.65rem;
-    transition: transform 0.2s ease;
-}
-
-.lang-switcher-btn.lang-open .lang-chevron {
-    transform: rotate(180deg);
-}
-
-.lang-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 150px;
-    background: var(--card-bg);
-    border: 1px solid #333;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    z-index: 2000;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    animation: dropdownSlide 0.18s ease;
-    padding: 6px;
-}
-
-.lang-dropdown.lang-dropdown-open {
-    display: flex;
-}
-
-.lang-dropdown form {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin: 0;
-    padding: 0;
-}
-
-.lang-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
+/* ── Pojedyncza opcja ──────────────────────────────────────── */
+.lang-drawer-option {
     background: transparent;
     border: none;
-    color: var(--text-main);
-    font-size: 0.88rem;
-    font-weight: 500;
-    padding: 9px 12px;
-    border-radius: 8px;
+    font-size: 1.45rem;
+    width: 44px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    text-align: left;
-    transition: background 0.15s, color 0.15s;
+    border-radius: 8px;
+    transition: background 0.15s, transform 0.15s;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
 }
 
-.lang-option:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--text-light);
+.lang-drawer-option:hover {
+    background: rgba(16, 185, 129, 0.14);
+    transform: scale(1.14);
 }
 
-.lang-option-active {
-    color: var(--accent);
-    background: rgba(16, 185, 129, 0.1);
-    font-weight: 700;
+/* ── Separator między opcjami a triggerem ─────────────────── */
+.lang-drawer-separator {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+    flex-shrink: 0;
+    transition: opacity 0.28s ease;
+    opacity: 0;
 }
 
-.lang-option-active:hover {
+.lang-drawer.lang-drawer-open .lang-drawer-separator {
+    opacity: 1;
+}
+
+/* ── Trigger — zawsze widoczna flaga aktualnego języka ─────── */
+.lang-drawer-trigger {
+    background: transparent;
+    border: none;
+    font-size: 1.45rem;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+    /* Lekkie tło odróżnia trigger od opcji */
+    background: rgba(16, 185, 129, 0.06);
+}
+
+.lang-drawer-trigger:hover {
     background: rgba(16, 185, 129, 0.15);
 }
 
+/* ── Mobile ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .lang-dropdown {
-        right: -8px;
+    .lang-drawer {
+        top: 68px;
+    }
+    .lang-drawer-trigger {
+        font-size: 1.2rem;
+        width: 44px;
+        height: 46px;
+    }
+    .lang-drawer-option {
+        font-size: 1.2rem;
+        width: 38px;
+        height: 46px;
+    }
+    .lang-drawer.lang-drawer-open .lang-drawer-options {
+        max-width: 160px;
     }
 }

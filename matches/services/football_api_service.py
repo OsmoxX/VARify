@@ -3,6 +3,7 @@ services/football_api_service.py
 
 Low-level helpers and search functions for the SportAPI.
 """
+
 import os
 
 import requests
@@ -37,7 +38,7 @@ def search_teams_from_api(query: str) -> list:
             response = requests.get(url, headers=headers, timeout=8)
             if response.status_code == 200:
                 data = response.json()
-                results = data.get('results', []) or data.get('teams', []) or []
+                results = data.get("results", []) or data.get("teams", []) or []
                 if results:
                     print(f"API Search OK: {url}")
                     break
@@ -52,16 +53,15 @@ def search_teams_from_api(query: str) -> list:
 
     teams = []
     for row in results:
-        if row.get('type') != 'team':
+        if row.get("type") != "team":
             continue
-        entity = row.get('entity', {})
-        api_id = entity.get('id')
-        name = entity.get('name', '').strip()
+        entity = row.get("entity", {})
+        api_id = entity.get("id")
+        name = entity.get("name", "").strip()
         if not api_id or not name:
             continue
         team, created = Team.objects.get_or_create(
-            api_id=api_id,
-            defaults={'name': name}
+            api_id=api_id, defaults={"name": name}
         )
         if created:
             print(f"API Search: zapisano nową drużynę '{name}' (api_id={api_id})")

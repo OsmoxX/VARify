@@ -7,67 +7,85 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0007_alter_matchevent_options_matchevent_away_score_and_more'),
+        ("matches", "0007_alter_matchevent_options_matchevent_away_score_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='livematch',
-            name='league_name',
+            model_name="livematch",
+            name="league_name",
         ),
         migrations.AddField(
-            model_name='league',
-            name='country',
+            model_name="league",
+            name="country",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='livematch',
-            name='league',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='matches', to='matches.league'),
+            model_name="livematch",
+            name="league",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="matches",
+                to="matches.league",
+            ),
         ),
         migrations.AddField(
-            model_name='livematch',
-            name='match_time',
+            model_name="livematch",
+            name="match_time",
             field=models.CharField(blank=True, max_length=20, null=True),
         ),
         migrations.AddField(
-            model_name='team',
-            name='logo_url',
+            model_name="team",
+            name="logo_url",
             field=models.URLField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='livematch',
-            name='api_id',
+            model_name="livematch",
+            name="api_id",
             field=models.IntegerField(unique=True),
         ),
         migrations.AlterField(
-            model_name='livematch',
-            name='away_team',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='away_matches', to='matches.team'),
+            model_name="livematch",
+            name="away_team",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="away_matches",
+                to="matches.team",
+            ),
         ),
         migrations.AlterField(
-            model_name='livematch',
-            name='country_name',
+            model_name="livematch",
+            name="country_name",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='livematch',
-            name='home_team',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='home_matches', to='matches.team'),
+            model_name="livematch",
+            name="home_team",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="home_matches",
+                to="matches.team",
+            ),
         ),
         migrations.AlterField(
-            model_name='matchevent',
-            name='added_time',
+            model_name="matchevent",
+            name="added_time",
             field=models.IntegerField(blank=True, default=0, null=True),
         ),
         migrations.AlterField(
-            model_name='matchlineup',
-            name='position',
+            model_name="matchlineup",
+            name="position",
             field=models.CharField(blank=True, max_length=50, null=True),
         ),
         migrations.AlterField(
-            model_name='team',
-            name='api_id',
+            model_name="team",
+            name="api_id",
             field=models.IntegerField(unique=True),
         ),
     ]

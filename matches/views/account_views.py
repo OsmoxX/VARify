@@ -3,6 +3,7 @@ views/account_views.py
 
 Account settings: change username, email, and password.
 """
+
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -15,52 +16,61 @@ def account_settings(request):
     user = request.user
     errors = {}
 
-    if request.method == 'POST':
-        action = request.POST.get('action')
+    if request.method == "POST":
+        action = request.POST.get("action")
 
         # ── Zmiana danych podstawowych ──────────────────────────
-        if action == 'update_profile':
-            new_username = request.POST.get('username', '').strip()
-            new_email = request.POST.get('email', '').strip()
+        if action == "update_profile":
+            new_username = request.POST.get("username", "").strip()
+            new_email = request.POST.get("email", "").strip()
 
             if not new_username:
-                errors['username'] = 'Nazwa użytkownika nie może być pusta.'
+                errors["username"] = "Nazwa użytkownika nie może być pusta."
             elif new_username != user.username:
                 from django.contrib.auth import get_user_model
+
                 User = get_user_model()
-                if User.objects.filter(username=new_username).exclude(pk=user.pk).exists():
-                    errors['username'] = 'Ta nazwa użytkownika jest już zajęta.'
+                if (
+                    User.objects.filter(username=new_username)
+                    .exclude(pk=user.pk)
+                    .exists()
+                ):
+                    errors["username"] = "Ta nazwa użytkownika jest już zajęta."
 
             if not errors:
                 user.username = new_username
                 user.email = new_email
                 user.save()
-                messages.success(request, 'Dane profilu zostały zaktualizowane.')
-                return redirect('account_settings')
+                messages.success(request, "Dane profilu zostały zaktualizowane.")
+                return redirect("account_settings")
 
         # ── Zmiana hasła ────────────────────────────────────────
-        elif action == 'change_password':
+        elif action == "change_password":
             # Używamy skróconych nazw zmiennych, aby zmylić uproszczone skanery
-            current_pw = request.POST.get('current_password', '')
-            new_pw = request.POST.get('new_password', '')
-            confirm_pw = request.POST.get('confirm_password', '')
+            current_pw = request.POST.get("current_password", "")
+            new_pw = request.POST.get("new_password", "")
+            confirm_pw = request.POST.get("confirm_password", "")
 
             if not user.check_password(current_pw):
                 # Dodajemy # nosec, aby Bandit nie brał komunikatów o błędach za hasła
-                errors['current_pw'] = 'Obecne hasło jest nieprawidłowe.'  # nosec
+                errors["current_pw"] = "Obecne hasło jest nieprawidłowe."  # nosec
             elif len(new_pw) < 8:
-                errors['new_pw'] = 'Nowe hasło musi mieć co najmniej 8 znaków.'  # nosec
+                errors["new_pw"] = "Nowe hasło musi mieć co najmniej 8 znaków."  # nosec
             elif new_pw != confirm_pw:
-                errors['confirm_pw'] = 'Hasła nie są identyczne.'  # nosec
+                errors["confirm_pw"] = "Hasła nie są identyczne."  # nosec
 
             if not errors:
                 user.set_password(new_pw)
                 user.save()
                 update_session_auth_hash(request, user)  # zachowuje zalogowaną sesję
-                messages.success(request, 'Hasło zostało zmienione.')
-                return redirect('account_settings')
+                messages.success(request, "Hasło zostało zmienione.")
+                return redirect("account_settings")
 
-    return render(request, 'matches/account_settings.html', {
-        'user': user,
-        'errors': errors,
-    })
+    return render(
+        request,
+        "matches/account_settings.html",
+        {
+            "user": user,
+            "errors": errors,
+        },
+    )

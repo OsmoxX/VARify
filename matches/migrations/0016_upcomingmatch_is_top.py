@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0015_upcomingmatch'),
+        ("matches", "0015_upcomingmatch"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='upcomingmatch',
-            name='is_top',
-            field=models.BooleanField(default=False, help_text='Czy mecz jest w top-competitions (z API eventFilters)'),
+            model_name="upcomingmatch",
+            name="is_top",
+            field=models.BooleanField(
+                default=False,
+                help_text="Czy mecz jest w top-competitions (z API eventFilters)",
+            ),
         ),
     ]

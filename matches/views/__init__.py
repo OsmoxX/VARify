@@ -34,31 +34,30 @@ from .auth_views import register, logout_view
 # Account settings
 from .account_views import account_settings as account_settings
 
-
 # Utilities
 from .utility_views import search_api_view, proxy_image_view
 
 __all__ = [
     # Constants
-    'TOP_LEAGUES_CONFIG',
-    'ENDED_STATUSES',
+    "TOP_LEAGUES_CONFIG",
+    "ENDED_STATUSES",
     # Match
-    'live_matches_view',
-    'match_detail_view',
-    'HomeView',
-    'toggle_notifications',
-    'active_match_ids',
+    "live_matches_view",
+    "match_detail_view",
+    "HomeView",
+    "toggle_notifications",
+    "active_match_ids",
     # Calendar
-    'CalendarView',
-    'upcoming_matches_view',
+    "CalendarView",
+    "upcoming_matches_view",
     # Domain details
-    'league_detail_view',
-    'team_detail_view',
-    'player_detail',
+    "league_detail_view",
+    "team_detail_view",
+    "player_detail",
     # Auth
-    'register',
-    'logout_view',
+    "register",
+    "logout_view",
     # Utilities
-    'search_api_view',
-    'proxy_image_view',
+    "search_api_view",
+    "proxy_image_view",
 ]

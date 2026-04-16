@@ -27,19 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # BEZPIECZEŃSTWO (Dostosowane pod produkcję)
 # ==========================================
 
-# Pobiera klucz z .env. Domyślny używany tylko lokalnie.
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-w#0c&!#4_gib+4(u!55*o%977%k-r_gbz$w-%9&@4t6)-j%i_$')
+# Pobiera klucz z .env. Brak wartości domyślnej w repo!
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # Jeśli w .env nie ma DEBUG=True, domyślnie będzie False (bezpieczne na serwerze)
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Dozwolone adresy IP i domeny
-ALLOWED_HOSTS = [
-    '13.62.58.123', 
-    '13.62.58.123.nip.io',
-    'localhost', 
-    '127.0.0.1'
-]
+ALLOWED_HOSTS = ["13.62.58.123", "13.62.58.123.nip.io", "localhost", "127.0.0.1"]
 
 # Dozwolone domeny dla zapytań z zewnętrznych aplikacji (CORS)
 CORS_ALLOWED_ORIGINS = [
@@ -59,7 +54,10 @@ CSRF_TRUSTED_ORIGINS = [
 # MONITOROWANIE
 # ==========================================
 sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN", "https://57fe3a4f7a85f4c31ec62748e24ee3a7@o4511019727388672.ingest.de.sentry.io/4511019742003280"),
+    dsn=os.getenv(
+        "SENTRY_DSN",
+        "https://57fe3a4f7a85f4c31ec62748e24ee3a7@o4511019727388672.ingest.de.sentry.io/4511019742003280",
+    ),
     send_default_pii=True,
     traces_sample_rate=1.0,
     profiles_sample_rate=1.0,
@@ -69,82 +67,82 @@ sentry_sdk.init(
 # APLIKACJE I MIDDLEWARE
 # ==========================================
 INSTALLED_APPS = [
-    'daphne',
-    'channels',
-    'corsheaders',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.github',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_celery_beat',
-    'matches',
-    'accounts',
-    'webpush',
-    'rest_framework',
-    'rosetta',
+    "daphne",
+    "channels",
+    "corsheaders",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.facebook",
+    "allauth.socialaccount.providers.github",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django_celery_beat",
+    "matches",
+    "accounts",
+    "webpush",
+    "rest_framework",
+    "rosetta",
 ]
 
 SITE_ID = 1
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.auth.middleware.LoginRequiredMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
-ROOT_URLCONF = 'my_football_app.urls'
+ROOT_URLCONF = "my_football_app.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'matches' / 'templates'], 
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "matches" / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'my_football_app.wsgi.application'
-ASGI_APPLICATION = 'my_football_app.asgi.application'
+WSGI_APPLICATION = "my_football_app.wsgi.application"
+ASGI_APPLICATION = "my_football_app.asgi.application"
 
 # ==========================================
 # BAZA DANYCH
 # ==========================================
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-LOGIN_URL = 'login'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGIN_URL = "login"
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'varify_db',             
-        'USER': 'root',                  
-        # Pobiera hasło z .env, domyślnie używa 'supertajnehaslo'
-        'PASSWORD': os.getenv('DB_PASSWORD', 'supertajnehaslo'),   
-        'HOST': 'db',                    
-        'PORT': '3306',
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "varify_db",
+        "USER": "root",
+        # Pobiera hasło z .env, ze względów bezpieczeństwa brak zahardkodowanego hasła
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": "db",
+        "PORT": "3306",
     }
 }
 
@@ -152,86 +150,88 @@ DATABASES = {
 # AUTORYZACJA I HASŁA
 # ==========================================
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 # Gdzie przekierować po udanym logowaniu/wylogowaniu
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
 
 # Konfiguracja Allauth
-ACCOUNT_LOGIN_METHODS = {'email', 'username'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_REQUIRED = True 
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_REQUIRED = True
 
 # ZMIANA: Wyłączone wymaganie weryfikacji maila, dopóki nie ma serwera SMTP
-ACCOUNT_EMAIL_VERIFICATION = 'none' 
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'VARify Team <noreply@varify.pl>'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "VARify Team <noreply@varify.pl>"
 
 # ==========================================
 # TŁUMACZENIA (i18n)
 # ==========================================
-LANGUAGE_CODE = 'pl'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = "pl"
+TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
 LANGUAGES = [
-    ('pl', _('Polski')),
-    ('en', _('English')),
-    ('uk', _('Ukrainian')),
+    ("pl", _("Polski")),
+    ("en", _("English")),
+    ("uk", _("Ukrainian")),
 ]
 
 LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
+    os.path.join(BASE_DIR, "locale"),
 ]
 
 # ==========================================
 # CELERY & REDIS
 # ==========================================
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Europe/Warsaw'
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Europe/Warsaw"
 
 CELERY_BEAT_SCHEDULE = {
-    'update-live-matches-every-30-seconds': {
-        'task': 'matches.tasks.sync_live_matches',
-        'schedule': 30.0, 
+    "update-live-matches-every-30-seconds": {
+        "task": "matches.tasks.sync_live_matches",
+        "schedule": 30.0,
     },
-    'fetch-upcoming-matches': {
-        'task': 'matches.tasks.fetch_upcoming_matches',
-        'schedule': crontab(hour=11, minute=00), 
+    "fetch-upcoming-matches": {
+        "task": "matches.tasks.fetch_upcoming_matches",
+        "schedule": crontab(hour=11, minute=00),
     },
-    'fetch-top-leagues-standings': {
-        'task': 'matches.tasks.fetch_top_leagues_standings_task',
-        'schedule': crontab(hour=13, minute=19), 
+    "fetch-top-leagues-standings": {
+        "task": "matches.tasks.fetch_top_leagues_standings_task",
+        "schedule": crontab(hour=13, minute=19),
     },
 }
 
-CACHES = {  
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
             "hosts": [("redis", 6379)],
         },
     },
@@ -241,47 +241,47 @@ CHANNEL_LAYERS = {
 # REST FRAMEWORK & LOGOWANIE BŁĘDÓW
 # ==========================================
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {'format': '[%(levelname)s] %(name)s: %(message)s'},
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {"format": "[%(levelname)s] %(name)s: %(message)s"},
     },
-    'handlers': {
-        'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "simple"},
     },
-    'loggers': {
-        'matches': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
-        'django': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+    "loggers": {
+        "matches": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle', 
-        'rest_framework.throttling.UserRateThrottle'  
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '5/minute',  
-        'user': '20/minute',  
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/minute",
+        "user": "20/minute",
     },
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20 
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
 # ==========================================
 # STRIPE CONFIGURATION
 # ==========================================
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
-STRIPE_PRICE_ID_PLUS = os.getenv('STRIPE_PRICE_ID_PLUS', '')
-STRIPE_PRICE_ID_PREMIUM = os.getenv('STRIPE_PRICE_ID_PREMIUM', '')
-STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PRICE_ID_PLUS = os.getenv("STRIPE_PRICE_ID_PLUS", "")
+STRIPE_PRICE_ID_PREMIUM = os.getenv("STRIPE_PRICE_ID_PREMIUM", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # ==========================================
 # PLIKI STATYCZNE (Dostosowane pod WhiteNoise)
 # ==========================================
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Konfiguracja WhiteNoise
 WHITENOISE_MANIFEST_STRICT = False
@@ -297,7 +297,7 @@ STORAGES = {
 # WEBPUSH SETTINGS (Powiadomienia PWA)
 # ==========================================
 WEBPUSH_SETTINGS = {
-    "VAPID_PUBLIC_KEY": os.environ.get('VAPID_PUBLIC_KEY'),
-    "VAPID_PRIVATE_KEY": os.environ.get('VAPID_PRIVATE_KEY'),
-    "VAPID_ADMIN_EMAIL": os.environ.get('VAPID_ADMIN_EMAIL')
+    "VAPID_PUBLIC_KEY": os.environ.get("VAPID_PUBLIC_KEY"),
+    "VAPID_PRIVATE_KEY": os.environ.get("VAPID_PRIVATE_KEY"),
+    "VAPID_ADMIN_EMAIL": os.environ.get("VAPID_ADMIN_EMAIL"),
 }

@@ -15,13 +15,44 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Profile',
+            name="Profile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tier', models.CharField(choices=[('FREE', 'Free'), ('PLUS', 'Plus'), ('PREMIUM', 'Premium')], default='FREE', max_length=10)),
-                ('stripe_customer_id', models.CharField(blank=True, max_length=255, null=True)),
-                ('stripe_subscription_id', models.CharField(blank=True, max_length=255, null=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "tier",
+                    models.CharField(
+                        choices=[
+                            ("FREE", "Free"),
+                            ("PLUS", "Plus"),
+                            ("PREMIUM", "Premium"),
+                        ],
+                        default="FREE",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "stripe_customer_id",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "stripe_subscription_id",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

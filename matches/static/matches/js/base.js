@@ -254,35 +254,33 @@ window.VarifyWS = {
 })();
 
 
-// ── LANGUAGE SWITCHER DROPDOWN ─────────────────────────────────────────────
+// ── LANGUAGE DRAWER (fixed right-edge panel) ──────────────────────────────────────────
 (function () {
     'use strict';
-    const btn      = document.getElementById('lang-switcher-btn');
-    const dropdown = document.getElementById('lang-dropdown');
-    if (!btn || !dropdown) return;
+    const drawer  = document.getElementById('lang-drawer');
+    const trigger = document.getElementById('lang-drawer-trigger');
+    if (!drawer || !trigger) return;
 
-    function openLang() {
-        dropdown.classList.add('lang-dropdown-open');
-        btn.classList.add('lang-open');
+    function openDrawer() {
+        drawer.classList.add('lang-drawer-open');
+        trigger.setAttribute('aria-expanded', 'true');
     }
 
-    function closeLang() {
-        dropdown.classList.remove('lang-dropdown-open');
-        btn.classList.remove('lang-open');
+    function closeDrawer() {
+        drawer.classList.remove('lang-drawer-open');
+        trigger.setAttribute('aria-expanded', 'false');
     }
 
-    btn.addEventListener('click', function (e) {
+    trigger.addEventListener('click', function (e) {
         e.stopPropagation();
-        dropdown.classList.contains('lang-dropdown-open') ? closeLang() : openLang();
+        drawer.classList.contains('lang-drawer-open') ? closeDrawer() : openDrawer();
     });
 
     document.addEventListener('click', function (e) {
-        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
-            closeLang();
-        }
+        if (!drawer.contains(e.target)) closeDrawer();
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeLang();
+        if (e.key === 'Escape') closeDrawer();
     });
 })();

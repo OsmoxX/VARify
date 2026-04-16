@@ -4,8 +4,10 @@ from .team import Team
 
 
 class LeagueStandings(models.Model):
-    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='standings')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='standings')
+    league = models.ForeignKey(
+        League, on_delete=models.CASCADE, related_name="standings"
+    )
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="standings")
     position = models.IntegerField()
     points = models.IntegerField()
     matches_played = models.IntegerField()

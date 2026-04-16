@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('matches', '0021_leaguestandings'),
+        ("matches", "0021_leaguestandings"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='livematch',
-            name='is_top',
-            field=models.BooleanField(default=False, help_text='Czy mecz jest top z API lub wg własnej listy'),
+            model_name="livematch",
+            name="is_top",
+            field=models.BooleanField(
+                default=False, help_text="Czy mecz jest top z API lub wg własnej listy"
+            ),
         ),
     ]

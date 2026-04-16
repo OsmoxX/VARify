@@ -4,10 +4,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist
 
+
 class SubscriptionTier(models.TextChoices):
-    FREE = 'FREE', 'Free'
-    PLUS = 'PLUS', 'Plus'
-    PREMIUM = 'PREMIUM', 'Premium'
+    FREE = "FREE", "Free"
+    PLUS = "PLUS", "Plus"
+    PREMIUM = "PREMIUM", "Premium"
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -22,11 +24,13 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username} - Plan: {self.tier}"
 
+
 # Sygnały: Gdy powstaje User, automatycznie twórz dla niego Profile
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):

@@ -14,8 +14,8 @@ from .models import SubscriptionTier
 # KLUCZOWA ZMIANA 1: Używamy .value, aby klucze na 100% były stringami.
 # To rozwiązuje błędy niezgodności typów (str vs Enum) i sprawia, że .get() działa!
 TIER_LEVEL: dict[str, int] = {
-    SubscriptionTier.FREE.value:    0,
-    SubscriptionTier.PLUS.value:    1,
+    SubscriptionTier.FREE.value: 0,
+    SubscriptionTier.PLUS.value: 1,
     SubscriptionTier.PREMIUM.value: 2,
 }
 
@@ -27,7 +27,9 @@ def _tier_value(tier: "SubscriptionTier | str") -> str:
     return str(tier)
 
 
-def has_access(user: "AbstractBaseUser | AnonymousUser", required_tier: "SubscriptionTier | str") -> bool:
+def has_access(
+    user: "AbstractBaseUser | AnonymousUser", required_tier: "SubscriptionTier | str"
+) -> bool:
     """
     Sprawdza, czy użytkownik ma dostęp do funkcji wymagającej danego poziomu.
     Respektuje hierarchię: PREMIUM >= PLUS >= FREE.
@@ -36,15 +38,15 @@ def has_access(user: "AbstractBaseUser | AnonymousUser", required_tier: "Subscri
         return False
 
     try:
-        profile = getattr(user, 'profile')
+        profile = getattr(user, "profile")
         user_tier = profile.tier
     except (AttributeError, ObjectDoesNotExist):
         return _tier_value(required_tier) == SubscriptionTier.FREE.value
 
     val_user = _tier_value(user_tier)
     val_req = _tier_value(required_tier)
-    
+
     user_level = TIER_LEVEL.get(val_user, 0)
     required_level = TIER_LEVEL.get(val_req, 0)
-  
+
     return user_level >= required_level

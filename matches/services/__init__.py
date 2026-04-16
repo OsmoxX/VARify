@@ -18,13 +18,13 @@ from .match_service import (
 from .standings_service import fetch_league_standings
 
 __all__ = [
-    'fetch_player',
-    'search_players_from_api',
-    'search_teams_from_api',
-    'sync_live_matches',
-    'fetch_live_matches',
-    'fetch_match_details',
-    'fetch_upcoming_matches',
-    'fetch_last_matches_for_team',
-    'fetch_league_standings',
+    "fetch_player",
+    "search_players_from_api",
+    "search_teams_from_api",
+    "sync_live_matches",
+    "fetch_live_matches",
+    "fetch_match_details",
+    "fetch_upcoming_matches",
+    "fetch_last_matches_for_team",
+    "fetch_league_standings",
 ]

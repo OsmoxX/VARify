@@ -9,7 +9,7 @@ from accounts.models import Profile, SubscriptionTier
 def _make_user_with_tier(username: str, tier) -> User:
     """Helper: create a user and set their subscription tier."""
     user = User.objects.create_user(username=username, password="pass")
-    tier_str = tier.value if hasattr(tier, 'value') else str(tier)
+    tier_str = tier.value if hasattr(tier, "value") else str(tier)
     Profile.objects.get_or_create(user=user)
     Profile.objects.filter(user=user).update(tier=tier_str)
     return User.objects.get(id=user.id)
@@ -24,7 +24,7 @@ def test_team_detail_view_success():
     client = Client()
     client.force_login(user)
 
-    url = reverse('team_detail', args=[team.id])
+    url = reverse("team_detail", args=[team.id])
     response = client.get(url)
 
     assert response.status_code == 200
@@ -39,8 +39,8 @@ def test_team_detail_view_free_user_redirected():
     client = Client()
     client.force_login(user)
 
-    url = reverse('team_detail', args=[team.id])
+    url = reverse("team_detail", args=[team.id])
     response = client.get(url)
 
     assert response.status_code == 302
-    assert '/subscribe/' in response['Location']
+    assert "/subscribe/" in response["Location"]

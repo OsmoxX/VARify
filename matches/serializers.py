@@ -1,5 +1,15 @@
 from rest_framework import serializers
-from .models import League, LeagueStandings, LiveMatch, UpcomingMatch, Team, Player, MatchEvent, MatchLineup, MissingPlayer
+from .models import (
+    League,
+    LeagueStandings,
+    LiveMatch,
+    UpcomingMatch,
+    Team,
+    Player,
+    MatchEvent,
+    MatchLineup,
+    MissingPlayer,
+)
 
 
 # ─────────────────────────────────────────────
@@ -8,7 +18,7 @@ from .models import League, LeagueStandings, LiveMatch, UpcomingMatch, Team, Pla
 class LeagueSerializer(serializers.ModelSerializer):
     class Meta:
         model = League
-        fields = ['id', 'api_id', 'name', 'country']
+        fields = ["id", "api_id", "name", "country"]
 
 
 # ─────────────────────────────────────────────
@@ -17,7 +27,7 @@ class LeagueSerializer(serializers.ModelSerializer):
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ['id', 'api_id', 'name', 'logo_url']
+        fields = ["id", "api_id", "name", "logo_url"]
 
 
 # ─────────────────────────────────────────────
@@ -29,10 +39,23 @@ class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = [
-            'id', 'api_id', 'name', 'first_name', 'last_name',
-            'team_name', 'position', 'jersey_number', 'nationality',
-            'date_of_birth', 'height', 'weight', 'image_url',
-            'preferred_foot', 'market_value', 'contract_until', 'retired',
+            "id",
+            "api_id",
+            "name",
+            "first_name",
+            "last_name",
+            "team_name",
+            "position",
+            "jersey_number",
+            "nationality",
+            "date_of_birth",
+            "height",
+            "weight",
+            "image_url",
+            "preferred_foot",
+            "market_value",
+            "contract_until",
+            "retired",
         ]
 
     def get_team_name(self, obj):
@@ -43,19 +66,29 @@ class PlayerSerializer(serializers.ModelSerializer):
 # LEAGUE STANDINGS
 # ─────────────────────────────────────────────
 class LeagueStandingsSerializer(serializers.ModelSerializer):
-    team = serializers.CharField(source='team.name', read_only=True)
-    team_id = serializers.IntegerField(source='team.id', read_only=True)
-    team_api_id = serializers.IntegerField(source='team.api_id', read_only=True)
-    league = serializers.CharField(source='league.name', read_only=True)
-    league_api_id = serializers.CharField(source='league.api_id', read_only=True)
+    team = serializers.CharField(source="team.name", read_only=True)
+    team_id = serializers.IntegerField(source="team.id", read_only=True)
+    team_api_id = serializers.IntegerField(source="team.api_id", read_only=True)
+    league = serializers.CharField(source="league.name", read_only=True)
+    league_api_id = serializers.CharField(source="league.api_id", read_only=True)
 
     class Meta:
         model = LeagueStandings
         fields = [
-            'position', 'team', 'team_id', 'team_api_id',
-            'league', 'league_api_id',
-            'points', 'matches_played', 'matches_won', 'matches_drawn', 'matches_lost',
-            'goals_for', 'goals_against', 'goal_difference',
+            "position",
+            "team",
+            "team_id",
+            "team_api_id",
+            "league",
+            "league_api_id",
+            "points",
+            "matches_played",
+            "matches_won",
+            "matches_drawn",
+            "matches_lost",
+            "goals_for",
+            "goals_against",
+            "goal_difference",
         ]
 
 
@@ -77,16 +110,36 @@ class MatchEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = MatchEvent
         fields = [
-            'id', 'incident_type', 'incident_class', 'incident_class_label',
-            'time', 'added_time', 'formatted_time',
-            'is_home_team', 'side',
-            'player_name', 'assist_player_name', 'assist2_player_name',
-            'player_in_name', 'player_out_name', 'injury',
-            'reason', 'rescinded', 'text', 'is_live',
-            'home_score', 'away_score', 'running_score',
-            'length', 'confirmed',
-            'is_goal', 'is_card', 'is_substitution', 'is_period_marker',
-            'is_in_game_penalty', 'card_color',
+            "id",
+            "incident_type",
+            "incident_class",
+            "incident_class_label",
+            "time",
+            "added_time",
+            "formatted_time",
+            "is_home_team",
+            "side",
+            "player_name",
+            "assist_player_name",
+            "assist2_player_name",
+            "player_in_name",
+            "player_out_name",
+            "injury",
+            "reason",
+            "rescinded",
+            "text",
+            "is_live",
+            "home_score",
+            "away_score",
+            "running_score",
+            "length",
+            "confirmed",
+            "is_goal",
+            "is_card",
+            "is_substitution",
+            "is_period_marker",
+            "is_in_game_penalty",
+            "card_color",
         ]
 
 
@@ -99,9 +152,16 @@ class MatchLineupSerializer(serializers.ModelSerializer):
     class Meta:
         model = MatchLineup
         fields = [
-            'id', 'player_name', 'player_api_id', 'shirt_number',
-            'position', 'position_label',
-            'is_home_team', 'is_starting_xi', 'is_captain', 'avg_rating',
+            "id",
+            "player_name",
+            "player_api_id",
+            "shirt_number",
+            "position",
+            "position_label",
+            "is_home_team",
+            "is_starting_xi",
+            "is_captain",
+            "avg_rating",
         ]
 
 
@@ -111,7 +171,7 @@ class MatchLineupSerializer(serializers.ModelSerializer):
 class MissingPlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = MissingPlayer
-        fields = ['id', 'player_name', 'type', 'reason', 'is_home_team']
+        fields = ["id", "player_name", "type", "reason", "is_home_team"]
 
 
 # ─────────────────────────────────────────────
@@ -130,39 +190,48 @@ class LiveMatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = LiveMatch
         fields = [
-            'id', 'api_id',
-            'home_team', 'home_team_api_id',
-            'away_team', 'away_team_api_id',
-            'home_score', 'away_score',
-            'status', 'minute', 'match_date',
-            'is_top',
-            'league_name', 'league_country', 'league_api_id',
-            'country_name', 'match_url',
+            "id",
+            "api_id",
+            "home_team",
+            "home_team_api_id",
+            "away_team",
+            "away_team_api_id",
+            "home_score",
+            "away_score",
+            "status",
+            "minute",
+            "match_date",
+            "is_top",
+            "league_name",
+            "league_country",
+            "league_api_id",
+            "country_name",
+            "match_url",
         ]
 
     def get_home_team(self, obj):
-        return obj.home_team.name if obj.home_team else ''
+        return obj.home_team.name if obj.home_team else ""
 
     def get_home_team_api_id(self, obj):
         return obj.home_team.api_id if obj.home_team else None
 
     def get_away_team(self, obj):
-        return obj.away_team.name if obj.away_team else ''
+        return obj.away_team.name if obj.away_team else ""
 
     def get_away_team_api_id(self, obj):
         return obj.away_team.api_id if obj.away_team else None
 
     def get_league_name(self, obj):
-        return obj.league.name if obj.league else ''
+        return obj.league.name if obj.league else ""
 
     def get_league_country(self, obj):
-        return (obj.league.country or '') if obj.league else ''
+        return (obj.league.country or "") if obj.league else ""
 
     def get_league_api_id(self, obj):
         return obj.league.api_id if obj.league else None
 
     def get_match_url(self, obj):
-        return f'/match/{obj.id}/'
+        return f"/match/{obj.id}/"
 
 
 # ─────────────────────────────────────────────
@@ -177,8 +246,12 @@ class LiveMatchDetailSerializer(LiveMatchSerializer):
 
     class Meta(LiveMatchSerializer.Meta):
         fields = LiveMatchSerializer.Meta.fields + [
-            'home_formation', 'away_formation',
-            'stats_json', 'events', 'lineups', 'missing_players',
+            "home_formation",
+            "away_formation",
+            "stats_json",
+            "events",
+            "lineups",
+            "missing_players",
         ]
 
 
@@ -198,36 +271,42 @@ class UpcomingMatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = UpcomingMatch
         fields = [
-            'id', 'api_id',
-            'home_team', 'home_team_api_id',
-            'away_team', 'away_team_api_id',
-            'start_datetime', 'start_time',
-            'is_top',
-            'league_name', 'league_country', 'league_api_id',
+            "id",
+            "api_id",
+            "home_team",
+            "home_team_api_id",
+            "away_team",
+            "away_team_api_id",
+            "start_datetime",
+            "start_time",
+            "is_top",
+            "league_name",
+            "league_country",
+            "league_api_id",
         ]
 
     def get_home_team(self, obj):
-        return obj.home_team.name if obj.home_team else ''
+        return obj.home_team.name if obj.home_team else ""
 
     def get_home_team_api_id(self, obj):
         return obj.home_team.api_id if obj.home_team else None
 
     def get_away_team(self, obj):
-        return obj.away_team.name if obj.away_team else ''
+        return obj.away_team.name if obj.away_team else ""
 
     def get_away_team_api_id(self, obj):
         return obj.away_team.api_id if obj.away_team else None
 
     def get_league_name(self, obj):
-        return obj.league.name if obj.league else ''
+        return obj.league.name if obj.league else ""
 
     def get_league_country(self, obj):
-        return (obj.league.country or '') if obj.league else ''
+        return (obj.league.country or "") if obj.league else ""
 
     def get_league_api_id(self, obj):
         return obj.league.api_id if obj.league else None
 
     def get_start_time(self, obj):
         if obj.start_datetime:
-            return obj.start_datetime.strftime('%H:%M')
-        return ''
+            return obj.start_datetime.strftime("%H:%M")
+        return ""
