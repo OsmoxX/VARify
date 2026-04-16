@@ -54,7 +54,7 @@ services:
       - "3306:3306"
     environment:
       MYSQL_DATABASE: varify_db
-      MYSQL_ROOT_PASSWORD: supertajnehaslo
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-supertajnehaslo}
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:

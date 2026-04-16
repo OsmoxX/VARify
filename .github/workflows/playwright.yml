@@ -66,6 +66,8 @@ jobs:
           STRIPE_PRICE_ID_PLUS=${{ secrets.STRIPE_PRICE_ID_PLUS }}
           STRIPE_PRICE_ID_PREMIUM=${{ secrets.STRIPE_PRICE_ID_PREMIUM }}
           STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           EOF
 
       # ── Docker: budujemy i startujemy kontenery (z katalogu głównego) ──────
