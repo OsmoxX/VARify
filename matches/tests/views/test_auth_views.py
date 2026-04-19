@@ -33,10 +33,18 @@ def test_register_view_post_invalid(client):
 @pytest.mark.django_db
 @patch("matches.views.auth_views.UserRegisterForm")
 def test_register_view_post_valid(MockFormClass, client):
-    # ARRANGE: Omijamy faktyczną walidację formularza. Udajemy, że użytkownik wpisał idealne dane.
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # ARRANGE: Tworzymy faktycznego usera w testowej bazie, żeby 
+    # EmailAddress.objects.create w widoku nie wyrzuciło błędu braku klucza obcego.
+    mock_user = User.objects.create_user(username="nowy_kacper", email="nowy_kacper@wp.pl", password="testpass")
+
+    # Przygotowujemy atrapę i symulujemy jej zachowanie
     mock_form_instance = MagicMock()
     mock_form_instance.is_valid.return_value = True
     mock_form_instance.cleaned_data = {"username": "nowy_kacper"}
+    mock_form_instance.save.return_value = mock_user
     MockFormClass.return_value = mock_form_instance
 
     # ACT: Wysyłamy "poprawne" dane
@@ -47,9 +55,9 @@ def test_register_view_post_valid(MockFormClass, client):
     # 1. Formularz musiał wywołać funkcję .save(), żeby zapisać usera do bazy
     mock_form_instance.save.assert_called_once()
 
-    # 2. Kod musi nas przekierować na stronę logowania
-    assert response.status_code == 302
-    assert "login" in response.url
+    # 2. Widok register po udanej weryfikacji renderuje specjalny szablon (200 OK)
+    assert response.status_code == 200
+    assert "account/verification_sent.html" in [t.name for t in response.templates]
 
 
 # ==========================================
