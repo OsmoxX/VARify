@@ -4,7 +4,6 @@ views/auth_views.py
 Handles user registration and logout.
 """
 
-from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import redirect, render
