@@ -104,8 +104,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # MUSI być przed LoginRequiredMiddleware
     "django.contrib.auth.middleware.LoginRequiredMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "my_football_app.urls"
@@ -113,7 +113,7 @@ ROOT_URLCONF = "my_football_app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "matches" / "templates"],
+        "DIRS": [BASE_DIR / "templates", BASE_DIR / "matches" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -132,7 +132,7 @@ ASGI_APPLICATION = "my_football_app.asgi.application"
 # BAZA DANYCH
 # ==========================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_URL = "login"
+LOGIN_URL = "login"  # własna strona logowania z matches/login.html
 
 DATABASES = {
     "default": {
@@ -171,12 +171,22 @@ LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"       # blokuje login do czasu weryfikacji
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True             # link w mailu aktywuje od razu (GET)
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False     # użytkownik loguje się sam po kliknięciu
+ACCOUNT_ADAPTER = "matches.adapter.CustomAccountAdapter" # Własny adapter (nadpisuje m.in. brzydkie komunikaty Allauth)
 
-# ZMIANA: Wyłączone wymaganie weryfikacji maila, dopóki nie ma serwera SMTP
-ACCOUNT_EMAIL_VERIFICATION = "none"
-
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "VARify Team <noreply@varify.pl>"
+# ==========================================
+# MAIL SENDING — WP.pl SMTP (port 465 / SSL)
+# ==========================================
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.wp.pl"
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_HOST_USER", "noreply.varify@wp.pl")
 
 # ==========================================
 # TŁUMACZENIA (i18n)

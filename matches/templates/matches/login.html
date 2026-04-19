@@ -31,7 +31,7 @@
         <div class="messages">
             {% for message in messages %}
             <div class="message {{ message.tags }}">
-                {% if message.tags == 'success' %}✅{% else %}❌{% endif %} {{ message }}
+                {% if message.tags == 'success' or message.tags == 'info' %}✅{% else %}❌{% endif %} {{ message }}
             </div>
             {% endfor %}
         </div>

@@ -132,6 +132,20 @@ VARify also features a **full subscription system powered by Stripe**, with tier
 - **Team detail** — recent matches, squad with ratings, league standings
 - **Player detail** — personal info, position, current club
 
+### 🔑 Authentication & Account Management
+> Secure registration flow with email verification and social login out of the box.
+
+- **Email Verification** — mandatory verification via SMTP, HTML welcome emails with CTA buttons, auto-login upon confirmation
+- **Social Login** — fast registration and login using Google accounts (OAuth 2.0)
+- **Personalized UX** — custom `AccountAdapter` overriding raw `django-allauth` messages with stylized UI notifications
+
+### 📱 Progressive Web App (PWA)
+> Install VARify globally on your device like a native app for the best experience.
+
+- **PWA Compliance** — full support for home screen installation from mobile and desktop browsers
+- **Richer Install UI** — enhanced installation prompts featuring dedicated mobile and desktop screenshots
+- **Offline Support** — app works smoothly during network disconnects, includes a custom install banner
+
 ---
 
 ## 💳 Subscription & Access Control

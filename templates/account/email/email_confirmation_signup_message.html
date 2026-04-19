@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aktywuj swoje konto w aplikacji VARify</title>
+</head>
+<body style="background-color: #111827; margin: 0; padding: 40px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #f3f4f6;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #1f2937; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        
+        <!-- Nagłówek -->
+        <div style="background-color: #111827; padding: 30px; text-align: center; border-bottom: 2px solid #10b981;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold; letter-spacing: 1px;">
+                ⚽ VARify
+            </h1>
+        </div>
+        
+        <!-- Główna treść -->
+        <div style="padding: 40px 30px;">
+            <p style="margin-top: 0; color: #ffffff; font-size: 18px;">Witaj <strong>{{ user.username }}</strong>,</p>
+            
+            <p style="color: #d1d5db; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                Dziękujemy za dołączenie do VARify. Zanim zaczniesz korzystać z platformy, potwierdź swój adres e-mail, klikając poniższy przycisk.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ activate_url }}" style="background-color: #10b981; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                    Aktywuj konto
+                </a>
+            </div>
+            
+            <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin-top: 30px;">
+                Jeśli przycisk nie działa, skopiuj poniższy link i wklej go do paska adresu swojej przeglądarki:<br>
+                <a href="{{ activate_url }}" style="color: #10b981; word-break: break-all;">{{ activate_url }}</a>
+            </p>
+        </div>
+        
+        <!-- Stopka -->
+        <div style="background-color: #374151; padding: 20px 30px; text-align: center;">
+            <p style="margin: 0; color: #9ca3af; font-size: 14px;">
+                Dziękujemy, że jesteś z nami! <br>
+                <strong style="color: #d1d5db;">Zespół VARify</strong>
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

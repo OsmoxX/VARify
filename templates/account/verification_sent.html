@@ -1,0 +1,179 @@
+{% extends "matches/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Sprawdź skrzynkę — VARify" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .verify-wrapper {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .verify-card {
+    background: linear-gradient(145deg, #1c1c2e, #16213e);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .verify-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #059669, #10b981);
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .verify-icon {
+    font-size: 4rem;
+    margin-bottom: 1.25rem;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .verify-card h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.75rem;
+  }
+
+  .verify-card .subtitle {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+  }
+
+  .verify-card .subtitle strong {
+    color: #10b981;
+  }
+
+  .verify-steps {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+
+  .verify-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .verify-step + .verify-step {
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .step-num {
+    background: #10b981;
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .btn-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  }
+
+  .btn-home:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .resend-note {
+    margin-top: 1.25rem;
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-wrapper">
+  <div class="verify-card">
+    <span class="verify-icon">✉️</span>
+
+    <h1>{% trans "Sprawdź swoją skrzynkę" %}</h1>
+
+    <p class="subtitle">
+      {% trans "Wysłaliśmy link weryfikacyjny na adres" %}
+      {% if email %}<br><strong>{{ email }}</strong>{% endif %}.<br>
+      {% trans "Kliknij w link, aby aktywować konto." %}
+    </p>
+
+    <div class="verify-steps">
+      <div class="verify-step">
+        <div class="step-num">1</div>
+        <div>{% trans "Otwórz aplikację pocztową lub webmail." %}</div>
+      </div>
+      <div class="verify-step">
+        <div class="step-num">2</div>
+        <div>{% trans "Znajdź wiadomość od" %} <strong>VARify</strong> {% trans "z tematem" %} <em>"{% trans "Potwierdź swój adres e-mail" %}"</em>.</div>
+      </div>
+      <div class="verify-step">
+        <div class="step-num">3</div>
+        <div>{% trans "Kliknij przycisk" %} <strong>{% trans "Aktywuj konto" %}</strong> {% trans "w mailu." %}</div>
+      </div>
+    </div>
+
+    <a href="{% url 'home' %}" class="btn-home">
+      ⚽ {% trans "Wróć do strony głównej" %}
+    </a>
+
+    <p class="resend-note">
+      {% trans "Nie widzisz maila? Sprawdź folder SPAM." %}
+    </p>
+  </div>
+</div>
+{% endblock %}

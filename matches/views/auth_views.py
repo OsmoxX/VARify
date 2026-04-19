@@ -8,21 +8,38 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import redirect, render
+from allauth.account.models import EmailAddress
+from allauth.account.internal.flows.email_verification import send_verification_email_to_address
 
 from matches.forms import UserRegisterForm
 
 
 @login_not_required
 def register(request):
-    """Rejestracja nowego użytkownika."""
+    """
+    Rejestracja nowego użytkownika.
+    Renderuje oryginalny szablon matches/register.html (z zachowanym CSS).
+    Używa własnego formularza, ale wyzwala proces weryfikacji e-mail przez allauth.
+    """
     form = UserRegisterForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        username = form.cleaned_data.get("username")
-        messages.success(
-            request, f"Konto dla {username} zostało utworzone! Możesz się zalogować."
+        user = form.save()
+        
+        # 1. Zarejestruj e-mail w allauth (aby system wiedział o użytkowniku)
+        email_address = EmailAddress.objects.create(
+            user=user, 
+            email=user.email, 
+            primary=True, 
+            verified=False
         )
-        return redirect("login")
+        
+        # 2. Wyślij oficjalny e-mail weryfikacyjny przez allauth 65.x (z flagą signup=True!)
+        # Właśnie flaga signup=True decyduje, że allauth użyje Twoich szablonów email_confirmation_signup...
+        send_verification_email_to_address(request, email_address, signup=True)
+        
+        # 3. Wyświetl informację "Sprawdź skrzynkę"
+        return render(request, "account/verification_sent.html", {"email": user.email})
+        
     return render(request, "matches/register.html", {"form": form})
 
 

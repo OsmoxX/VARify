@@ -1,0 +1,141 @@
+{% extends "matches/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Weryfikacja linku" %} - VARify{% endblock %}
+
+{% block extra_css %}
+<style>
+  .confirm-wrapper {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .confirm-card {
+    background: linear-gradient(145deg, #1c1c2e, #16213e);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(239, 68, 68, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .confirm-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ef4444, #dc2626, #ef4444);
+  }
+
+  .confirm-icon {
+    font-size: 4rem;
+    margin-bottom: 1.25rem;
+    display: block;
+    animation: floating 3s ease-in-out infinite;
+  }
+
+  @keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .confirm-card h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.75rem;
+  }
+
+  .confirm-card p {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .btn-login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .resend-link {
+    display: inline-block;
+    color: #64748b;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-decoration-color: rgba(100, 116, 139, 0.4);
+    text-underline-offset: 4px;
+    transition: color 0.2s;
+  }
+
+  .resend-link:hover {
+    color: #94a3b8;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-wrapper">
+  <div class="confirm-card">
+    {% if not confirmation %}
+        <span class="confirm-icon">⚠️</span>
+        
+        <h1>{% trans "Nieważny link aktywacyjny" %}</h1>
+        
+        <p>
+            {% trans "Ten link wygasł lub Twoje konto zostało już pomyślnie aktywowane." %}<br>
+            {% trans "Spróbuj się zalogować, aby sprawdzić status swojego konta." %}
+        </p>
+
+        <a href="{% url 'login' %}" class="btn-login">
+            <i class="fa-solid fa-arrow-right-to-bracket" style="margin-right: 8px;"></i>
+            {% trans "Przejdź do logowania" %}
+        </a>
+
+        <div>
+            <a href="{% url 'account_email' %}" class="resend-link">
+                {% trans "Wyślij nowy link weryfikacyjny" %}
+            </a>
+        </div>
+    {% else %}
+        {# Fallback na wypadek gdyby ACCOUNT_CONFIRM_EMAIL_ON_GET=False kiedykolwiek wrócił #}
+        <span class="confirm-icon" style="animation: none;">✅</span>
+        <h1 style="color: #10b981;">{% trans "Potwierdź swój adres e-mail" %}</h1>
+        <p>{% blocktrans with email=confirmation.email_address.email %}Kliknij poniższy przycisk, aby ostatecznie potwierdzić chęć aktywacji powiązaną z mailem {{ email }}.{% endblocktrans %}</p>
+        
+        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-login" style="border: none; cursor: pointer;">
+                <i class="fa-solid fa-check" style="margin-right: 8px;"></i>
+                {% trans "Aktywuj konto" %}
+            </button>
+        </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -2,7 +2,7 @@ from webpush import send_user_notification
 from django.contrib.auth.models import User
 
 # Pobieramy Twoje konto
-user = User.objects.get(username='alicja') 
+user = User.objects.get(username='sigma123') 
 
 payload = {
     "head": "VARify ⚽",

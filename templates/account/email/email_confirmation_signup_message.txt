@@ -1,0 +1,8 @@
+Witaj {{ user.username }},
+
+Dziękujemy za dołączenie do VARify! Aby aktywować konto, skopiuj i wklej poniższy link w przeglądarce:
+
+{{ activate_url }}
+
+Dziękujemy, że jesteś z nami!
+Zespół VARify
