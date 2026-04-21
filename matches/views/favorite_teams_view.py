@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render
 
-from ..models.team import FavoriteTeam, Team
+from ..models.team import Team
 
 
 # ── Drużyny piłkarskie — te, które mają co najmniej jeden mecz w bazie

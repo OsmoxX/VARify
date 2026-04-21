@@ -9,7 +9,6 @@ import os
 import time as _time
 from datetime import datetime, timedelta
 
-import requests
 from matches.services.api_tracker import api_get
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -21,7 +20,6 @@ from matches.models import (
     MatchEvent,
     MatchLineup,
     MissingPlayer,
-    MatchSubscription,
     Team,
     UpcomingMatch,
 )

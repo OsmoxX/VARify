@@ -7,7 +7,7 @@ from matches.services.match_service import (
     fetch_match_details,
     fetch_upcoming_matches,
     fetch_last_matches_for_team,
-    _check_new_incidents,
+        
 )
 
 
@@ -81,21 +81,6 @@ def test_fetch_last_matches_for_team_errors(mock_get):
     # Wyjątek sieci
     mock_get.side_effect = Exception("Timeout")
     assert fetch_last_matches_for_team(1) == []
-
-
-@pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
-def test_check_new_incidents_errors(mock_get, setup_match):
-    # 404 i Wyjątki przy dociąganiu incydentów dla Subskrybentów WebSocket
-    mock_get.return_value.status_code = 404
-    _check_new_incidents(
-        setup_match, 999, setup_match.home_team, setup_match.away_team, None, "room"
-    )
-
-    mock_get.side_effect = Exception("Fail")
-    _check_new_incidents(
-        setup_match, 999, setup_match.home_team, setup_match.away_team, None, "room"
-    )
 
 
 # ==========================================

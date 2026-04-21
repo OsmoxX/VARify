@@ -11,7 +11,7 @@ import requests
 from celery import shared_task
 from django.contrib.auth import get_user_model
 
-from .models import FavoriteTeam, LiveMatch, MatchEvent, MatchSubscription
+from .models import LiveMatch
 from .services import (
     fetch_match_details,
     fetch_league_standings,
@@ -205,7 +205,6 @@ def _build_push_body(inc: dict, home_name: str, away_name: str,
     score_str = f"{home_score}:{away_score}"
 
     inc_type = inc.get("incidentType", "")
-    inc_class = inc.get("incidentClass", "")
 
     if inc_type == "goal":
         scorer = f" – {player}" if player else ""

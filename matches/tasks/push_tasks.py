@@ -25,7 +25,6 @@ Optymalizacje API:
 import logging
 import os
 
-import requests
 from matches.services.api_tracker import api_get
 from celery import shared_task
 from django.contrib.auth import get_user_model

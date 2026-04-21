@@ -9,7 +9,6 @@ from matches.services.match_service import (
     _save_lineup_players,
     _save_missing_players,
     fetch_match_details,
-    _check_new_incidents,
     sync_live_matches,
 )
 
@@ -104,65 +103,6 @@ def test_fetch_match_details_time_data_not_dict(mock_get, setup_data):
 
 
 # ==========================================
-# TESTY: WEBSOCKETY (INCIDENTS LOOP)
-# ==========================================
-@pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
-@patch("matches.services.match_service.async_to_sync")
-def test_check_new_incidents_loop(mock_async, mock_get, setup_data):
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "incidents": [
-            {
-                "id": 1,
-                "incidentType": "card",
-                "incidentClass": "yellow",
-                "player": {"name": "A"},
-            },
-            {
-                "id": 2,
-                "incidentType": "card",
-                "incidentClass": "red",
-                "player": {"name": "B"},
-            },
-            {
-                "id": 3,
-                "incidentType": "card",
-                "incidentClass": "yellowRed",
-                "player": {"name": "C"},
-            },
-            {
-                "id": 4,
-                "incidentType": "substitution",
-                "playerIn": {"name": "D"},
-                "playerOut": {"name": "E"},
-            },
-            {
-                "id": 5,
-                "incidentType": "card",
-                "incidentClass": "unknown",
-            },  # Ignorowane przez "continue"
-        ]
-    }
-    mock_get.return_value = mock_resp
-
-    mock_layer = MagicMock()
-    _check_new_incidents(
-        setup_data,
-        setup_data.api_id,
-        setup_data.home_team,
-        setup_data.away_team,
-        mock_layer,
-        "room",
-    )
-
-    assert mock_async.call_count == 4
-    # Baza zapisze tylko 4 incydenty, bo piąty zniknął po "continue" w pętli
-    assert MatchEvent.objects.filter(match=setup_data).count() == 4
-
-
-# ==========================================
 # TESTY: SYNC LIVE MATCHES (Sukces Printów)
 # ==========================================
 @pytest.mark.django_db
@@ -171,9 +111,8 @@ def test_check_new_incidents_loop(mock_async, mock_get, setup_data):
 )  # <-- Nowy mock omijający błędy z DB
 @patch("matches.services.match_service.fetch_live_matches")
 @patch("matches.services.match_service.async_to_sync")
-@patch("matches.services.match_service._check_new_incidents")
 def test_sync_live_matches_success_prints(
-    mock_check_incidents, mock_async, mock_fetch, mock_filter, setup_data
+    mock_async, mock_fetch, mock_filter, setup_data
 ):
     stale = LiveMatch.objects.create(
         api_id=777,
@@ -210,7 +149,6 @@ def test_sync_live_matches_success_prints(
 
     assert "Wysłano WS do grupy" in out
     assert "Auto-zakończono 1 meczów" in out
-    mock_check_incidents.assert_called_once()
 
     stale.refresh_from_db()
     assert stale.status == "Ended"

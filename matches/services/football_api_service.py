@@ -6,7 +6,6 @@ Low-level helpers and search functions for the SportAPI.
 
 import os
 
-import requests
 from matches.services.api_tracker import api_get
 
 from matches.models import Team
