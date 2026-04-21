@@ -9,7 +9,7 @@ from matches.services.football_api_service import search_teams_from_api
 # TESTY: HAPPY PATH
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.football_api_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_teams_success_on_first_url(mock_get):
     # 1. ARRANGE: Udajemy, że pierwszy URL od razu zwraca sukces i JSON-a.
     # Wrzucamy też 'śmiecia' (type: player), żeby sprawdzić czy pętla go pominie.
@@ -40,7 +40,7 @@ def test_search_teams_success_on_first_url(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.football_api_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_teams_uses_fallback_urls(mock_get):
     # 1. ARRANGE: Magia `side_effect`!
     # Mówimy mockowi: Przy pierwszym wywołaniu rzuć błąd 404, przy drugim zwróć sukces 200.
@@ -76,7 +76,7 @@ def test_search_teams_uses_fallback_urls(mock_get):
 # TESTY: EDGE CASES & AWARIE (SAD PATH)
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.football_api_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_teams_api_timeout_exception(mock_get):
     # 1. ARRANGE: Udajemy, że serwery RapidAPI padły (Timeout)
     mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
@@ -90,7 +90,7 @@ def test_search_teams_api_timeout_exception(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.football_api_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_teams_empty_results(mock_get):
     # 1. ARRANGE: Symulujemy API, które odpowiada statusem 200, ale nie zwraca żadnych wyników
     mock_response = MagicMock()
@@ -106,7 +106,7 @@ def test_search_teams_empty_results(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.football_api_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_teams_missing_api_id_or_name(mock_get):
     # 1. ARRANGE: Symulujemy API, które zwraca drużyny z "popsutymi" danymi
     mock_response = MagicMock()

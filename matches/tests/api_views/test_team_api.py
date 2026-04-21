@@ -127,39 +127,37 @@ def test_get_team_matches_not_found(api_client):
 
 
 @pytest.mark.django_db
-@patch("matches.api_views.team_api.fetch_last_matches_for_team")
+@patch("matches.tasks.sync_tasks.fetch_last_matches_team_task.delay")
 def test_get_team_matches_calls_api_when_under_5(
-    mock_fetch, api_client, setup_team_data
+    mock_delay, api_client, setup_team_data
 ):
     # ARRANGE: Arsenal ma u nas lokalnie tylko 2 mecze (czyli mniej niż 5).
     # ACT
     res = api_client.get("/api/teams/10/matches/")
 
-    # ASSERT: Widok powinien odpalić funkcję z API!
+    # ASSERT: Widok powinien odpałić task Celery!
     assert res.status_code == status.HTTP_200_OK
     assert res.json()["count"] == 2  # Zwraca te 2 lokalne
-    mock_fetch.assert_called_once_with(team_api_id=10, n=5)
+    mock_delay.assert_called_once_with(10, 5)
 
 
 @pytest.mark.django_db
-@patch("matches.api_views.team_api.fetch_last_matches_for_team")
+@patch("matches.tasks.sync_tasks.fetch_last_matches_team_task.delay")
 def test_get_team_matches_api_exception_handled(
-    mock_fetch, api_client, setup_team_data
+    mock_delay, api_client, setup_team_data
 ):
-    # ARRANGE: Symulujemy twardą awarię RapidAPI w zwiadowcy
-    mock_fetch.side_effect = Exception("RapidAPI Down")
-
+    # ARRANGE: Delay nie rzuca wyjątku (Celery samo obrabia błędy)
     # ACT
     res = api_client.get("/api/teams/10/matches/")
 
-    # ASSERT: Wyjątek został pożarty w try..except. Zwracamy normalnie status 200.
+    # ASSERT: Zawsze 200 — wyjątek pożarty w try..except widaću.
     assert res.status_code == status.HTTP_200_OK
     assert res.json()["count"] == 2
 
 
 @pytest.mark.django_db
-@patch("matches.api_views.team_api.fetch_last_matches_for_team")
-def test_get_team_matches_over_5_skips_api(mock_fetch, api_client, setup_team_data):
+@patch("matches.tasks.sync_tasks.fetch_last_matches_team_task.delay")
+def test_get_team_matches_over_5_skips_api(mock_delay, api_client, setup_team_data):
     # ARRANGE: Dodajemy Arsenalowi 3 kolejne mecze z dzisiejszą datą (czyli świeże)
     t1, t2, l1 = setup_team_data["t1"], setup_team_data["t2"], setup_team_data["l1"]
     today = date.today()
@@ -176,13 +174,13 @@ def test_get_team_matches_over_5_skips_api(mock_fetch, api_client, setup_team_da
     # ASSERT: Baza jest pełna (5 meczów) i dane są świeże → zwiadowca NIE powinien się wywołać!
     assert res.status_code == status.HTTP_200_OK
     assert res.json()["count"] == 5
-    mock_fetch.assert_not_called()
+    mock_delay.assert_not_called()
 
 
 @pytest.mark.django_db
-@patch("matches.api_views.team_api.fetch_last_matches_for_team")
+@patch("matches.tasks.sync_tasks.fetch_last_matches_team_task.delay")
 def test_get_team_matches_stale_data_triggers_api(
-    mock_fetch, api_client, setup_team_data
+    mock_delay, api_client, setup_team_data
 ):
     # ARRANGE: Arsenal ma 5 meczów, ale wszystkie z wczoraj (czyli stale)
     t1, t2, l1 = setup_team_data["t1"], setup_team_data["t2"], setup_team_data["l1"]
@@ -198,12 +196,12 @@ def test_get_team_matches_stale_data_triggers_api(
 
     # ASSERT: Dane są stale (wczorajsze) → zwiadowca POWINIEN się wywołać!
     assert res.status_code == status.HTTP_200_OK
-    mock_fetch.assert_called_once_with(team_api_id=10, n=5)
+    mock_delay.assert_called_once_with(10, 5)
 
 
 @pytest.mark.django_db
-@patch("matches.api_views.team_api.fetch_last_matches_for_team")
-def test_get_team_matches_fresh_data_skips_api(mock_fetch, api_client, setup_team_data):
+@patch("matches.tasks.sync_tasks.fetch_last_matches_team_task.delay")
+def test_get_team_matches_fresh_data_skips_api(mock_delay, api_client, setup_team_data):
     # ARRANGE: Arsenal ma 5 meczów z dzisiejszą datą (czyli świeże)
     t1, t2, l1 = setup_team_data["t1"], setup_team_data["t2"], setup_team_data["l1"]
     today = date.today()
@@ -219,4 +217,4 @@ def test_get_team_matches_fresh_data_skips_api(mock_fetch, api_client, setup_tea
     # ASSERT: Dane są świeże (dzisiaj) → zwiadowca NIE powinien się wywołać!
     assert res.status_code == status.HTTP_200_OK
     assert res.json()["count"] == 5
-    mock_fetch.assert_not_called()
+    mock_delay.assert_not_called()

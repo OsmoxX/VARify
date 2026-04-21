@@ -9,5 +9,5 @@ def api_get(url: str, **kwargs):
     Pojawi się w logach, by łatwiej było policzyć ilość outbound calls do API.
     """
     logger.info(f"🟢 [API CALL] Wykonuję GET do: {url}")
-    timeout = kwargs.pop('timeout', 10)
-    return requests.get(url, **kwargs)
+    timeout = kwargs.pop("timeout", 10)
+    return requests.get(url, timeout=timeout, **kwargs)

@@ -59,7 +59,7 @@ def test_save_missing_players_no_info(setup_data):
 # ==========================================
 # ZMIEŃ TEN TEST:
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 @patch("matches.services.match_service._time.time")
 def test_fetch_match_details_time_calc_and_missing_id(mock_time, mock_get, setup_data):
     mock_time.return_value = 1000000 + 120
@@ -93,7 +93,7 @@ def test_fetch_match_details_time_calc_and_missing_id(mock_time, mock_get, setup
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_match_details_time_data_not_dict(mock_get, setup_data):
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -106,13 +106,10 @@ def test_fetch_match_details_time_data_not_dict(mock_get, setup_data):
 # TESTY: SYNC LIVE MATCHES (Sukces Printów)
 # ==========================================
 @pytest.mark.django_db
-@patch(
-    "matches.services.match_service.MatchSubscription.objects.filter"
-)  # <-- Nowy mock omijający błędy z DB
 @patch("matches.services.match_service.fetch_live_matches")
 @patch("matches.services.match_service.async_to_sync")
 def test_sync_live_matches_success_prints(
-    mock_async, mock_fetch, mock_filter, setup_data
+    mock_async, mock_fetch, setup_data
 ):
     stale = LiveMatch.objects.create(
         api_id=777,
@@ -121,9 +118,6 @@ def test_sync_live_matches_success_prints(
         away_team=setup_data.away_team,
         status="1st Half",
     )
-
-    # Symulujemy, że mecz ma subskrybentów
-    mock_filter.return_value.exists.return_value = True
 
     mock_fetch.return_value = {
         "events": [

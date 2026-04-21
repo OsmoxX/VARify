@@ -22,7 +22,7 @@ from matches.services.match_service import (
 # ==========================================
 @pytest.mark.django_db
 @patch("matches.services.match_service.get_channel_layer")  # Blokujemy WebSockety
-@patch("matches.services.match_service.requests.get")  # Blokujemy API
+@patch("matches.services.api_tracker.requests.get")  # Blokujemy API
 def test_sync_live_matches_creates_new_match(mock_get, mock_channel_layer):
     # 1. ARRANGE: Przygotowujemy fałszywą odpowiedź z meczem na żywo
     mock_get.return_value.status_code = 200
@@ -70,7 +70,7 @@ def test_sync_live_matches_creates_new_match(mock_get, mock_channel_layer):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_sync_live_matches_handles_empty_response(mock_get):
     # 1. ARRANGE: Zwracamy pusty słownik bez klucza 'events'
     mock_get.return_value.status_code = 200
@@ -87,7 +87,7 @@ def test_sync_live_matches_handles_empty_response(mock_get):
 # TESTY: FETCH UPCOMING MATCHES
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_upcoming_matches_success(mock_get):
     # 1. ARRANGE: Przygotowujemy fałszywy nadchodzący mecz
     mock_get.return_value.status_code = 200
@@ -133,7 +133,7 @@ def test_fetch_upcoming_matches_success(mock_get):
 # TESTY: FETCH MATCH DETAILS
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_match_details_success(mock_get):
     # 1. ARRANGE: Przygotowujemy bazę i "oszukane" odpowiedzi
     league = League.objects.create(api_id=1, name="Test League")
@@ -258,7 +258,7 @@ def test_fetch_match_details_match_not_found():
 # TESTY: ZWIADOWCA (fetch_last_matches_for_team)
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_last_matches_for_team_success_and_slicing(mock_get):
     # 1. ARRANGE: Tworzymy odpowiedź symulującą 3 mecze, ale poprosimy o 2 (n=2).
     # Chcemy udowodnić, że kod 'events[-n:]' prawidłowo odrzuci najstarszy mecz.
@@ -311,7 +311,7 @@ def test_fetch_last_matches_for_team_success_and_slicing(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_last_matches_for_team_api_errors(mock_get):
     # Testujemy awarię samego serwera HTTP (np. błąd 500)
     mock_get.return_value.status_code = 500
@@ -323,7 +323,7 @@ def test_fetch_last_matches_for_team_api_errors(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_last_matches_for_team_skips_corrupted_event(mock_get):
     # Co jeśli API zwróci listę meczów, ale jeden z nich będzie zepsuty (np. brak ID ligi)?
     # Pętla `for event in last_events:` powinna to wyłapać przez `try..except`, pominąć ten mecz i lecieć dalej.

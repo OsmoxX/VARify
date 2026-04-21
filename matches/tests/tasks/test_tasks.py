@@ -16,9 +16,10 @@ from matches.tasks import (
 
 @patch("matches.tasks.sync_tasks.sync_live_matches_service")
 def test_sync_live_matches_task(mock_sync_service):
+    mock_sync_service.return_value = []  # brak zmian → 0 meczów z Push
     result = sync_live_matches()
     mock_sync_service.assert_called_once()
-    assert result == "Live matches synced!"
+    assert result == "Synced. Triggered push for 0 changed matches."
 
 
 @patch("matches.tasks.sync_tasks.fetch_match_details")
@@ -43,9 +44,9 @@ def test_fetch_upcoming_matches_task(mock_fetch_upcoming):
 @patch("matches.tasks.calendar_tasks.fetch_league_standings")
 def test_fetch_top_leagues_standings_task_success(mock_fetch_standings):
     result = fetch_top_leagues_standings_task()
-    # 15 ID na liście top_leagues_ids w calendar_tasks.py
-    assert mock_fetch_standings.call_count == 15
-    assert result == "Pobrano tabele dla 15 lig"
+    # Lista zawiera 15 wpisów, ale ID=8 pojawia się dwa razy → deduplikacja → 14 unikalnych
+    assert mock_fetch_standings.call_count == 14
+    assert result == "Pobrano tabele dla 14 lig"
 
 
 @patch("matches.tasks.calendar_tasks.fetch_league_standings")
@@ -59,7 +60,7 @@ def test_fetch_top_leagues_standings_task_with_exceptions(mock_fetch_standings):
 
     result = fetch_top_leagues_standings_task()
 
-    # Pętla idzie dalej po błędzie – 15 wywołań
-    assert mock_fetch_standings.call_count == 15
-    # Champions League (ID=2) popsute – sukces = 14
-    assert result == "Pobrano tabele dla 14 lig"
+    # Pętla idzie dalej po błędzie – 14 wywołań (po deduplikacji)
+    assert mock_fetch_standings.call_count == 14
+    # Champions League (ID=2) popsute – sukces = 13
+    assert result == "Pobrano tabele dla 13 lig"

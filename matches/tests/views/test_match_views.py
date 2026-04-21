@@ -96,21 +96,19 @@ def test_live_matches_view(mock_render, setup_match_data):
 # TESTY: match_detail_view (Szczegóły meczu)
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.views.match_views.fetch_match_details")
+@patch("matches.tasks.sync_tasks.fetch_match_details_task.delay")
 @patch("matches.views.match_views.render")
-def test_match_detail_view_live(mock_render, mock_fetch, setup_match_data):
+def test_match_detail_view_live(mock_render, mock_delay, setup_match_data):
     m_live, _, _ = setup_match_data
 
     factory = RequestFactory()
     request = factory.get(f"/match/{m_live.id}/")
 
-    # ACT: Wywołujemy widok dla meczu LIVE
+    # ACT: Wywołujemy widók dla meczu LIVE
     match_detail_view(request, match_id=m_live.id)
 
-    # ASSERT: Skoro to mecz na żywo, a nie ma w nim pełnych danych, widok powinien pobrać go z API
-    mock_fetch.assert_called_once_with(
-        local_match_id=m_live.id, api_match_id=m_live.api_id
-    )
+    # ASSERT: Skoro to mecz na żywo, widók powinien uruchomić task Celery po dane
+    mock_delay.assert_called_once_with(m_live.id, m_live.api_id)
 
     context = mock_render.call_args[0][2]
     assert context["match"] == m_live
@@ -129,12 +127,12 @@ def test_match_detail_view_ended_with_data(mock_render, setup_match_data):
     factory = RequestFactory()
     request = factory.get(f"/match/{m_ended.id}/")
 
-    # ACT: Wywołujemy widok dla ZAKOŃCZONEGO meczu z danymi
-    with patch("matches.views.match_views.fetch_match_details") as mock_fetch:
+    # ACT: Wywołujemy widók dla ZAKOŃCZONEGO meczu z danymi
+    with patch("matches.tasks.sync_tasks.fetch_match_details_task.delay") as mock_delay:
         match_detail_view(request, match_id=m_ended.id)
 
         # ASSERT: Skoro ma dane, NIE powinien próbować dociągać z API
-        mock_fetch.assert_not_called()
+        mock_delay.assert_not_called()
 
 
 # ==========================================

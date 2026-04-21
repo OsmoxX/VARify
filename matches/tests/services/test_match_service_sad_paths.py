@@ -36,7 +36,7 @@ def setup_match():
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_live_matches_errors(mock_get):
     # API zwraca status 500 (błąd serwera)
     mock_get.return_value.status_code = 500
@@ -48,7 +48,7 @@ def test_fetch_live_matches_errors(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_match_details_api_errors(mock_get, setup_match):
     # API zwraca status 404 (nie znaleziono) na wszystkie zapytania (status, incidents, lineups, stats)
     mock_get.return_value.status_code = 404
@@ -60,7 +60,7 @@ def test_fetch_match_details_api_errors(mock_get, setup_match):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_upcoming_matches_errors(mock_get):
     # Odpowiedź 404
     mock_get.return_value.status_code = 404
@@ -72,7 +72,7 @@ def test_fetch_upcoming_matches_errors(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_last_matches_for_team_errors(mock_get):
     # Odpowiedź 404
     mock_get.return_value.status_code = 404
@@ -115,7 +115,7 @@ def test_sync_live_matches_corrupted_json(mock_fetch):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_upcoming_matches_corrupted_json(mock_get):
     # Brak klucza "tournament" wywoła KeyError łapany w except
     mock_get.return_value.status_code = 200
@@ -126,7 +126,7 @@ def test_fetch_upcoming_matches_corrupted_json(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.match_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_last_matches_corrupted_json(mock_get):
     # Brak klucza id wewnątrz tournament wywoła KeyError łapany w except
     mock_get.return_value.status_code = 200

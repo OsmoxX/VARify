@@ -9,7 +9,7 @@ from matches.services.player_service import fetch_player, search_players_from_ap
 # TESTY: fetch_player (Pobieranie szczegółów)
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.player_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_player_success(mock_get):
     # 1. ARRANGE: Przygotowujemy potężnego JSON-a ze wszystkimi detalami
     mock_get.return_value.status_code = 200
@@ -52,7 +52,7 @@ def test_fetch_player_success(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.player_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_player_no_data(mock_get):
     # ARRANGE: API zwraca pustą odpowiedź (brak klucza 'player')
     mock_get.return_value.status_code = 200
@@ -63,7 +63,7 @@ def test_fetch_player_no_data(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.player_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_player_request_exception(mock_get):
     # ARRANGE: Udajemy twardy błąd biblioteki requests
     mock_get.side_effect = requests.exceptions.RequestException("Błąd HTTP")
@@ -76,7 +76,7 @@ def test_fetch_player_request_exception(mock_get):
 # TESTY: search_players_from_api (Wyszukiwarka)
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.player_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_players_success_first_url(mock_get):
     # 1. ARRANGE: Pierwszy adres URL od razu działa
     mock_get.return_value.status_code = 200
@@ -98,7 +98,7 @@ def test_search_players_success_first_url(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.player_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_players_fallback_url(mock_get):
     # 1. ARRANGE: Symulujemy - Pierwszy URL zwraca 404, więc skrypt uderza w drugi
     class MockResponse:
@@ -126,7 +126,7 @@ def test_search_players_fallback_url(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.player_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_search_players_exception(mock_get):
     # 1. ARRANGE: Odcięty internet
     mock_get.side_effect = Exception("Timeout")

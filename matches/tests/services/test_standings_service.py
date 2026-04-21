@@ -19,7 +19,7 @@ class MockResponse:
 # TESTY: HAPPY PATH
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.standings_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_league_standings_auto_season_success(mock_get):
     # 1. ARRANGE: Mockujemy DWIE odpowiedzi (najpierw po sezon, potem po tabele)
     mock_get.side_effect = [
@@ -78,7 +78,7 @@ def test_fetch_league_standings_auto_season_success(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.standings_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_league_standings_with_provided_season_and_local_id(mock_get):
     # 1. ARRANGE: Ponieważ podajemy ID sezonu, kod pominie zapytanie nr 1.
     # Ustawiamy więc tylko JEDNĄ odpowiedź mocka.
@@ -121,7 +121,7 @@ def test_fetch_league_standings_with_provided_season_and_local_id(mock_get):
 # TESTY: EDGE CASES (BŁĘDY)
 # ==========================================
 @pytest.mark.django_db
-@patch("matches.services.standings_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_league_standings_season_fail(mock_get):
     # Scenariusz A: API od sezonów zwraca błąd 404
     mock_get.return_value = MockResponse(404, {})
@@ -133,7 +133,7 @@ def test_fetch_league_standings_season_fail(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.standings_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_league_standings_standings_fail(mock_get):
     # Sezon działa (200), ale padają tabele (500)
     mock_get.side_effect = [
@@ -144,7 +144,7 @@ def test_fetch_league_standings_standings_fail(mock_get):
 
 
 @pytest.mark.django_db
-@patch("matches.services.standings_service.requests.get")
+@patch("matches.services.api_tracker.requests.get")
 def test_fetch_league_standings_network_exception(mock_get):
     # Brak internetu / Timeout
     mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
