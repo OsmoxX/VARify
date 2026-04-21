@@ -29,7 +29,7 @@
 
                 <div class="filter-search-box">
                     <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
-                    <input type="text" id="league-search-input" placeholder="{% trans 'Szukaj ligi...' %}"
+                    <input type="text" id="league-search-input" name="league-search-input" placeholder="{% trans 'Szukaj ligi...' %}"
                         oninput="filterLeagueCheckboxes(this.value)" autocomplete="off">
                 </div>
 
@@ -52,7 +52,7 @@
         <div class="global-toggle">
             <span class="toggle-text">{% trans "Rozwiń wszystkie" %}</span>
             <label class="switch">
-                <input type="checkbox" id="global-toggle-input" checked onchange="toggleAllLeagues(this)">
+                <input type="checkbox" id="global-toggle-input" name="global-toggle-input" checked onchange="toggleAllLeagues(this)">
                 <span class="slider"></span>
             </label>
         </div>

@@ -192,7 +192,6 @@ def test_toggle_notifications(setup_match_data):
     m_live, _, _ = setup_match_data
 
     factory = RequestFactory()
-    # Żądanie POST z body JSON, jakiego oczekuje funkcja
     request = factory.post(
         "/toggle/",
         data=json.dumps({"match_id": m_live.api_id}),
@@ -200,16 +199,20 @@ def test_toggle_notifications(setup_match_data):
     )
     request.session = MagicMock()
     request.session.session_key = "fake_session_123"
+    # RequestFactory nie przypisuje user automatycznie – widok sprawdza is_authenticated
+    request.user = AnonymousUser()
 
-    # Krok 1: Włączamy subskrypcję (DODANIE)
-    response_add = toggle_notifications(request)
-    assert json.loads(response_add.content)["status"] == "added"
+    # Krok 1: Włączamy subskrypcję
+    response_add = toggle_notifications(request, match_id=m_live.api_id)
+    assert json.loads(response_add.content)["status"] == "success"
+    assert json.loads(response_add.content)["is_subscribed"] is True
     assert MatchSubscription.objects.count() == 1
 
-    # Krok 2: Klikamy jeszcze raz, żeby wyłączyć (USUNIĘCIE)
-    response_remove = toggle_notifications(request)
-    assert json.loads(response_remove.content)["status"] == "removed"
-    assert MatchSubscription.objects.count() == 0
+    # Krok 2: Klikamy jeszcze raz, żeby wyłączyć (toggle is_active na False, rekord zostaje)
+    response_remove = toggle_notifications(request, match_id=m_live.api_id)
+    assert json.loads(response_remove.content)["status"] == "success"
+    assert json.loads(response_remove.content)["is_subscribed"] is False
+    assert MatchSubscription.objects.count() == 1  # rekord istnieje, ale is_active=False
 
 
 @pytest.mark.django_db
@@ -221,8 +224,8 @@ def test_toggle_notifications_not_found():
         content_type="application/json",
     )
     request.session = MagicMock()
-
-    response = toggle_notifications(request)
+    request.user = AnonymousUser()
+    response = toggle_notifications(request, match_id=99999)
     assert json.loads(response.content)["status"] == "error"
 
 

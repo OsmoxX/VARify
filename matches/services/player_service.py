@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 
 import requests
+from matches.services.api_tracker import api_get
 
 from matches.models import Player, Team
 
@@ -21,7 +22,7 @@ def fetch_player(player_id: int) -> Player | None:
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = api_get(url, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json().get("player")
         if not data:
@@ -79,10 +80,10 @@ def search_players_from_api(query: str) -> list:
 
     url = f"https://sportapi7.p.rapidapi.com/api/v1/search/players/{query}/more"
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = api_get(url, headers=headers, timeout=10)
         if response.status_code != 200:
             url = f"https://sportapi7.p.rapidapi.com/api/v1/search/players/{query}"
-            response = requests.get(url, headers=headers, timeout=10)
+            response = api_get(url, headers=headers, timeout=10)
 
         if response.status_code == 200:
             data = response.json()

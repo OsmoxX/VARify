@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="detail-wrapper" data-api-id="{{ api_id }}">
+<div class="detail-wrapper" data-api-id="{{ api_id }}" data-user-authenticated="{{ user.is_authenticated|lower }}">
     <a class="back-btn-modern" href="/">
         <i class="fa-solid fa-chevron-left"></i> {% trans "Powrót" %}
     </a>
@@ -21,7 +21,22 @@
             <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div class="team-name-section">
-            <h1 id="team-name">{% trans "Ładowanie..." %}</h1>
+            <div class="team-name-row">
+                <h1 id="team-name">{% trans "Ładowanie..." %}</h1>
+                {% if user.is_authenticated %}
+                <button
+                    class="toggle-favorite-btn{% if is_favorite %} is-favorite{% endif %}"
+                    data-team-id="{{ team_id }}"
+                    data-tooltip-add="{% trans 'Dodaj do ulubionych' %}"
+                    data-tooltip-remove="{% trans 'Usuń z ulubionych' %}"
+                    data-tooltip="{% if is_favorite %}{% trans 'Usuń z ulubionych' %}{% else %}{% trans 'Dodaj do ulubionych' %}{% endif %}"
+                    aria-label="{% if is_favorite %}{% trans 'Usuń z ulubionych' %}{% else %}{% trans 'Dodaj do ulubionych' %}{% endif %}"
+                    title=""
+                >
+                    <i class="{% if is_favorite %}fa-solid{% else %}fa-regular{% endif %} fa-star"></i>
+                </button>
+                {% endif %}
+            </div>
             <div class="team-meta" id="team-meta"></div>
         </div>
     </div>

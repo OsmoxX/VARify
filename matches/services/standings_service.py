@@ -7,6 +7,7 @@ Handles fetching and storing league standings from the SportAPI.
 import os
 
 import requests
+from matches.services.api_tracker import api_get
 
 from matches.models import League, LeagueStandings, Team
 
@@ -34,7 +35,7 @@ def fetch_league_standings(
         # 1. Automatyczne wykrycie sezonu
         if not season_id:
             season_url = f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}/seasons"
-            resp_seasons = requests.get(season_url, headers=headers, timeout=10)
+            resp_seasons = api_get(season_url, headers=headers, timeout=10)
             if resp_seasons.status_code == 200:
                 seasons = resp_seasons.json().get("seasons", [])
                 if seasons:
@@ -51,7 +52,7 @@ def fetch_league_standings(
             f"https://sportapi7.p.rapidapi.com/api/v1/unique-tournament/{tournament_id}"
             f"/season/{season_id}/standings/total"
         )
-        response = requests.get(url, headers=headers, timeout=8)
+        response = api_get(url, headers=headers, timeout=8)
         if response.status_code != 200:
             print(f"API League Standings błąd: {response.status_code}")
             return []

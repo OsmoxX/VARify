@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tr>
                             <td class="col-pos">${row.position}</td>
                             <td class="col-team">
-                                <a href="/team/${row.team_api_id}/" class="team-link">
+                                <a href="/team/${row.team_id}/" class="team-link">
                                     <img src="/api/image/team/${row.team_api_id}/" alt="${row.team}" class="team-icon" onerror="this.style.display='none'">
                                     ${row.team}
                                 </a>

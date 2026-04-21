@@ -175,6 +175,10 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"       # blokuje login do czasu weryfika
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True             # link w mailu aktywuje od razu (GET)
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False     # użytkownik loguje się sam po kliknięciu
 ACCOUNT_ADAPTER = "matches.adapter.CustomAccountAdapter" # Własny adapter (nadpisuje m.in. brzydkie komunikaty Allauth)
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"       # Omija weryfikację email dla kont Google/Społecznościowych
+SOCIALACCOUNT_EMAIL_REQUIRED = False             # Google nie musi wymuszać adresu email
+SOCIALACCOUNT_AUTO_SIGNUP = True                 # Automatyczne tworzenie konta, bez pytania o email
+SOCIALACCOUNT_ADAPTER = "matches.adapter.CustomSocialAccountAdapter"  # Pre-login hook → email verified=True
 
 # ==========================================
 # MAIL SENDING — WP.pl SMTP (port 465 / SSL)
@@ -217,9 +221,12 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/Warsaw"
 
 CELERY_BEAT_SCHEDULE = {
-    "update-live-matches-every-30-seconds": {
+    # Jedyne zadanie w harmonogramie: synchronizacja meczów live co 60 sekund.
+    # Jeśli wykryje zmianę wyniku/statusu → samo trigger'uje process_match_incidents_and_notify
+    # dla konkretnego meczu (architektura event-driven, nie polling).
+    "update-live-matches-every-60-seconds": {
         "task": "matches.tasks.sync_live_matches",
-        "schedule": 30.0,
+        "schedule": 60.0,
     },
     "fetch-upcoming-matches": {
         "task": "matches.tasks.fetch_upcoming_matches",

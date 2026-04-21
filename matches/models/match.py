@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from .league import League
 from .team import Team
+
+User = get_user_model()
 
 
 class LiveMatch(models.Model):
@@ -48,6 +51,29 @@ class LiveMatch(models.Model):
     )
     is_top = models.BooleanField(
         default=False, help_text="Czy mecz jest top z API lub wg własnej listy"
+    )
+
+    # ── Push Notification State Tracking ──────────────────────────────────────
+    # Lista stringów z ID zdarzeń (bramki, kartki) które już wysłałyśmy Push.
+    # Przechowujemy jako JSON array, np. ["1234", "5678"]
+    notified_event_ids = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="ID incydentów (z API) o których już wysłano Push Notification"
+    )
+    # Ostatni wynik przy którym wysłano powiadomienie o bramce, np. "1:0".
+    # Zapobiega podwójnym powiadomieniom przy tej samej zmianie wyniku.
+    last_notified_score = models.CharField(
+        max_length=10,
+        default="0:0",
+        help_text="Wynik w formacie 'X:Y' przy ostatnim wysłanym Push o bramce"
+    )
+    # Flaga API blacklist — False gdy /incidents zwróciło 404/403.
+    # Mecze z has_incident_data=False są całkowicie pomijane przez monitor,
+    # nie generując zbędnych zapytań do API dla niszowych lig bez danych.
+    has_incident_data = models.BooleanField(
+        default=True,
+        help_text="False jeśli API zwróciło 404 dla /incidents — mecz pomijany w monitorze"
     )
 
     @property
@@ -106,12 +132,21 @@ class UpcomingMatch(models.Model):
 
 
 class MatchSubscription(models.Model):
-    session_key = models.CharField(max_length=100)
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="match_subscriptions",
+        null=True,
+        blank=True,
+        help_text="Zalogowany użytkownik (jeśli kliknął dzwoneczek będąc zalogowany)"
+    )
+    session_key = models.CharField(max_length=100)  # Zachowane dla kompatybilności
     match = models.ForeignKey(
         LiveMatch, on_delete=models.CASCADE, related_name="subscriptions"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-
+    is_active = models.BooleanField(default=True)
+    
     class Meta:
         unique_together = ("session_key", "match")
 

@@ -1,0 +1,153 @@
+/* =========================================================
+   FAVORITES.CSS — Gwiazdki ulubionych drużyn
+   ========================================================= */
+
+/* ── Przycisk gwiazdki ── */
+.toggle-favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+
+    /* Przejścia dla wszystkich właściwości */
+    transition:
+        background 0.25s ease,
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.25s ease;
+}
+
+/* ── Ikona wewnątrz przycisku ── */
+.toggle-favorite-btn i {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.35);
+    transition:
+        color 0.25s ease,
+        text-shadow 0.25s ease;
+    pointer-events: none; /* Kliknięcia przechodzą do rodzica (button) */
+}
+
+/* ── Hover (stan nieaktywny) ── */
+.toggle-favorite-btn:not(.is-favorite):hover {
+    background: rgba(255, 215, 0, 0.1);
+    transform: scale(1.1);
+}
+
+.toggle-favorite-btn:not(.is-favorite):hover i {
+    color: rgba(255, 215, 0, 0.6);
+}
+
+/* ── Stan aktywny: drużyna jest w ulubionych ── */
+.toggle-favorite-btn.is-favorite i {
+    color: #ffd700;
+    text-shadow:
+        0 0 8px rgba(255, 215, 0, 0.6),
+        0 0 16px rgba(255, 215, 0, 0.25);
+}
+
+.toggle-favorite-btn.is-favorite {
+    background: rgba(255, 215, 0, 0.12);
+}
+
+/* ── Hover na aktywnej gwiazdce ── */
+.toggle-favorite-btn.is-favorite:hover {
+    background: rgba(255, 215, 0, 0.08);
+    transform: scale(1.05);
+}
+
+.toggle-favorite-btn.is-favorite:hover i {
+    color: #ffec6e;
+    text-shadow:
+        0 0 10px rgba(255, 215, 0, 0.7),
+        0 0 20px rgba(255, 215, 0, 0.35);
+}
+
+/* ── Animacja "pop" po kliknięciu ── */
+.toggle-favorite-btn.fav-pop {
+    animation: fav-star-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fav-star-pop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.35); }
+    70%  { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+
+/* ── Stan ładowania (pending request) ── */
+.toggle-favorite-btn.is-loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* ── Tooltip ─ pojawia się po najechaniu ── */
+.toggle-favorite-btn {
+    position: relative;
+}
+
+.toggle-favorite-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(15, 15, 25, 0.92);
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 50;
+}
+
+.toggle-favorite-btn:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ── Integracja z nagłówkiem drużyny ── */
+.team-name-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.team-name-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.team-name-row h1 {
+    margin: 0;
+}
+
+/* ── W tabeli ligowej: gwiazdka przy linku drużyny ── */
+.team-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.team-link .toggle-favorite-btn {
+    width: 26px;
+    height: 26px;
+    margin-left: 4px;
+}
+
+.team-link .toggle-favorite-btn i {
+    font-size: 0.85rem;
+}

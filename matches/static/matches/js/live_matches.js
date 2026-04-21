@@ -138,23 +138,28 @@ function buildMatchRow(match) {
         e.preventDefault();
         e.stopPropagation();
         const matchId = parseInt(btn.dataset.matchId, 10);
-        fetch('/toggle-notifications/', {
+        
+        // Dynamicznie ustal prefix językowy np. /pl/ na podstawie taga HTML
+        const lang = document.documentElement.lang || 'pl';
+        
+        fetch(`/${lang}/toggle-notifications/${matchId}/`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ match_id: matchId })
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
         })
         .then(r => r.json())
         .then(data => {
-            if (data.status === 'added') {
-                btn.classList.add('bell-active');
-                btn.title = _liveI18n.bellOff;
-                showMatchToast('\uD83D\uDD14', _liveI18n.notifOn, 'info');
-                if (window.VarifyWS) window.VarifyWS.subscribe(matchId);
-            } else if (data.status === 'removed') {
-                btn.classList.remove('bell-active');
-                btn.title = _liveI18n.bellOn;
-                showMatchToast('\uD83D\uDD15', _liveI18n.notifOff, 'info');
-                if (window.VarifyWS) window.VarifyWS.unsubscribe(matchId);
+            if (data.status === 'success') {
+                if (data.is_subscribed) {
+                    btn.classList.add('bell-active');
+                    btn.title = _liveI18n.bellOff;
+                    showMatchToast('🔔', _liveI18n.notifOn || 'Włączono', 'info');
+                    if (window.VarifyWS) window.VarifyWS.subscribe(matchId);
+                } else {
+                    btn.classList.remove('bell-active');
+                    btn.title = _liveI18n.bellOn;
+                    showMatchToast('🔕', _liveI18n.notifOff || 'Wyłączono', 'info');
+                    if (window.VarifyWS) window.VarifyWS.unsubscribe(matchId);
+                }
             } else {
                 showMatchToast('❌', data.message || 'Błąd', 'error');
             }

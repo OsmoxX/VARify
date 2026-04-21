@@ -21,7 +21,6 @@ from matches.models import (
     MatchSubscription,
     MissingPlayer,
 )
-from matches.services import fetch_match_details
 
 from .helpers import (
     TOP_LEAGUES_CONFIG,
@@ -60,10 +59,9 @@ def match_detail_view(request, match_id):
     is_ended = match.status.lower().strip() in ENDED_STATUSES
 
     if not (is_ended and (match.events.exists() or match.stats_json)):
-        if not is_ended:
-            match.events.all().delete()
-        fetch_match_details(local_match_id=match.id, api_match_id=match.api_id)
-        match.refresh_from_db()
+        # Asynchroniczne zadanie pobrania danych w Celery. Pobierze dane jeśli brakujące (chronione cache lockiem)
+        from matches.tasks.sync_tasks import fetch_match_details_task
+        fetch_match_details_task.delay(match.id, match.api_id)
 
     events = MatchEvent.objects.filter(match=match).order_by(
         "-time", "-added_time", "-id"
@@ -160,33 +158,74 @@ class HomeView(LoginRequiredMixin, ListView):
         return context
 
 
-@csrf_exempt
 @require_POST
-def toggle_notifications(request):
-    """Przełącza subskrypcję powiadomień WebSocket dla meczu (toggle)."""
+def toggle_notifications(request, match_id):
+    """
+    Przełącza subskrypcję powiadomień (WebSocket + PWA Push) dla meczu.
+
+    Używa filter().first() zamiast get_or_create() aby uniknąć IntegrityError
+    (race condition / konflikt unique_together przy szybkich kliknięciach).
+
+    Dodatkowo scala subskrypcję gościa z kontem użytkownika po zalogowaniu.
+    """
     if not request.session.session_key:
         request.session.create()
 
-    data = json.loads(request.body)
-    match_api_id = data.get("match_id")
+    session_key = request.session.session_key
 
     try:
-        match = LiveMatch.objects.get(api_id=match_api_id)
+        match = LiveMatch.objects.get(api_id=match_id)
     except LiveMatch.DoesNotExist:
-        return JsonResponse({"status": "error", "message": "Mecz nie istnieje"})
+        return JsonResponse({"status": "error", "message": "Mecz nie istnieje"}, status=404)
 
-    subscription, created = MatchSubscription.objects.get_or_create(
-        match=match,
-        session_key=request.session.session_key,
-    )
+    subscription = None
 
-    if not created:
-        subscription.delete()
-        return JsonResponse(
-            {"status": "removed", "message": "Powiadomienia wyłączone 🔕"}
+    if request.user.is_authenticated:
+        # Krok 1: Szukaj subskrypcji powiązanej z tym kontem
+        subscription = MatchSubscription.objects.filter(
+            match=match,
+            user=request.user,
+        ).first()
+
+        if subscription is None:
+            # Krok 2: Czy istnieje stara subskrypcja gościa z tej sesji?
+            # Jeśli tak → połącz ją z kontem (merge) zamiast tworzyć duplikat
+            guest_sub = MatchSubscription.objects.filter(
+                match=match,
+                user=None,
+                session_key=session_key,
+            ).first()
+            if guest_sub:
+                guest_sub.user = request.user
+                guest_sub.save(update_fields=["user"])
+                subscription = guest_sub
+    else:
+        # Gość: szukaj wyłącznie po session_key
+        subscription = MatchSubscription.objects.filter(
+            match=match,
+            user=None,
+            session_key=session_key,
+        ).first()
+
+    # Krok 3: Zmień stan lub utwórz nową subskrypcję
+    if subscription is not None:
+        subscription.is_active = not subscription.is_active
+        subscription.save(update_fields=["is_active"])
+    else:
+        user = request.user if request.user.is_authenticated else None
+        subscription = MatchSubscription.objects.create(
+            match=match,
+            user=user,
+            session_key=session_key,
+            is_active=True,
         )
 
-    return JsonResponse({"status": "added", "message": "Powiadomienia włączone 🔔"})
+    status_msg = "włączone 🔔" if subscription.is_active else "wyłączone 🔕"
+    return JsonResponse({
+        "status": "success",
+        "is_subscribed": subscription.is_active,
+        "message": f"Powiadomienia {status_msg}",
+    })
 
 
 def active_match_ids(request):

@@ -151,8 +151,8 @@ def _build_pitch_data(xi_players, formation_str, is_home=True):
             pitch_data.append(
                 {
                     "player": player,
-                    "top": round(top_pct, 1),
-                    "left": round(left_pct, 1),
+                    "top": str(round(top_pct, 1)).replace(",", "."),
+                    "left": str(round(left_pct, 1)).replace(",", "."),
                     "rating_class": _rating_class(player.avg_rating),
                 }
             )

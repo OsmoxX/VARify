@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrapper = document.querySelector('.detail-wrapper');
     if (!wrapper || !wrapper.dataset.apiId) return;
     const TEAM_API_ID = parseInt(wrapper.dataset.apiId, 10);
+    const USER_AUTHENTICATED = wrapper.dataset.userAuthenticated === 'true';
 
     // ── Tab switch ──
     window.switchTab = function(tabId, btnContext) {
@@ -15,6 +16,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Team image helper ──
     const teamImg = (apiId) =>
         `<img src="/api/image/team/${apiId}/" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" onerror="this.style.display='none'">`;
+
+    // ── Favorite star button helper ──
+    function favStarBtn(teamDbId, isFav) {
+        if (!USER_AUTHENTICATED) return '';
+        const isFavClass = isFav ? ' is-favorite' : '';
+        const iconClass  = isFav ? 'fa-solid' : 'fa-regular';
+        const tooltip    = isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych';
+        return `<button
+            class="toggle-favorite-btn${isFavClass}"
+            data-team-id="${teamDbId}"
+            data-tooltip="${tooltip}"
+            data-tooltip-add="Dodaj do ulubionych"
+            data-tooltip-remove="Usuń z ulubionych"
+            aria-label="${tooltip}"
+            title=""
+        ><i class="${iconClass} fa-star"></i></button>`;
+    }
 
     // ── Fetch team info ──
     fetch(`/api/teams/${TEAM_API_ID}/`)
@@ -131,14 +149,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 let html = currentTeamStandings.map(row => {
                     const isCurrentTeam = row.team_api_id === TEAM_API_ID;
                     const gd = row.goal_difference > 0 ? `+${row.goal_difference}` : row.goal_difference;
+                    // row.team_id is the Django PK — used for the favorite toggle endpoint
+                    const starBtn = favStarBtn(row.team_id, false);
                     return `
                         <tr class="${isCurrentTeam ? 'highlight-row' : ''}">
                             <td class="col-pos">${row.position}</td>
                             <td class="col-team">
-                                <a href="/team/${row.team_api_id}/" class="team-link">
+                                <a href="/team/${row.team_id}/" class="team-link">
                                     <img src="/api/image/team/${row.team_api_id}/" alt="${row.team}" class="team-icon" onerror="this.style.display='none'">
                                     ${row.team}
                                 </a>
+                                ${starBtn}
                             </td>
                             <td class="col-num">${row.matches_played}</td>
                             <td class="col-num">${row.matches_won}</td>
@@ -160,3 +181,4 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     loadTeamStandings(`/api/teams/${TEAM_API_ID}/standings/`);
 });
+

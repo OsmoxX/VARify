@@ -34,6 +34,9 @@ from .auth_views import register, logout_view
 # Account settings
 from .account_views import account_settings as account_settings
 
+# Favorites
+from .favorite_teams_view import favorite_teams_list
+
 # Utilities
 from .utility_views import search_api_view, proxy_image_view
 
@@ -57,6 +60,10 @@ __all__ = [
     # Auth
     "register",
     "logout_view",
+    # Account settings
+    "account_settings",
+    # Favorites
+    "favorite_teams_list",
     # Utilities
     "search_api_view",
     "proxy_image_view",

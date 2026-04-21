@@ -1,0 +1,366 @@
+/* =========================================================
+   FAVORITE_TEAMS.CSS — Strona "Moje ulubione drużyny"
+   ========================================================= */
+
+/* ── Nagłówek strony ── */
+.fav-page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+
+.fav-page-header h1 {
+    font-size: 1.8rem;
+    color: var(--text-light);
+    margin: 0;
+    font-weight: 700;
+}
+
+.fav-page-header .header-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #ffd700;
+    flex-shrink: 0;
+}
+
+.fav-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 215, 0, 0.12);
+    color: #ffd700;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* ── Sekcje ── */
+.fav-section {
+    margin-bottom: 48px;
+}
+
+.fav-section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin: 0 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fav-section-title i {
+    color: var(--accent);
+}
+
+/* ── Siatka kart drużyn ── */
+.fav-teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+/* ── Karta pojedynczej drużyny ── */
+.fav-team-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fav-team-card:hover {
+    border-color: rgba(255, 215, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.06);
+    transform: translateY(-2px);
+}
+
+/* Animacja znikania po usunięciu */
+.fav-team-card.removing {
+    animation: cardFadeOut 0.3s ease forwards;
+}
+
+@keyframes cardFadeOut {
+    0%   { opacity: 1; transform: scale(1); max-height: 200px; }
+    50%  { opacity: 0.3; transform: scale(0.95); }
+    100% { opacity: 0; transform: scale(0.9); max-height: 0; padding: 0; margin: 0; overflow: hidden; }
+}
+
+/* Logo drużyny w karcie */
+.fav-team-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.fav-team-logo-fallback {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* Informacje o drużynie */
+.fav-team-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.fav-team-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s;
+}
+
+.fav-team-name:hover {
+    color: var(--accent);
+}
+
+/* Gwiazdka w karcie */
+.fav-team-card .toggle-favorite-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* ── Stan pusty ── */
+.fav-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.fav-empty-state .empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+    opacity: 0.3;
+    display: block;
+}
+
+.fav-empty-state h3 {
+    font-size: 1.15rem;
+    color: var(--text-light);
+    margin: 0 0 8px;
+    font-weight: 600;
+}
+
+.fav-empty-state p {
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ── Formularz wyszukiwania ── */
+.fav-search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.fav-search-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.fav-search-wrapper i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.fav-search-input {
+    width: 100%;
+    padding: 11px 16px 11px 40px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: var(--text-light);
+    font-size: 0.92rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fav-search-input:focus {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+}
+
+.fav-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.fav-search-btn {
+    padding: 11px 22px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.fav-search-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* ── Wyniki wyszukiwania (lista) ── */
+.fav-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fav-search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.fav-search-result-item:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.fav-result-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 3px;
+    flex-shrink: 0;
+}
+
+.fav-result-logo-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.fav-result-name {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    transition: color 0.2s;
+}
+
+.fav-result-name:hover {
+    color: var(--accent);
+}
+
+.fav-results-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.fav-results-count strong {
+    color: var(--accent);
+}
+
+/* ── Czysty przycisk "wróć" ── */
+.fav-clear-search-btn {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    margin-left: 10px;
+    transition: color 0.2s;
+}
+
+.fav-clear-search-btn:hover {
+    color: var(--danger);
+}
+
+/* ── Responsywność ── */
+@media (max-width: 768px) {
+    .fav-teams-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .fav-page-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .fav-search-form {
+        flex-direction: column;
+    }
+
+    .fav-search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .fav-teams-grid {
+        grid-template-columns: 1fr;
+    }
+}

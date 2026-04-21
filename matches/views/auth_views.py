@@ -9,9 +9,12 @@ from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import redirect, render
 from allauth.account.models import EmailAddress
 from allauth.account.internal.flows.email_verification import send_verification_email_to_address
-
+from ..models.team import Team, FavoriteTeam
 from matches.forms import UserRegisterForm
-
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 @login_not_required
 def register(request):
@@ -46,3 +49,27 @@ def logout_view(request):
     """Wylogowuje użytkownika i przekierowuje na stronę główną."""
     logout(request)
     return redirect("home")
+
+
+@login_required
+@require_POST
+def toggle_favorite_team(request, team_id):
+    # Pobieramy obiekt Team na podstawie ID z Twojej bazy (nie z API)
+    team = get_object_or_404(Team, pk=team_id)
+    
+    # Próbujemy znaleźć istniejący rekord
+    favorite, created = FavoriteTeam.objects.get_or_create(user=request.user, team=team)
+    
+    if not created:
+        # Jeśli rekord już istniał, to znaczy, że użytkownik kliknął, aby "odlubić"
+        favorite.delete()
+        is_favorite = False
+    else:
+        # Jeśli rekord został właśnie stworzony
+        is_favorite = True
+        
+    return JsonResponse({
+        'status': 'success',
+        'is_favorite': is_favorite,
+        'team_name': team.name
+    })

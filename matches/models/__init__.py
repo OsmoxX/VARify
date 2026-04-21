@@ -7,13 +7,14 @@ Re-exports all model classes so that the rest of the codebase
 """
 
 from .league import League
-from .team import Team
+from .team import Team, FavoriteTeam
 from .player import Player
 from .match import LiveMatch, UpcomingMatch, MatchSubscription
 from .event import MatchEvent
 from .lineup import MatchLineup, MissingPlayer
 from .image import CachedImage
 from .standings import LeagueStandings
+
 
 __all__ = [
     "League",
@@ -27,4 +28,5 @@ __all__ = [
     "MissingPlayer",
     "CachedImage",
     "LeagueStandings",
+    "FavoriteTeam",
 ]

@@ -28,6 +28,7 @@ from matches.views import (
     league_detail_view,
 )
 from matches import views
+from matches.views import dev_views
 from django.contrib.auth import views as auth_views
 from matches import api_views
 from matches.views.ai_views import ai_chat_endpoint
@@ -35,6 +36,7 @@ from django.views.generic.base import RedirectView
 from django.conf.urls.i18n import i18n_patterns
 from typing import Any, cast
 from django.views.generic import TemplateView
+from matches.views.auth_views import toggle_favorite_team
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -107,6 +109,8 @@ urlpatterns = [
     ),
     # WebPush
     path("webpush/", include("webpush.urls")),
+    # Favorite teams
+    path('favorite/toggle/<int:team_id>/', toggle_favorite_team, name='toggle_favorite_team'),
 ]
 
 urlpatterns.extend(
@@ -132,12 +136,18 @@ urlpatterns.extend(
                 name="proxy_image",
             ),
             path(
-                "toggle-notifications/",
+                "toggle-notifications/<int:match_id>/",
                 views.toggle_notifications,
                 name="toggle_notifications",
             ),
             path(
                 "api/active-match-ids/", views.active_match_ids, name="active_match_ids"
+            ),
+            # ── DEV TOOLS ──────────────────────────────────────────
+            path(
+                "dev/simulate-push/<int:match_api_id>/", 
+                dev_views.simulate_match_event, 
+                name="dev_simulate_push"
             ),
             path("register/", views.register, name="register"),
             path(
@@ -149,6 +159,7 @@ urlpatterns.extend(
             ),
             path("logout/", views.logout_view, name="logout"),
             path("account/", views.account_settings, name="account_settings"),
+            path("favorites/", views.favorite_teams_list, name="favorite_teams"),
             path("", include("accounts.urls")),
             # ── ALLAUTH ────────────────────────────────────────────────────────────────
             # Włączamy wszystkie domyślne ścieżki z Allauth

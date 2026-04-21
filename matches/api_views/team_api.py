@@ -18,7 +18,6 @@ from matches.serializers import (
     LiveMatchSerializer,
     TeamSerializer,
 )
-from matches.services import fetch_last_matches_for_team
 
 
 @login_not_required
@@ -133,7 +132,8 @@ def get_team_matches(request, api_id):
 
     if (matches_count < 5 or stale) and team.api_id:
         try:
-            fetch_last_matches_for_team(team_api_id=team.api_id, n=5)
+            from matches.tasks.sync_tasks import fetch_last_matches_team_task
+            fetch_last_matches_team_task.delay(team.api_id, 5)
         except Exception:
             pass  # nosec B110
 

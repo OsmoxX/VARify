@@ -103,7 +103,7 @@
                 {% else %}
                 {# FREE: pole zablokowane (soft paywall) #}
                 <div class="input-locked-wrapper">
-                    <input type="text" id="username" value="{{ user.username }}"
+                    <input type="text" id="username" name="username" value="{{ user.username }}"
                         class="form-input input-locked"
                         disabled title="{% trans 'Zmiana nicku wymaga planu PLUS' %}">
                     <i class="fa-solid fa-lock input-lock-icon" style="color: #f59e0b;"></i>
@@ -143,7 +143,7 @@
                 <p class="text-muted">{% trans "Bądź na bieżąco, nawet gdy aplikacja jest zamknięta." %}</p>
             </div>
             <label class="push-switch" title="Włącz powiadomienia na tym urządzeniu">
-                <input type="checkbox" id="push-settings-toggle" disabled>
+                <input type="checkbox" id="push-settings-toggle" name="push-settings-toggle" disabled>
                 <span class="push-slider"></span>
             </label>
         </div>

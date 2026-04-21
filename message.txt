@@ -2,12 +2,12 @@ from webpush import send_user_notification
 from django.contrib.auth.models import User
 
 # Pobieramy Twoje konto
-user = User.objects.get(username='sigma123') 
+user = User.objects.get(username='kacper') 
 
 payload = {
     "head": "VARify ⚽",
     "body": "Real Madrid 1:0 Barcelona - Kylian Mbappe",
-    "url": "https://13.62.58.123.nip.io/pl/calendar/"
+    "url": "https://13.62.58.123.nip.io/pl/player/826643/"
 }
 
 send_user_notification(user=user, payload=payload, ttl=1000)

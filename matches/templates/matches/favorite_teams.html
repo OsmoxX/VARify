@@ -1,0 +1,172 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}VARify – {% trans "Moje ulubione drużyny" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/favorites.css' %}">
+<link rel="stylesheet" href="{% static 'matches/favorite_teams.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="fav-page-header">
+    <div class="header-icon">
+        <i class="fa-solid fa-star"></i>
+    </div>
+    <h1>
+        {% trans "Moje ulubione drużyny" %}
+        <span class="fav-count-badge" id="fav-count-badge">{{ favorites.count }}</span>
+    </h1>
+</div>
+
+<!-- ══ SEKCJA 1: Moje drużyny ══ -->
+<section class="fav-section">
+    <h2 class="fav-section-title">
+        <i class="fa-solid fa-shield-halved"></i>
+        {% trans "Zapisane drużyny" %}
+    </h2>
+
+    {% if favorites %}
+    <div class="fav-teams-grid" id="fav-teams-grid">
+        {% for fav in favorites %}
+        <div class="fav-team-card" data-team-id="{{ fav.team.pk }}">
+            <img
+                class="fav-team-logo"
+                src="/api/image/team/{{ fav.team.api_id }}/"
+                alt="{{ fav.team.name }}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            >
+            <div class="fav-team-logo-fallback" style="display:none;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div class="fav-team-info">
+                <a
+                    href="{% url 'team_detail' fav.team.pk %}"
+                    class="fav-team-name"
+                    title="{{ fav.team.name }}"
+                >{{ fav.team.name }}</a>
+            </div>
+
+            <!-- Gwiazdka — obsługiwana przez favorites.js -->
+            <button
+                class="toggle-favorite-btn is-favorite"
+                data-team-id="{{ fav.team.pk }}"
+                data-tooltip="{% trans 'Usuń z ulubionych' %}"
+                data-tooltip-add="{% trans 'Dodaj do ulubionych' %}"
+                data-tooltip-remove="{% trans 'Usuń z ulubionych' %}"
+                aria-label="{% trans 'Usuń z ulubionych' %}"
+                title=""
+            >
+                <i class="fa-solid fa-star"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="fav-empty-state" class="fav-empty-state" style="display: none;">
+        <i class="fa-regular fa-star empty-icon"></i>
+        <h3>{% trans "Brak ulubionych drużyn" %}</h3>
+        <p>{% trans "Kliknij gwiazdkę przy dowolnej drużynie, aby ją dodać." %}</p>
+    </div>
+
+    {% else %}
+    <div id="fav-empty-state" class="fav-empty-state">
+        <i class="fa-regular fa-star empty-icon"></i>
+        <h3>{% trans "Nie masz jeszcze ulubionych drużyn" %}</h3>
+        <p>{% trans "Wyszukaj drużynę poniżej lub kliknij gwiazdkę na stronie drużyny, aby ją dodać." %}</p>
+    </div>
+    <div id="fav-teams-grid" class="fav-teams-grid" style="display:none;"></div>
+    {% endif %}
+</section>
+
+<!-- ══ SEKCJA 2: Wyszukaj nowe drużyny ══ -->
+<section class="fav-section">
+    <h2 class="fav-section-title">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        {% trans "Dodaj nową drużynę" %}
+        {% if query %}
+            <a href="{% url 'favorite_teams' %}" class="fav-clear-search-btn">
+                {% trans "Wyczyść wyszukiwanie" %}
+            </a>
+        {% endif %}
+    </h2>
+
+    <form method="get" action="{% url 'favorite_teams' %}" class="fav-search-form">
+        <div class="fav-search-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="text"
+                name="q"
+                id="fav-search-input"
+                class="fav-search-input"
+                value="{{ query|default:'' }}"
+                placeholder="{% trans 'Wpisz nazwę drużyny...' %}"
+                autocomplete="off"
+                autofocus
+            >
+        </div>
+        <button type="submit" class="fav-search-btn">
+            <i class="fa-solid fa-search"></i>
+            {% trans "Szukaj" %}
+        </button>
+    </form>
+
+    {% if query %}
+    <p class="fav-results-count">
+        {% if search_results %}
+            {% blocktrans with count=search_results.count q=query %}
+                Znaleziono <strong>{{ count }}</strong> wyników dla „{{ q }}"
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans with q=query %}
+                Brak wyników dla „{{ q }}"
+            {% endblocktrans %}
+        {% endif %}
+    </p>
+
+    <div class="fav-search-results">
+        {% for team in search_results %}
+        <div class="fav-search-result-item">
+            <img
+                class="fav-result-logo"
+                src="/api/image/team/{{ team.api_id }}/"
+                alt="{{ team.name }}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            >
+            <div class="fav-result-logo-fallback" style="display:none;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <a href="{% url 'team_detail' team.pk %}" class="fav-result-name" title="{{ team.name }}">
+                {{ team.name }}
+            </a>
+
+            <button
+                class="toggle-favorite-btn {% if team in favorite_team_objects %}is-favorite{% endif %}"
+                data-team-id="{{ team.pk }}"
+                data-tooltip="{% if team in favorite_team_objects %}{% trans 'Usuń z ulubionych' %}{% else %}{% trans 'Dodaj do ulubionych' %}{% endif %}"
+                data-tooltip-add="{% trans 'Dodaj do ulubionych' %}"
+                data-tooltip-remove="{% trans 'Usuń z ulubionych' %}"
+                aria-label="{% if team in favorite_team_objects %}{% trans 'Usuń z ulubionych' %}{% else %}{% trans 'Dodaj do ulubionych' %}{% endif %}"
+                title=""
+            >
+                <i class="{% if team in favorite_team_objects %}fa-solid{% else %}fa-regular{% endif %} fa-star"></i>
+            </button>
+        </div>
+        {% empty %}
+        <div class="fav-empty-state">
+            <i class="fa-solid fa-circle-exclamation empty-icon"></i>
+            <h3>{% trans "Nie znaleziono drużyn" %}</h3>
+            <p>{% trans "Spróbuj innej frazy wyszukiwania." %}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'matches/js/favorite_teams.js' %}"></script>
+{% endblock %}

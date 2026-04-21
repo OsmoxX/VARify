@@ -15,6 +15,7 @@
         <link rel="stylesheet" href="{% static 'matches/paywall.css' %}">
         <link rel="stylesheet" href="{% static 'matches/ai_chat.css' %}">
         <link rel="stylesheet" href="{% static 'matches/push_ui.css' %}">
+        <link rel="stylesheet" href="{% static 'matches/favorites.css' %}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="manifest" href="{% static 'matches/manifest.json' %}">
         <link rel="apple-touch-icon" href="{% static 'matches/apple-touch-icon.png' %}">
@@ -37,7 +38,7 @@
             {# ── PLUS/PREMIUM: pełna wyszukiwarka ── #}
                 <div class="nav-search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="live-search-input" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny (Enter)' %}" autocomplete="off">
+                    <input type="text" id="live-search-input" name="live-search-input" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny (Enter)' %}" autocomplete="off">
                     <div id="search-results-dropdown" class="search-dropdown" style="display: none;"></div>
                 </div>
             {% else %}
@@ -45,7 +46,7 @@
                 <div class="nav-search-container nav-search-locked" id="locked-search-bar"
                      data-testid="locked-search-bar" title="{% trans 'Wymaga planu PLUS' %}">
                     <i class="fa-solid fa-lock search-icon" style="color: #f59e0b;"></i>
-                    <input type="text" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny...' %}"
+                    <input type="text" id="locked-search-input" name="locked-search-input" class="nav-search-input" placeholder="{% trans 'Szukaj drużyny...' %}"
                            disabled data-testid="search-input-locked">
                     <div class="search-lock-tooltip" data-testid="search-lock-tooltip">
                         <i class="fa-solid fa-lock"></i>
@@ -64,8 +65,31 @@
                 <a href="{% url 'calendar' %}" class="nav-link">
                     <i class="fa-solid fa-calendar-days"></i> {% trans "Kalendarz" %}
                 </a>
+
+            <!-- ========== PANEL POWIADOMIEŃ ========== -->
+                <div class="notif-wrapper" id="notif-wrapper">
+                    <button class="notif-bell-btn" id="notif-bell-btn" title="{% trans 'Powiadomienia' %}" aria-label="{% trans 'Powiadomienia' %}">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notif-badge" id="notif-badge" style="display:none;"></span>
+                    </button>
+                    <div class="notif-panel" id="notif-panel">
+                        <div class="notif-panel-header">
+                            <span>{% trans "Powiadomienia" %}</span>
+                            <button class="notif-clear-btn" id="notif-clear-btn" title="{% trans 'Wyczyść wszystkie' %}">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <div class="notif-panel-body" id="notif-panel-body">
+                            <div class="notif-empty" id="notif-empty">
+                                <i class="fa-solid fa-bell-slash"></i>
+                                <p>{% trans "Brak powiadomień" %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- ========== DROPDOWN KONTA UŻYTKOWNIKA (skrajnie po prawej) ========== -->
                 {% if user.is_authenticated %}
-            <!-- ========== DROPDOWN KONTA UŻYTKOWNIKA ========== -->
                     <div class="user-menu-wrapper" id="user-menu-wrapper">
                         <button class="user-avatar-btn" id="user-avatar-btn" title="{{ user.username }}" aria-label="{% trans 'Menu użytkownika' %}" data-testid="user-menu-btn">
                             <i class="fa-solid fa-circle-user"></i>
@@ -94,6 +118,10 @@
                                 <i class="fa-solid fa-gear"></i>
                                 {% trans "Ustawienia konta" %}
                             </a>
+                            <a href="{% url 'favorite_teams' %}" class="user-dropdown-item">
+                                <i class="fa-solid fa-star"></i>
+                                {% trans "Ulubione drużyny" %}
+                            </a>
                             <div class="user-dropdown-divider"></div>
                             <a href="{% url 'logout' %}" class="user-dropdown-item user-dropdown-logout" data-testid="logout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i>
@@ -106,28 +134,6 @@
                         <i class="fa-solid fa-right-to-bracket"></i> {% trans "Zaloguj" %}
                     </a>
                 {% endif %}
-
-            <!-- ========== PANEL POWIADOMIEŃ (skrajnie po prawej) ========== -->
-                <div class="notif-wrapper" id="notif-wrapper">
-                    <button class="notif-bell-btn" id="notif-bell-btn" title="{% trans 'Powiadomienia' %}" aria-label="{% trans 'Powiadomienia' %}">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="notif-badge" id="notif-badge" style="display:none;"></span>
-                    </button>
-                    <div class="notif-panel" id="notif-panel">
-                        <div class="notif-panel-header">
-                            <span>{% trans "Powiadomienia" %}</span>
-                            <button class="notif-clear-btn" id="notif-clear-btn" title="{% trans 'Wyczyść wszystkie' %}">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
-                        <div class="notif-panel-body" id="notif-panel-body">
-                            <div class="notif-empty" id="notif-empty">
-                                <i class="fa-solid fa-bell-slash"></i>
-                                <p>{% trans "Brak powiadomień" %}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
             </div>
         </nav>
@@ -175,6 +181,7 @@
         </main>
 
         <script src="{% static 'matches/js/base.js' %}"></script>
+        <script src="{% static 'matches/js/favorites.js' %}"></script>
 
 
         {% block extra_js %}{% endblock %}
@@ -250,6 +257,7 @@
                     <div class="ai-chat-input-area">
                         <textarea
                             id="ai-chat-input"
+                            name="ai_chat_message"
                             placeholder="{% trans 'Zapytaj o mecz, drużynę, statystyki...' %}"
                             rows="1"
                             aria-label="{% trans 'Wiadomość do AI Analityka' %}"
@@ -319,6 +327,7 @@
                     <div class="ai-chat-input-area locked">
                         <textarea
                             id="ai-chat-input"
+                            name="ai_chat_message"
                             placeholder="{% trans 'Dostępne tylko dla Premium...' %}"
                             rows="1"
                             disabled

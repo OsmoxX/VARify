@@ -10,6 +10,7 @@ import time as _time
 from datetime import datetime, timedelta
 
 import requests
+from matches.services.api_tracker import api_get
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.utils.timezone import make_aware
@@ -156,94 +157,6 @@ def _map_incident(item: dict) -> dict:
 
 
 # =============================================================================
-#  WEBSOCKET INCIDENT NOTIFICATIONS
-# =============================================================================
-
-
-def _check_new_incidents(
-    match_obj, api_match_id, home_team, away_team, channel_layer, room_group_name
-):
-    """
-    Pobiera zdarzenia (incidents) z API dla obserwowanego meczu.
-    Porównuje event_id z tymi już w DB → nowe kartki/zmiany → wysyła WS notification.
-    Wywoływana TYLKO dla meczów z aktywnymi subskrypcjami.
-    """
-    incidents_url = (
-        f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/incidents"
-    )
-    try:
-        resp = requests.get(incidents_url, headers=_api_headers(), timeout=10)
-        if resp.status_code != 200:
-            return
-        incidents = resp.json().get("incidents", [])
-    except Exception as e:
-        print(f"Błąd pobierania incidentów dla meczu {api_match_id}: {e}")
-        return
-
-    existing_ids = set(
-        MatchEvent.objects.filter(match=match_obj)
-        .exclude(event_id__isnull=True)
-        .values_list("event_id", flat=True)
-    )
-
-    for inc in incidents:
-        inc_id = str(inc.get("id", ""))
-        if not inc_id or inc_id in existing_ids:
-            continue
-
-        inc_type = inc.get("incidentType", "")
-        inc_class = inc.get("incidentClass", "")
-        is_home = inc.get("isHome", True)
-        team_name = home_team.name if is_home else away_team.name
-        player = inc.get("player", {}).get("name", "")
-        minute = inc.get("time", "")
-
-        if inc_type == "card":
-            if inc_class == "yellow":
-                icon, label = "🟨", "Żółta kartka"
-            elif inc_class == "red":
-                icon, label = "🟥", "Czerwona kartka"
-            elif inc_class == "yellowRed":
-                icon, label = "🟨🟥", "Druga żółta → czerwona"
-            else:
-                continue
-            async_to_sync(channel_layer.group_send)(
-                room_group_name,
-                {
-                    "type": "match_event",
-                    "event_type": "card",
-                    "icon": icon,
-                    "message": f"{label}: {player} ({team_name}) {minute}'",
-                },
-            )
-
-        elif inc_type == "substitution":
-            player_in = inc.get("playerIn", {}).get("name", "?")
-            player_out = inc.get("playerOut", {}).get("name", "?")
-            async_to_sync(channel_layer.group_send)(
-                room_group_name,
-                {
-                    "type": "match_event",
-                    "event_type": "substitution",
-                    "icon": "🔄",
-                    "message": f"Zmiana ({team_name}) {minute}': ⬆️ {player_in}  ⬇️ {player_out}",
-                },
-            )
-
-        MatchEvent.objects.get_or_create(
-            match=match_obj,
-            event_id=inc_id,
-            defaults={
-                "incident_type": inc_type,
-                "incident_class": inc_class,
-                "time": minute if isinstance(minute, int) else 0,
-                "is_home_team": is_home,
-                "player_name": player,
-            },
-        )
-
-
-# =============================================================================
 #  FETCH LIVE MATCHES (KROK 1 – dane surowe z API)
 # =============================================================================
 
@@ -252,7 +165,7 @@ def fetch_live_matches() -> dict | None:
     """Pobiera listę meczów na żywo z API."""
     url = "https://sportapi7.p.rapidapi.com/api/v1/sport/football/events/live"
     try:
-        response = requests.get(url, headers=_api_headers(), timeout=10)
+        response = api_get(url, headers=_api_headers(), timeout=10)
         if response.status_code == 200:
             return response.json()
         print(f"Błąd API (Live Matches): {response.status_code}")
@@ -267,14 +180,21 @@ def fetch_live_matches() -> dict | None:
 # =============================================================================
 
 
-def sync_live_matches():
-    """Pobiera mecze live z API i zapisuje je do bazy danych."""
+def sync_live_matches() -> list[int]:
+    """
+    Pobiera mecze live z API, zapisuje je do bazy danych i wykrywa istotne zmiany.
+
+    Zwraca listę api_id meczów, w których nastąpiła zmiana wyniku lub statusu.
+    Ta lista jest przekazywana przez zadanie Celery do triggerowania
+    process_match_incidents_and_notify dla każdego zmienionego meczu.
+    """
     data = fetch_live_matches()
     if not data or "events" not in data:
         print("Brak danych do zsynchronizowania.")
-        return
+        return []
 
     count = 0
+    changed_api_ids: list[int] = []  # Mecze ze zmianą wyniku lub statusu
     for event in data["events"]:
         try:
             league_data = event["tournament"]
@@ -312,7 +232,7 @@ def sync_live_matches():
             status_desc = status_data.get("description", "")
             start_ts = event.get("startTimestamp")
             match_date = (
-                (datetime.fromtimestamp(start_ts) + timedelta(hours=1)).date()
+                (datetime.fromtimestamp(start_ts) + timedelta(hours=2)).date()
                 if start_ts
                 else None
             )
@@ -353,10 +273,14 @@ def sync_live_matches():
                 channel_layer = get_channel_layer()
                 room_group_name = f'match_{event["id"]}'
 
-                if (
+                score_changed = (
                     old_match.home_score < home_score
                     or old_match.away_score < away_score
-                ):
+                )
+                status_changed = old_match.status != status_desc and status_desc
+
+                # ── Web Socket: bramka ───────────────────────────────────────
+                if score_changed:
                     print(
                         f"🔔 BRAMKA! {home_team.name} {old_match.home_score}→{home_score} - {old_match.away_score}→{away_score} {away_team.name}"
                     )
@@ -377,7 +301,8 @@ def sync_live_matches():
                     except Exception as ws_err:
                         print(f"  ❌ Błąd wysyłki WS: {ws_err}")
 
-                if old_match.status != status_desc and status_desc:
+                # ── Web Socket: zmiana okresu ────────────────────────────────
+                if status_changed:
                     period_icons = {
                         "Halftime": "⏸️",
                         "Ended": "🏁",
@@ -403,18 +328,15 @@ def sync_live_matches():
                     except Exception as ws_err:
                         print(f"  ❌ Błąd wysyłki WS status: {ws_err}")
 
-                has_subscribers = MatchSubscription.objects.filter(
-                    match=old_match
-                ).exists()
-                if has_subscribers:
-                    _check_new_incidents(
-                        old_match,
-                        event["id"],
-                        home_team,
-                        away_team,
-                        channel_layer,
-                        room_group_name,
-                    )
+                # ── ZABLOKOWANE: _check_new_incidents ────────────────────────────────
+                # Celowo usunięto ukryte odpytywanie incidents po API z głównej pętli sync_live_matches.
+                # Wszelkie zdarzenia typu kartki na ten moment aktualizowane asynchronicznie przez Push.
+
+                # ── Trigger Push Notifications (event-driven) ────────────────
+                # Tylko gdy wynik lub status się zmienił — ZERO zbędnych zapytań API
+                # dla meczów bez żadnej aktywności.
+                if score_changed or status_changed:
+                    changed_api_ids.append(event["id"])
 
             except LiveMatch.DoesNotExist:
                 pass
@@ -425,7 +347,10 @@ def sync_live_matches():
             print(f"Błąd przy zapisie meczu ID {event.get('id')}: {e}")
             continue
 
-    print(f"Zakończono! Zsynchronizowano {count} meczów.")
+    print(
+        f"Zakończono! Zsynchronizowano {count} meczów. "
+        f"Istotne zmiany w {len(changed_api_ids)} meczach → trigger Push."
+    )
 
     live_api_ids = {event["id"] for event in data["events"]}
     stale_matches = LiveMatch.objects.filter(
@@ -434,6 +359,8 @@ def sync_live_matches():
     ended_count = stale_matches.update(status="Ended")
     if ended_count:
         print(f"Auto-zakończono {ended_count} meczów.")
+
+    return changed_api_ids
 
 
 # =============================================================================
@@ -503,7 +430,7 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
     # 0. Stan meczu
     event_url = f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}"
     try:
-        response_ev = requests.get(event_url, headers=headers, timeout=10)
+        response_ev = api_get(event_url, headers=headers, timeout=10)
         if response_ev.status_code == 200:
             ev_data = response_ev.json().get("event", {})
             time_data = ev_data.get("time", {})
@@ -550,7 +477,7 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
         f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/incidents"
     )
     try:
-        response_inc = requests.get(incidents_url, headers=headers, timeout=10)
+        response_inc = api_get(incidents_url, headers=headers, timeout=10)
         if response_inc.status_code == 200:
             incidents = response_inc.json().get("incidents", [])
             created_count = 0
@@ -579,7 +506,7 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
         f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/lineups"
     )
     try:
-        response_lin = requests.get(lineups_url, headers=headers, timeout=10)
+        response_lin = api_get(lineups_url, headers=headers, timeout=10)
         if response_lin.status_code == 200:
             data = response_lin.json()
             home_formation = data.get("home", {}).get("formation")
@@ -618,7 +545,7 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
         f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/statistics"
     )
     try:
-        response_stats = requests.get(url_stats, headers=headers, timeout=10)
+        response_stats = api_get(url_stats, headers=headers, timeout=10)
         if response_stats.status_code == 200:
             match.stats_json = response_stats.json().get("statistics", [])
             match.save()
@@ -652,7 +579,7 @@ def fetch_upcoming_matches():
         date_str = fetch_date.strftime("%Y-%m-%d")
         url = url_template.format(date=date_str)
         try:
-            response = requests.get(url, headers=_api_headers(), timeout=10)
+            response = api_get(url, headers=_api_headers(), timeout=10)
         except Exception as e:
             print(f"Błąd połączenia dla daty {date_str}: {e}")
             continue
@@ -679,7 +606,7 @@ def fetch_upcoming_matches():
                 api_id = event["id"]
                 start_ts = event["startTimestamp"]
                 start_datetime = make_aware(
-                    datetime.fromtimestamp(start_ts) + timedelta(hours=1)
+                    datetime.fromtimestamp(start_ts) + timedelta(hours=2)
                 )
 
                 league_obj, _ = League.objects.get_or_create(
@@ -727,7 +654,7 @@ def fetch_last_matches_for_team(team_api_id: int, n: int = 5) -> list:
     """
     url = f"https://sportapi7.p.rapidapi.com/api/v1/team/{team_api_id}/events/last/0"
     try:
-        response = requests.get(url, headers=_api_headers(), timeout=10)
+        response = api_get(url, headers=_api_headers(), timeout=10)
         if response.status_code != 200:
             print(f"Błąd API (team events): {response.status_code}")
             return []
@@ -767,7 +694,7 @@ def fetch_last_matches_for_team(team_api_id: int, n: int = 5) -> list:
 
             start_ts = event.get("startTimestamp")
             match_date = (
-                (datetime.fromtimestamp(start_ts) + timedelta(hours=1)).date()
+                (datetime.fromtimestamp(start_ts) + timedelta(hours=2)).date()
                 if start_ts
                 else None
             )
