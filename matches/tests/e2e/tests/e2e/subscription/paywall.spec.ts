@@ -8,7 +8,7 @@
  *  2. Lineups tab paywall — visible for FREE, unlocked for PLUS/PREMIUM
  *  3. Stats tab paywall   — visible for FREE and PLUS, unlocked for PREMIUM
  *  4. All paywall upgrade buttons redirect to /subscribe/
- *  5. Username field — disabled for FREE, enabled for PLUS/PREMIUM
+ *  5. Username field — readonly for FREE, enabled for PLUS/PREMIUM
  *
  * Uses the tier fixtures from fixtures.ts:
  *   pageFree, pagePlus, pagePremium
@@ -203,10 +203,11 @@ test.describe('Match detail — Statystyki tab paywall (FREE+PLUS blocked, PREMI
 // ── 4. ACCOUNT SETTINGS — USERNAME FIELD ──────────────────────────────────
 test.describe('Account settings — username field tier access', () => {
 
-  test('FREE user — username field is disabled', async ({ pageFree }) => {
+  test('FREE user — username field is READONLY', async ({ pageFree }) => {
     await pageFree.goto('/account/');
     const usernameInput = pageFree.locator('#username');
-    await expect(usernameInput).toBeDisabled();
+    await expect(usernameInput).not.toBeEditable();
+    await expect(usernameInput).toHaveAttribute('readonly');
   });
 
   test('FREE user — upgrade hint text is visible near username field', async ({ pageFree }) => {

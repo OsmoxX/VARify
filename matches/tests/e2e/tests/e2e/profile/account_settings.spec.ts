@@ -73,9 +73,11 @@ test.describe('Account settings — page structure (FREE baseline)', () => {
 // regression guard inside the settings-page suite.
 
 test.describe('Account settings — username field by tier', () => {
-  test('FREE user sees a DISABLED username input with upgrade hint', async ({ pageFree }) => {
+  test('FREE user sees a READONLY username input with upgrade hint', async ({ pageFree }) => {
     await pageFree.goto('/account/');
-    await expect(pageFree.locator('#username')).toBeDisabled();
+    const usernameInput = pageFree.locator('#username');
+    await expect(usernameInput).not.toBeEditable();
+    await expect(usernameInput).toHaveAttribute('readonly');
     await expect(pageFree.locator('.form-hint-locked')).toBeVisible();
   });
 
