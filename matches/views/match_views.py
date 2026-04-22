@@ -10,6 +10,7 @@ import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils.cache import patch_cache_control
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
@@ -102,7 +103,7 @@ def match_detail_view(request, match_id):
 
     stats_periods = _parse_stats(match.stats_json)
 
-    return render(
+    response = render(
         request,
         "matches/match_detail.html",
         {
@@ -124,6 +125,10 @@ def match_detail_view(request, match_id):
             "stats_periods": stats_periods,
         },
     )
+    # Zakazujemy cache'owania dynamicznych stron meczowych (SW + przeglądarka)
+    if not is_ended:
+        patch_cache_control(response, no_store=True, no_cache=True, must_revalidate=True)
+    return response
 
 
 class HomeView(LoginRequiredMixin, ListView):

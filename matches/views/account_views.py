@@ -21,12 +21,26 @@ def account_settings(request):
 
         # ── Zmiana danych podstawowych ──────────────────────────
         if action == "update_profile":
-            new_username = request.POST.get("username", "").strip()
             new_email = request.POST.get("email", "").strip()
 
+            # Pobieramy username z POST, ale dla FREE użytkowników ignorujemy zmianę
+            # (pole w HTML ma readonly, ale zabezpieczamy też backend przed tampering)
+            is_free = not hasattr(user, "profile") or user.profile.tier == "FREE"
+            post_username = request.POST.get("username", "").strip()
+
+            if is_free:
+                # FREE: username w POST może być pusty (stary disabled) lub zmieniony
+                # ręcznie — zawsze używamy aktualnej wartości z bazy
+                new_username = user.username
+            else:
+                # PLUS/PREMIUM: mogą zmienić
+                new_username = post_username
+
             if not new_username:
-                errors["username"] = "Nazwa użytkownika nie może być pusta."
-            elif new_username != user.username:
+                # Ostateczny fallback — nigdy nie pozwól na pusty username
+                new_username = user.username
+
+            if not is_free and new_username != user.username:
                 from django.contrib.auth import get_user_model
 
                 User = get_user_model()

@@ -445,10 +445,15 @@ input:checked+.slider:before {
     align-items: center;
     gap: 8px;
     padding: 0 4px;
+    /* Zapobiega rozjeżdżaniu się na mobile — flex items mogą się skurczyć */
+    overflow: hidden;
 }
 
 .match-row-wrapper .match-row {
     flex: 1;
+    /* Kluczowe: bez tego grid wewnątrz flex-item nie kurczy się poprawnie */
+    min-width: 0;
+    overflow: hidden;
 }
 
 .bell-btn {
@@ -548,6 +553,12 @@ input:checked+.slider:before {
     .match-row-wrapper {
         gap: 4px;
         padding: 0 2px;
+        overflow: hidden;
+    }
+
+    .match-row-wrapper .match-row {
+        min-width: 0;
+        overflow: hidden;
     }
 
     /* Menu filtrów – pełna szerokość */

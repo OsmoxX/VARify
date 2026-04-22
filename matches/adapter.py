@@ -79,3 +79,25 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         except Exception as exc:
             # Błąd łączenia nie powinien blokować logowania — logujemy i idziemy dalej
             logger.warning("SocialLogin pre_social_login: błąd łączenia kont: %s", exc)
+
+    def populate_user(self, request, sociallogin, data):
+        """
+        Wywoływane przez allauth przy tworzeniu/aktualizacji użytkownika z danych social.
+        Jawnie kopiuje e-mail z danych Google do pola user.email.
+
+        Bez tej metody allauth może pozostawić user.email pustym przy niektórych
+        konfiguracjach (zależy od SOCIALACCOUNT_EMAIL_REQUIRED i kolejności hooków).
+        """
+        user = super().populate_user(request, sociallogin, data)
+
+        # Jawne przypisanie e-maila z danych Google → user.email
+        email = data.get("email") or ""
+        if email and not user.email:
+            user.email = email
+            logger.info(
+                "SocialLogin populate_user: przypisano e-mail '%s' z Google do user.email.",
+                email,
+            )
+
+        return user
+

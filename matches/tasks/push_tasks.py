@@ -184,13 +184,21 @@ def send_match_event_notification(
         match_subscriptions__user__isnull=False,
     ).distinct()
 
-    # B) Fani drużyn (z wykluczeniem wyciszonych)
+    # B) Fani drużyn – POPRAWNA logika wykluczeń
+    # PROBLEM z .exclude(): Django robi LEFT JOIN i wyklucza również fanów bez żadnej
+    # subskrypcji dla tego meczu (brak rekordu != wyciszony).
+    # Rozwiązanie: osobne podzapytanie które zwraca ID userów co AKTYWNIE wyciszyli.
+    muted_user_ids = MatchSubscription.objects.filter(
+        match__api_id=match_api_id,
+        is_active=False,
+        user__isnull=False,
+    ).values_list("user_id", flat=True)
+
     fans = User.objects.filter(
         favorite_teams__team__api_id__in=[home_team_api_id, away_team_api_id],
         favorite_teams__is_active=True,
     ).exclude(
-        match_subscriptions__match__api_id=match_api_id,
-        match_subscriptions__is_active=False,
+        id__in=muted_user_ids,
     ).distinct()
 
     users_to_notify = (subscribed_users | fans).distinct()

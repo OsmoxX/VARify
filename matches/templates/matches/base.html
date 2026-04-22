@@ -97,11 +97,8 @@
                         <div class="user-dropdown" id="user-dropdown">
                             <div class="user-dropdown-header">
                                 <i class="fa-solid fa-circle-user user-dropdown-icon"></i>
-                                <div>
+                                <div class="user-dropdown-info">
                                     <div class="user-dropdown-name">{{ user.username }}</div>
-                                    <div class="user-dropdown-email">
-                                        {% if user.email %}{{ user.email }}{% else %}{% trans "brak e-mail" %}{% endif %}
-                                    </div>
                                     <div class="user-dropdown-tier">
                                         {% if user.profile.tier == 'PREMIUM' %}
                                             <span class="user-tier-badge premium"><i class="fa-solid fa-crown"></i> PREMIUM</span>

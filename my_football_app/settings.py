@@ -180,6 +180,18 @@ SOCIALACCOUNT_EMAIL_REQUIRED = False             # Google nie musi wymuszać adr
 SOCIALACCOUNT_AUTO_SIGNUP = True                 # Automatyczne tworzenie konta, bez pytania o email
 SOCIALACCOUNT_ADAPTER = "matches.adapter.CustomSocialAccountAdapter"  # Pre-login hook → email verified=True
 
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
 # ==========================================
 # MAIL SENDING — WP.pl SMTP (port 465 / SSL)
 # ==========================================

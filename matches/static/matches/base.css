@@ -428,18 +428,19 @@ a.search-item:hover {
     flex-shrink: 0;
 }
 
+.user-dropdown-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
 .user-dropdown-name {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-light);
     word-break: break-all;
-}
-
-.user-dropdown-email {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-    word-break: break-all;
+    line-height: 1.1;
 }
 
 /* Divider */
@@ -503,19 +504,23 @@ a.search-item:hover {
    USER DROPDOWN - SUBSCRIPTION BADGES
 ========================================= */
 .user-dropdown-tier {
-    margin-top: 6px;
+    margin-top: 2px;
 }
 
 .user-tier-badge {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.70rem;
-    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .user-tier-badge i {
-    margin-right: 4px;
+    margin-right: 5px;
+    font-size: 0.7rem;
 }
 
 .user-tier-badge.premium {
@@ -532,8 +537,8 @@ a.search-item:hover {
 }
 
 .user-tier-badge.free {
-    background: #374151;
-    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
     font-weight: 600;
 }
 
