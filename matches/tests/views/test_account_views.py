@@ -75,7 +75,8 @@ def test_update_profile_success(logged_client, test_user):
 
     # Sprawdzamy, czy w bazie zapisano nowe dane
     test_user.refresh_from_db()
-    assert test_user.username == "kacper_pro"
+    # Użytkownik FREE nie może zmienić nicku
+    assert test_user.username == "kacper"
     assert test_user.email == "nowy@test.com"
 
 
@@ -91,12 +92,11 @@ def test_update_profile_empty_username(logged_client, test_user):
         },
     )
 
-    # Brak przekierowania, strona renderuje się ponownie z błędem
-    assert response.status_code == 200
-    assert (
-        response.context["errors"]["username"]
-        == "Nazwa użytkownika nie może być pusta."
-    )
+    # Sukces dla FREE pomimo pustego username, bo i tak ignorujemy to pole
+    assert response.status_code == 302
+    test_user.refresh_from_db()
+    assert test_user.username == "kacper"
+    assert test_user.email == "nowy@test.com"
 
 
 @pytest.mark.django_db
@@ -111,11 +111,36 @@ def test_update_profile_username_taken(logged_client, test_user, other_user):
         },
     )
 
-    assert response.status_code == 200
-    assert (
-        response.context["errors"]["username"]
-        == "Ta nazwa użytkownika jest już zajęta."
+    # Sukces dla FREE pomimo zajętego username, bo ignorujemy zmianę
+    assert response.status_code == 302
+    test_user.refresh_from_db()
+    assert test_user.username == "kacper"
+    assert test_user.email == "nowy@test.com"
+
+
+@pytest.mark.django_db
+def test_update_profile_success_plus_user(logged_client, test_user):
+    # Dajemy użytkownikowi plan PLUS, by mógł zmieniać login
+    test_user.profile.tier = "PLUS"
+    test_user.profile.save()
+
+    url = reverse("account_settings")
+    response = logged_client.post(
+        url,
+        {
+            "action": "update_profile",
+            "username": "kacper_pro",
+            "email": "nowy@test.com",
+        },
     )
+
+    # Przekierowanie po sukcesie (redirect)
+    assert response.status_code == 302
+
+    # Sprawdzamy, czy nick uległ zmianie (bo użytkownik jest PLUS)
+    test_user.refresh_from_db()
+    assert test_user.username == "kacper_pro"
+    assert test_user.email == "nowy@test.com"
 
 
 # ==========================================

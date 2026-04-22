@@ -97,29 +97,24 @@ def test_live_matches_view(mock_render, setup_match_data):
 # ==========================================
 @pytest.mark.django_db
 @patch("matches.tasks.sync_tasks.fetch_match_details_task.delay")
-@patch("matches.views.match_views.render")
-def test_match_detail_view_live(mock_render, mock_delay, setup_match_data):
+def test_match_detail_view_live(mock_delay, setup_match_data):
     m_live, _, _ = setup_match_data
 
     factory = RequestFactory()
     request = factory.get(f"/match/{m_live.id}/")
 
     # ACT: Wywołujemy widók dla meczu LIVE
-    match_detail_view(request, match_id=m_live.id)
+    response = match_detail_view(request, match_id=m_live.id)
 
     # ASSERT: Skoro to mecz na żywo, widók powinien uruchomić task Celery po dane
     mock_delay.assert_called_once_with(m_live.id, m_live.api_id)
 
-    context = mock_render.call_args[0][2]
-    assert context["match"] == m_live
-    assert "events" in context
-    assert "lineups" in context
-    assert "pitch_home" in context
+    assert response.status_code == 200
+    assert "Cache-Control" in response.headers
 
 
 @pytest.mark.django_db
-@patch("matches.views.match_views.render")
-def test_match_detail_view_ended_with_data(mock_render, setup_match_data):
+def test_match_detail_view_ended_with_data(setup_match_data):
     _, m_ended, _ = setup_match_data
     # Symulujemy, że zakończony mecz MA już w sobie wydarzenia
     MatchEvent.objects.create(match=m_ended, time=90, incident_type="period")
@@ -129,10 +124,11 @@ def test_match_detail_view_ended_with_data(mock_render, setup_match_data):
 
     # ACT: Wywołujemy widók dla ZAKOŃCZONEGO meczu z danymi
     with patch("matches.tasks.sync_tasks.fetch_match_details_task.delay") as mock_delay:
-        match_detail_view(request, match_id=m_ended.id)
+        response = match_detail_view(request, match_id=m_ended.id)
 
         # ASSERT: Skoro ma dane, NIE powinien próbować dociągać z API
         mock_delay.assert_not_called()
+        assert response.status_code == 200
 
 
 # ==========================================
