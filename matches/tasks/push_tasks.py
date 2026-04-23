@@ -33,7 +33,6 @@ from celery import shared_task
 from django.contrib.auth import get_user_model
 
 from matches.models import FavoriteTeam, LiveMatch, MatchSubscription
-from matches.services.match_service import _api_headers
 
 try:
     from webpush import send_user_notification

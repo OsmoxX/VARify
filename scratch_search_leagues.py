@@ -1,6 +1,5 @@
 import os
 import requests
-import json
 import time
 
 def _api_headers() -> dict:
