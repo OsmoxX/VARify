@@ -79,6 +79,7 @@ def test_live_matches_view(mock_render, setup_match_data):
 
     factory = RequestFactory()
     request = factory.get("/live/")
+    request.user = AnonymousUser()
     request.session = (
         MagicMock()
     )  # Zabezpieczenie przed błędem braku sesji w _subscribed_ids

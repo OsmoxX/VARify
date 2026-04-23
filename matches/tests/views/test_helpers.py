@@ -96,11 +96,13 @@ def test_build_pitch_data():
 def test_subscribed_ids():
     # Symulacja requesta bez sesji
     request_no_session = MagicMock()
+    request_no_session.user.is_authenticated = False
     request_no_session.session.session_key = None
     assert _subscribed_ids(request_no_session) == []
 
     # Symulacja requesta z przypisaną sesją w bazie
     request_with_session = MagicMock()
+    request_with_session.user.is_authenticated = False
     request_with_session.session.session_key = "abc123xyz"
 
     # Tworzymy powiązanie w bazie
