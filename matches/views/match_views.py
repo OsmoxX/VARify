@@ -58,13 +58,24 @@ def match_detail_view(request, match_id):
 
     is_ended = match.status.lower().strip() in ENDED_STATUSES
 
-    if not (is_ended and (match.events.exists() or match.stats_json)):
-        from matches.tasks.sync_tasks import fetch_match_details_task
-        
-        if is_ended:
-            fetch_match_details_task(match.id, match.api_id)
-        else:
-            fetch_match_details_task.delay(match.id, match.api_id)
+    # Sprawdzamy, czy mamy JAKIEKOLWIEK dane dla tego meczu
+    has_any_data = match.events.exists() or bool(match.stats_json)
+
+    from matches.tasks.sync_tasks import fetch_match_details_task
+
+    # --- ULEPSZONA LOGIKA POBIERANIA DANYCH ---
+    if not has_any_data:
+        # 1. PIERWSZE WEJŚCIE W MECZ (Brak danych)
+        # Nieważne czy mecz trwa, czy się skończył. Czekamy ułamek sekundy
+        # na pobranie danych z API, żeby użytkownik nie zobaczył "Brak zdarzeń".
+        fetch_match_details_task(match.id, match.api_id)
+    elif not is_ended:
+        # 2. KOLEJNE WEJŚCIA (Mecz wciąż trwa, są już stare dane)
+        # Ładujemy stronę błyskawicznie pokazując to, co mamy,
+        # a Celery zaciąga ewentualne nowości (nowe bramki) w tle.
+        fetch_match_details_task.delay(match.id, match.api_id)
+    # 3. Jeśli mecz jest zakończony i ma już dane -> kod omija pobieranie (oszczędność API)
+    # ------------------------------------------
 
     events = MatchEvent.objects.filter(match=match).order_by(
         "-time", "-added_time", "-id"

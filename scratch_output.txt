@@ -1,0 +1,39 @@
+PREMIUM_LEAGUE_IDS = {
+    7, # Champions League
+    679, # Europa League
+    17015, # Conference League
+    17, # Premier League
+    8, # LaLiga
+    23, # Serie A
+    35, # Bundesliga
+    34, # Ligue 1
+    37, # Eredivisie
+    238, # Liga Portugal
+    18, # Championship
+    52, # Super Lig
+    36, # Scottish Premiership
+    44, # 2. Bundesliga
+    54, # LaLiga 2
+    53, # Serie B
+    182, # Ligue 2
+    172, # Czech First League
+    45, # Austrian Bundesliga
+    215, # Swiss Super League
+    40, # Allsvenskan
+    20, # Eliteserien
+    39, # Superliga
+    19, # FA Cup
+    329, # Copa del Rey
+    328, # Coppa Italia
+    217, # DFB Pokal
+    335, # Coupe de France
+    281, # Puchar Polski
+    330, # KNVB Beker
+    336, # Taca de Portugal
+    16940, # Copa Libertadores
+    955, # Saudi Pro League
+    242, # MLS
+    325, # Brasileirao
+    11621, # Liga MX
+    202, # Ekstraklasa
+}

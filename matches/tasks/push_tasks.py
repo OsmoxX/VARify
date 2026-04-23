@@ -28,6 +28,7 @@ from django.urls import reverse
 from django.utils import translation
 
 from matches.services.api_tracker import api_get
+from matches.services.match_service import _api_headers, PREMIUM_LEAGUE_IDS
 from celery import shared_task
 from django.contrib.auth import get_user_model
 
@@ -262,6 +263,19 @@ def process_match_incidents_and_notify(match_api_id: int) -> str:
         logger.debug("Pominięto mecz %s — blacklista 404.", match_api_id)
         return f"Skipped (blacklisted) {match_api_id}"
 
+    # ── Guard: niszowa liga — nie marnujemy limitu API —————————————
+    try:
+        league_api_id_str = str(match.league.api_id) if match.league and match.league.api_id is not None else None
+    except Exception:
+        league_api_id_str = None
+
+    if not league_api_id_str or league_api_id_str not in PREMIUM_LEAGUE_IDS:
+        logger.debug(
+            "Pominięto mecz %s (liga api_id=%r, typ: %s) — niszowa liga.",
+            match_api_id, league_api_id_str, type(match.league.api_id if match.league else None).__name__,
+        )
+        return f"Skipped (niche league) {match_api_id}"
+
     if not match.home_team or not match.away_team:
         return f"Skipped (missing teams) {match_api_id}"
 
@@ -355,6 +369,48 @@ def process_match_incidents_and_notify(match_api_id: int) -> str:
             "🔔 Push zakolejkowany: [%s] %s (inc_id=%s)",
             match_api_id, title_base, inc_id,
         )
+
+    # =========================================================================
+    #  NOWOŚĆ: Powiadomienia o zmianie statusu (Start, Przerwa, Koniec)
+    # =========================================================================
+    status_lower = (match.status or "").lower().strip()
+    current_score_str = f"{match.home_score}:{match.away_score}"
+
+    # 1. Start meczu
+    if status_lower in ["1st half", "first half", "1t"] and "status_started" not in already_notified_set:
+        send_match_event_notification.delay(
+            match_api_id=match_api_id,
+            home_team_api_id=home_api_id,
+            away_team_api_id=away_api_id,
+            event_title=f"🟢 Mecz się rozpoczął! | {home_name} – {away_name}",
+            event_body="Pierwszy gwizdek! Śledź relację na żywo.",
+        )
+        new_notified_ids.append("status_started")
+        pushed += 1
+
+    # 2. Przerwa
+    if status_lower in ["halftime", "ht", "half-time"] and "status_halftime" not in already_notified_set:
+        send_match_event_notification.delay(
+            match_api_id=match_api_id,
+            home_team_api_id=home_api_id,
+            away_team_api_id=away_api_id,
+            event_title=f"⏸️ Przerwa | {home_name} – {away_name}",
+            event_body=f"Koniec pierwszej połowy. Wynik do przerwy: {current_score_str}",
+        )
+        new_notified_ids.append("status_halftime")
+        pushed += 1
+
+    # 3. Koniec meczu
+    if status_lower in ["ended", "ft", "fulltime", "finished"] and "status_ended" not in already_notified_set:
+        send_match_event_notification.delay(
+            match_api_id=match_api_id,
+            home_team_api_id=home_api_id,
+            away_team_api_id=away_api_id,
+            event_title=f"🏁 Koniec meczu! | {home_name} – {away_name}",
+            event_body=f"Ostatni gwizdek! Ostateczny wynik to {current_score_str}.",
+        )
+        new_notified_ids.append("status_ended")
+        pushed += 1
 
     # ── Fallback wynikowy (API incidents opóźnione względem live score) ────────
     current_score_str = f"{match.home_score}:{match.away_score}"

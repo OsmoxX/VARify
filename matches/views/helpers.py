@@ -13,19 +13,55 @@ from matches.models import MatchSubscription
 # ─────────────────────────────────────────────────────────────
 
 TOP_LEAGUES_CONFIG = [
-    (7, "UEFA Champions League", "Europa"),
-    (679, "UEFA Europa League", "Europa"),
-    (1703, "UEFA Conference League", "Europa"),
-    (17, "Premier League", "England"),
-    (8, "LaLiga", "Spain"),
-    (23, "Serie A", "Italy"),
-    (35, "Bundesliga", "Germany"),
-    (34, "Ligue 1", "France"),
-    (202, "Ekstraklasa", "Poland"),
-    (37, "VriendenLoterij Eredivisie", "Netherlands"),
-    (238, "Liga Portugal Betclic", "Portugal"),
-    (18, "Championship", "England"),
-    (52, "Trendyol Süper Lig", "Turkey"),
+    # ── Europejskie puchary ──────────────────────────────────────────
+    (7,    "UEFA Champions League",    "Europa"),
+    (679,  "UEFA Europa League",       "Europa"),
+    (1703, "UEFA Conference League",   "Europa"),
+    # ── Top 5 lig ────────────────────────────────────────────────────
+    (17,   "Premier League",           "England"),
+    (8,    "LaLiga",                   "Spain"),
+    (23,   "Serie A",                  "Italy"),
+    (35,   "Bundesliga",               "Germany"),
+    (34,   "Ligue 1",                  "France"),
+    # ── Kolejne europejskie ligi ─────────────────────────────────────
+    (37,   "Eredivisie",               "Netherlands"),
+    (238,  "Liga Portugal",            "Portugal"),
+    (18,   "Championship",             "England"),
+    (52,   "Süper Lig",                "Turkey"),
+    (53,   "Jupiler Pro League",       "Belgium"),
+    (44,   "Scottish Premiership",     "Scotland"),
+    (36,   "2. Bundesliga",            "Germany"),
+    (955,  "LaLiga2",                  "Spain"),
+    (24,   "Serie B",                  "Italy"),
+    (40,   "Ligue 2",                  "France"),
+    (60,   "Czech First League",       "Czech Republic"),
+    (406,  "Fortuna Liga",             "Slovakia"),
+    (329,  "Austrian Bundesliga",      "Austria"),
+    (547,  "Swiss Super League",       "Switzerland"),
+    (242,  "Allsvenskan",              "Sweden"),
+    (200,  "Eliteserien",              "Norway"),
+    (210,  "Superliga",                "Denmark"),
+    # ── Puchary krajowe ──────────────────────────────────────────────
+    (3,    "FA Cup",                   "England"),
+    (336,  "Copa del Rey",             "Spain"),
+    (137,  "Coppa Italia",             "Italy"),
+    (98,   "DFB-Pokal",                "Germany"),
+    (89,   "Coupe de France",          "France"),
+    (570,  "Puchar Polski",            "Poland"),
+    (345,  "KNVB Beker",               "Netherlands"),
+    (90,   "Taca de Portugal",         "Portugal"),
+    # ── Puchary kontynentalne poza Europą ───────────────────────────
+    (384,  "Copa Libertadores",        "Ameryka Południowa"),
+    (480,  "Copa Sudamericana",        "Ameryka Południowa"),
+    # ── Ligi poza Europą ─────────────────────────────────────────────
+    (67,   "Allsvenskan",              "Sweden"),
+    (1346, "Saudi Pro League",         "Saudi Arabia"),
+    (955,  "Saudi Pro League",         "Saudi Arabia"),#zapasowe
+    (242,  "MLS",                      "USA"),
+    (325,  "Brasileirao",              "Brazil"),
+    (230,  "Liga MX",                  "Mexico"),
+    # ── Polska ───────────────────────────────────────────────────────
+    (202,  "Ekstraklasa",              "Poland"),
 ]
 
 ENDED_STATUSES = frozenset(

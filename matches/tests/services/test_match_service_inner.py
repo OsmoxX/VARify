@@ -83,6 +83,8 @@ def test_fetch_match_details_time_calc_and_missing_id(mock_time, mock_get, setup
         return mock_resp
 
     mock_get.side_effect = side_effect
+    setup_data.league.api_id = "17"
+    setup_data.league.save()
     fetch_match_details(setup_data.id, setup_data.api_id)
 
     setup_data.refresh_from_db()
@@ -99,6 +101,8 @@ def test_fetch_match_details_time_data_not_dict(mock_get, setup_data):
     mock_resp.status_code = 200
     mock_resp.json.return_value = {"event": {"time": "zepsuty-tekst"}}
     mock_get.return_value = mock_resp
+    setup_data.league.api_id = "17"
+    setup_data.league.save()
     fetch_match_details(setup_data.id, setup_data.api_id)
 
 

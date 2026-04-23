@@ -24,8 +24,28 @@ from matches.models import (
     UpcomingMatch,
 )
 
-# ─── Top leagues set (SportAPI unique-tournament IDs) ────────────────────────
-_TOP_LEAGUES = {7, 679, 1703, 17, 8, 23, 35, 34, 202, 37, 238, 18, 52, 53, 44}
+# ─── Top leagues whitelist (SportAPI/Sofascore unique-tournament IDs) ──────────
+# UWAGA: W modelu League api_id to CharField, więc używamy stringów!
+PREMIUM_LEAGUE_IDS = {
+    # Europejskie puchary
+    "7", "679", "1703",
+    # Top 5 lig
+    "17", "8", "23", "35", "34",
+    # Kolejne ligi europejskie
+    "37", "238", "18", "52", "53", "44", "36", "54", "24", "40",
+    "60", "329", "547", "67", "200", "210",
+    # Puchary krajowe
+    "3", "336", "137", "98", "89", "570", "345", "90",
+    # Puchary kontynentalne poza Europą
+    "384", "480",
+    # Ligi poza Europą
+    "1346", "955",  # Saudi Pro League (dwa znane ID z API)
+    "242",          # MLS
+    "325",          # Brasileirao
+    "230",          # Liga MX
+    # Polska
+    "202",          # Ekstraklasa
+}
 
 
 def _api_headers() -> dict:
@@ -250,7 +270,7 @@ def sync_live_matches() -> list[int]:
 
             home_score = event["homeScore"].get("current", 0)
             away_score = event["awayScore"].get("current", 0)
-            is_top = league_id in _TOP_LEAGUES
+            is_top = str(league_id) in PREMIUM_LEAGUE_IDS
 
             defaults = {
                 "league": league,
@@ -470,6 +490,17 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
     except Exception as e:
         print(f"Wyjątek przy pobieraniu stanu meczu: {e}")
 
+    # GUARD: Pomijamy szczegółowe pobieranie dla niszowych lig (incidents/lineups/stats)
+    # Konwertujemy zawsze do stringa — defensywnie, niezależnie od tego co zwróci ORM.
+    try:
+        league_api_id_str = str(match.league.api_id) if match.league and match.league.api_id is not None else None
+    except Exception:
+        league_api_id_str = None
+
+    if not league_api_id_str or league_api_id_str not in PREMIUM_LEAGUE_IDS:
+        print(f"Pominięto incidents/lineups/stats dla niszowej ligi (api_id={league_api_id_str!r}, typ: {type(match.league.api_id if match.league else None).__name__}).")
+        return True
+
     # 1. Zdarzenia
     incidents_url = (
         f"https://sportapi7.p.rapidapi.com/api/v1/event/{api_match_id}/incidents"
@@ -611,7 +642,7 @@ def fetch_upcoming_matches():
                 league_id = unique_tournament.get("id") or league_data["id"]
                 league_name = unique_tournament.get("name") or league_data["name"]
 
-                is_top = league_id in _TOP_LEAGUES
+                is_top = str(league_id) in PREMIUM_LEAGUE_IDS
                 api_id = event["id"]
                 start_ts = event["startTimestamp"]
                 start_datetime = make_aware(

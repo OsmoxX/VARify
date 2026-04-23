@@ -136,7 +136,8 @@ def test_fetch_upcoming_matches_success(mock_get):
 @patch("matches.services.api_tracker.requests.get")
 def test_fetch_match_details_success(mock_get):
     # 1. ARRANGE: Przygotowujemy bazę i "oszukane" odpowiedzi
-    league = League.objects.create(api_id=1, name="Test League")
+    # Mecz musi mieć id ligi premium, żeby guard puścił API
+    league = League.objects.create(api_id="17", name="Test League")
     team_h = Team.objects.create(api_id=1, name="Home")
     team_a = Team.objects.create(api_id=2, name="Away")
 
