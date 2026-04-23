@@ -161,12 +161,25 @@ def _build_pitch_data(xi_players, formation_str, is_home=True):
 
 
 def _subscribed_ids(request):
-    """Zwraca listę api_id meczów obserwowanych przez bieżącą sesję."""
+    """Zwraca listę api_id meczów obserwowanych przez bieżącego użytkownika (lub sesję)."""
+    # 1. Dla zalogowanych użytkowników
+    if request.user.is_authenticated:
+        return list(
+            MatchSubscription.objects.filter(
+                user=request.user,
+                is_active=True  
+            ).values_list("match__api_id", flat=True)
+        )
+    
+    # 2. Dla gości (niezalogowanych)
     if not request.session.session_key:
         return []
+
     return list(
         MatchSubscription.objects.filter(
-            session_key=request.session.session_key
+            user=None,
+            session_key=request.session.session_key,
+            is_active=True  
         ).values_list("match__api_id", flat=True)
     )
 

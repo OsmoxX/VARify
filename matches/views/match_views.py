@@ -59,14 +59,16 @@ def match_detail_view(request, match_id):
     is_ended = match.status.lower().strip() in ENDED_STATUSES
 
     if not (is_ended and (match.events.exists() or match.stats_json)):
-        # Asynchroniczne zadanie pobrania danych w Celery. Pobierze dane jeśli brakujące (chronione cache lockiem)
         from matches.tasks.sync_tasks import fetch_match_details_task
-        fetch_match_details_task.delay(match.id, match.api_id)
+        
+        if is_ended:
+            fetch_match_details_task(match.id, match.api_id)
+        else:
+            fetch_match_details_task.delay(match.id, match.api_id)
 
     events = MatchEvent.objects.filter(match=match).order_by(
         "-time", "-added_time", "-id"
     )
-
     if not is_ended:
         current_minute = _current_match_minute(match)
         status_lower = match.status.lower().strip()
