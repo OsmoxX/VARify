@@ -8,5 +8,4 @@ urlpatterns = [
         views.create_checkout_session,
         name="create-checkout-session",
     ),
-    path("webhook/", views.stripe_webhook, name="stripe-webhook"),
 ]

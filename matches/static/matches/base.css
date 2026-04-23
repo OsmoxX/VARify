@@ -352,10 +352,22 @@ a.search-item:hover {
         padding: 0 12px;
     }
 
-    /* Panel powiadomień – pełna szerokość na mobile */
+    /* Panel powiadomień – pełna szerokość na mobile i centrowanie */
     .notif-panel {
-        width: calc(100vw - 32px);
-        right: -16px;
+        position: fixed; /* Zmienia pozycję na względem okna przeglądarki */
+        top: 60px; /* Ustaw odpowiedni odstęp od góry (pod navbarem) */
+        left: 50%; /* Przesuwa lewą krawędź na środek ekranu */
+        transform: translateX(-50%); /* Cofa panel o połowę jego szerokości, idealnie go centrując */
+        width: 92vw; /* Zajmuje 92% szerokości ekranu, zostawiając ładne marginesy */
+        max-width: 400px; /* Zabezpieczenie dla większych telefonów/tabletów */
+        right: auto; /* Resetuje desktopowe ustawienie right: 0 */
+        z-index: 2000;
+    }
+    
+    /* Animacja wysuwania od góry dla fixed */
+    @keyframes panelSlide {
+        from { opacity: 0; transform: translate(-50%, -8px); }
+        to   { opacity: 1; transform: translate(-50%, 0); }
     }
 }
 

@@ -477,7 +477,18 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
     try:
         response_inc = api_get(incidents_url, headers=headers, timeout=10)
         if response_inc.status_code == 200:
-            incidents = response_inc.json().get("incidents", [])
+            json_data = response_inc.json()
+            if "incidents" in json_data:
+                incidents = json_data["incidents"]
+            elif "data" in json_data and isinstance(json_data["data"], dict):
+                incidents = json_data["data"].get("incidents", [])
+            elif "response" in json_data:
+                if isinstance(json_data["response"], dict):
+                    incidents = json_data["response"].get("incidents", [])
+                else:
+                    incidents = json_data["response"]
+            else:
+                incidents = []
             created_count = 0
             for item in incidents:
                 mapped = _map_incident(item)

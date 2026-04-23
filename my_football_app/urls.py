@@ -37,6 +37,7 @@ from django.conf.urls.i18n import i18n_patterns
 from typing import Any, cast
 from django.views.generic import TemplateView
 from matches.views.auth_views import toggle_favorite_team
+from accounts import views as account_views
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -111,6 +112,8 @@ urlpatterns = [
     path("webpush/", include("webpush.urls")),
     # Favorite teams
     path('favorite/toggle/<int:team_id>/', toggle_favorite_team, name='toggle_favorite_team'),
+    # Stripe
+    path("webhook/", account_views.stripe_webhook, name="stripe-webhook"),
 ]
 
 urlpatterns.extend(
@@ -160,11 +163,8 @@ urlpatterns.extend(
             path("logout/", views.logout_view, name="logout"),
             path("account/", views.account_settings, name="account_settings"),
             path("favorites/", views.favorite_teams_list, name="favorite_teams"),
-            path("", include("accounts.urls")),
-            # ── ALLAUTH ────────────────────────────────────────────────────────────────
-            # Włączamy wszystkie domyślne ścieżki z Allauth
-            # To daje nam gotowe endpointy: /accounts/login/, /accounts/register/, /accounts/logout/ itd.
             path("accounts/", include("allauth.urls")),
+            path("", include("accounts.urls")),
             # ── AI AGENT ────────────────────────────────────────────────────────────────
             path("api/ai-chat/", ai_chat_endpoint, name="ai_chat_api"),
         ),
