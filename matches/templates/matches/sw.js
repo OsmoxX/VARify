@@ -161,16 +161,34 @@ self.addEventListener('push', function (event) {
 // ────────────────────────────────────────────────────────────
 self.addEventListener('notificationclick', function (event) {
     event.notification.close();
+    
+    // Pobieramy URL z danych powiadomienia
+    let targetUrl = event.notification.data.url;
+
+    // 1. Jeśli URL jest relatywny (zaczyna się od /), doklejamy origin (domenę)
+    if (targetUrl.startsWith('/')) {
+        targetUrl = self.location.origin + targetUrl;
+    }
+
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            const targetUrl = event.notification.data.url;
-            // Jeśli aplikacja jest już otwarta – przełącz na odpowiednie okno
+            // 2. Szukamy czy użytkownik ma już otwartą TĘ KONKRETNĄ stronę
             for (const client of clientList) {
                 if (client.url === targetUrl && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // Otwórz nowe okno
+            // 3. Jeśli nie, sprawdzamy czy ma otwartą JAKĄKOLWIEK stronę naszej apki
+            // i przekierowujemy ją, zamiast otwierać nowe okno (opcjonalne, ale lepsze UX)
+            if (clientList.length > 0) {
+                let client = clientList[0];
+                if ('navigate' in client) {
+                    client.focus();
+                    return client.navigate(targetUrl);
+                }
+            }
+            
+            // 4. Jeśli nic nie jest otwarte – otwieramy nowe okno
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }

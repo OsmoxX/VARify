@@ -24,6 +24,8 @@ Optymalizacje API:
 
 import logging
 import os
+from django.urls import reverse
+from django.utils import translation
 
 from matches.services.api_tracker import api_get
 from celery import shared_task
@@ -175,7 +177,16 @@ def send_match_event_notification(
         logger.error("django-webpush nie jest zainstalowany — pomijam wysyłkę Push.")
         return "webpush unavailable"
 
-    match_url = f"{_BASE_URL}/pl/match/{match_api_id}/"
+    # Wyciągamy lokalne ID meczu (bo match_detail_view oczekuje lokalnego ID, a nie API ID)
+    try:
+        local_match_id = LiveMatch.objects.get(api_id=match_api_id).id
+    except LiveMatch.DoesNotExist:
+        local_match_id = match_api_id  # Bezpieczny fallback
+
+    with translation.override('pl'):
+        match_path = reverse('match_detail', kwargs={'match_id': local_match_id})
+    
+    match_url = f"{_BASE_URL}{match_path}"
 
     # A) Ręczni subskrybenci (user__isnull=False wyklucza anonimowe sesje bez urządzenia)
     subscribed_users = User.objects.filter(
