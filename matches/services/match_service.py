@@ -543,10 +543,11 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
                         if created:
                             created_count += 1
                     elif incident_type == "injuryTime":
+                        time_val = int(mapped.get("time") or 0)
                         _, created = MatchEvent.objects.update_or_create(
                             match=match,
                             incident_type="injuryTime",
-                            time=mapped.get("time"),
+                            time=time_val,
                             defaults=mapped
                         )
                         if created:
