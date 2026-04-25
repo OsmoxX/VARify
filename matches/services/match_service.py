@@ -531,8 +531,29 @@ def fetch_match_details(local_match_id: int, api_match_id: int) -> bool:
                     if created:
                         created_count += 1
                 else:
-                    MatchEvent.objects.create(match=match, **mapped)
-                    created_count += 1
+                    # Deduplikacja dla zdarzeń bez ID z API (np. HT, FT)
+                    incident_type = mapped.get("incident_type")
+                    if incident_type == "period":
+                        _, created = MatchEvent.objects.update_or_create(
+                            match=match,
+                            incident_type="period",
+                            text=mapped.get("text"),
+                            defaults=mapped
+                        )
+                        if created:
+                            created_count += 1
+                    elif incident_type == "injuryTime":
+                        _, created = MatchEvent.objects.update_or_create(
+                            match=match,
+                            incident_type="injuryTime",
+                            time=mapped.get("time"),
+                            defaults=mapped
+                        )
+                        if created:
+                            created_count += 1
+                    else:
+                        MatchEvent.objects.create(match=match, **mapped)
+                        created_count += 1
             print(
                 f"Zapisano {created_count} nowych zdarzeń (z {len(incidents)} w API)."
             )
