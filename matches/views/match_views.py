@@ -68,15 +68,21 @@ def match_detail_view(request, match_id):
         # 1. PIERWSZE WEJŚCIE W MECZ (Brak danych)
         # Nieważne czy mecz trwa, czy się skończył. Czekamy ułamek sekundy
         # na pobranie danych z API, żeby użytkownik nie zobaczył "Brak zdarzeń".
+        # KLUCZOWE: wywołanie SYNCHRONICZNE (bez .delay) — blokuje do zakończenia.
         fetch_match_details_task(match.id, match.api_id)
+
+        # Po zakończeniu synchronicznego pobierania odśwież obiekt meczu z bazy,
+        # aby widok wyrenderował nowo pobrane dane, a nie stary (pusty) stan.
+        match.refresh_from_db()
+        is_ended = match.status.lower().strip() in ENDED_STATUSES
     elif not is_ended:
         # 2. KOLEJNE WEJŚCIA (Mecz wciąż trwa, są już stare dane)
         # Ładujemy stronę błyskawicznie pokazując to, co mamy,
         # a Celery zaciąga ewentualne nowości (nowe bramki) w tle.
         fetch_match_details_task.delay(match.id, match.api_id)
-    # 3. Jeśli mecz jest zakończony i ma już dane -> kod omija pobieranie (oszczędność API)
-    # ------------------------------------------
 
+    # WAŻNE: zapytania do DB wykonujemy PO ewentualnym refresh_from_db(),
+    # żeby zawsze pracować na aktualnym stanie bazy (nie na cache ORM).
     events = MatchEvent.objects.filter(match=match).order_by(
         "-time", "-added_time", "-id"
     )

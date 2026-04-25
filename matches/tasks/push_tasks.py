@@ -299,33 +299,32 @@ def process_match_incidents_and_notify(match_api_id: int) -> str:
         )
         return f"Blacklisted {match_api_id}"
 
-    # ── Cold-start: pierwszy raz widzimy ten mecz ─────────────────────────────
+    # ── BAZA WYSŁANYCH POWIADOMIEŃ ─────────────────────────────
     already_notified: list = match.notified_event_ids or []
     already_notified_set: set = set(already_notified)
     new_notified_ids: list = []
 
-    if not already_notified:
-        all_current_ids = [
-            str(inc.get("id", ""))
-            for inc in incidents
-            if str(inc.get("id", ""))
-        ]
-        if all_current_ids:
-            current_score_str = f"{match.home_score}:{match.away_score}"
-            LiveMatch.objects.filter(pk=match.pk).update(
-                notified_event_ids=all_current_ids,
-                last_notified_score=current_score_str,
-            )
-            logger.info(
-                "🔕 Cold-start meczu [%s]: zapamiętano %s ID, brak powiadomień.",
-                match_api_id, len(all_current_ids),
-            )
-        return f"Cold-start {match_api_id}"
+    # ── SMART COLD-START ──────────────────────────────────────────────
+    # Flaga: czy to PIERWSZE przetworzenie meczu? (baza wysyłek pusta)
+    is_cold_start: bool = not already_notified
+
+    # Aktualna minuta meczu (z pola match.minute lub 0 jeśli brak)
+    current_minute: int = match.minute or 0
+
+    # Progi dla Cold-Start:
+    # 0 = wyślij Push TYLKO dla zdarzeń z bieżącej minuty (age == 0).
+    # Cokolwiek starszego (age > 0) zostaje zapamiętane, ale uciszone.
+    # Dzięki temu użytkownik, którdy kliknie dzwoneczek w 67. minucie,
+    # nigdy nie dostanie powiadomienia o kartce z 65. minuty.
+    _COLD_START_INCIDENT_WINDOW = 0   # minuty — tylko zdarzenia z aktualnej minuty
+    _COLD_START_STATUS_WINDOW  = 5   # minuty — blokuj "Mecz się rozpoczął" jeśli > 5 min
 
     # ── Procesuj nowe incydenty ────────────────────────────────────────────────
     pushed = 0
     for inc in incidents:
         inc_id = str(inc.get("id", ""))
+
+        # Pomijamy zdarzenie jeśli nie ma ID lub jeśli juz wyslalismy o nim powiadomienie
         if not inc_id or inc_id in already_notified_set:
             continue
 
@@ -343,6 +342,21 @@ def process_match_incidents_and_notify(match_api_id: int) -> str:
             elif inc_type == "card":
                 label_info = ("🃏", "Kartka!")
             else:
+                continue
+
+        # ── COLD-START GUARD: ucisz historię meczu ───────────────────────
+        incident_minute: int = inc.get("time") or 0
+        if is_cold_start:
+            age = current_minute - incident_minute
+            if age > _COLD_START_INCIDENT_WINDOW:
+                # Zdarzenie jest stare — zapamiętaj ID (nie wyślemy ponownie),
+                # ale NIE triggeruj Push. Uciszamy historię.
+                new_notified_ids.append(inc_id)
+                already_notified_set.add(inc_id)  # uaktualnij set dla fallbacku
+                logger.debug(
+                    "🔕 Cold-Start: pominięto stary incydent [%s] min=%s age=%s min (inc_id=%s)",
+                    match_api_id, incident_minute, age, inc_id,
+                )
                 continue
 
         emoji, title_base = label_info
@@ -376,16 +390,26 @@ def process_match_incidents_and_notify(match_api_id: int) -> str:
     current_score_str = f"{match.home_score}:{match.away_score}"
 
     # 1. Start meczu
+    # Cold-Start guard: jeśli mecz trwa już dłużej niż _COLD_START_STATUS_WINDOW minut,
+    # nie wysyłamy "Mecz się rozpoczął!" — byłoby mylące w 45. minucie.
     if status_lower in ["1st half", "first half", "1t"] and "status_started" not in already_notified_set:
-        send_match_event_notification.delay(
-            match_api_id=match_api_id,
-            home_team_api_id=home_api_id,
-            away_team_api_id=away_api_id,
-            event_title=f"🟢 Mecz się rozpoczął! | {home_name} – {away_name}",
-            event_body="Pierwszy gwizdek! Śledź relację na żywo.",
-        )
-        new_notified_ids.append("status_started")
-        pushed += 1
+        if is_cold_start and current_minute > _COLD_START_STATUS_WINDOW:
+            # Mecz trwa zbyt długo — uciszamy powiadomienie o starcie
+            new_notified_ids.append("status_started")
+            logger.debug(
+                "🔕 Cold-Start: zablokowano 'Mecz się rozpoczął' [%s] (minuta=%s > %s)",
+                match_api_id, current_minute, _COLD_START_STATUS_WINDOW,
+            )
+        else:
+            send_match_event_notification.delay(
+                match_api_id=match_api_id,
+                home_team_api_id=home_api_id,
+                away_team_api_id=away_api_id,
+                event_title=f"🟢 Mecz się rozpoczął! | {home_name} – {away_name}",
+                event_body="Pierwszy gwizdek! Śledź relację na żywo.",
+            )
+            new_notified_ids.append("status_started")
+            pushed += 1
 
     # 2. Przerwa
     if status_lower in ["halftime", "ht", "half-time"] and "status_halftime" not in already_notified_set:

@@ -187,7 +187,6 @@ self.addEventListener('notificationclick', function (event) {
                     return client.navigate(targetUrl);
                 }
             }
-            
             // 4. Jeśli nic nie jest otwarte – otwieramy nowe okno
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
