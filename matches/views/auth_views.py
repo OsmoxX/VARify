@@ -20,28 +20,34 @@ from django.contrib.auth.decorators import login_required
 def register(request):
     """
     Rejestracja nowego użytkownika.
-    Renderuje oryginalny szablon matches/register.html (z zachowanym CSS).
-    Używa własnego formularza, ale wyzwala proces weryfikacji e-mail przez allauth.
+
+    Sekwencja:
+    1. Formularz waliduje unikalność e-maila i zapisuje użytkownika z is_active=False.
+    2. Allauth rejestruje e-mail (verified=False) i wysyła link aktywacyjny.
+    3. Widok renderuje stronę "Sprawdź skrzynkę" — użytkownik NIE jest logowany.
+
+    Dzięki is_active=False ModelBackend odrzuci login nawet jeśli ktoś
+    spróbuje zalogować się przy użyciu poprawnych danych przed aktywacją.
     """
     form = UserRegisterForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
+        # form.save() tworzy użytkownika z is_active=False (patrz forms.py)
         user = form.save()
-        
-        # 1. Zarejestruj e-mail w allauth (aby system wiedział o użytkowniku)
+
+        # Zarejestruj e-mail w allauth (verified=False — czeka na kliknięcie linku)
         email_address = EmailAddress.objects.create(
-            user=user, 
-            email=user.email, 
-            primary=True, 
+            user=user,
+            email=user.email,
+            primary=True,
             verified=False
         )
-        
-        # 2. Wyślij oficjalny e-mail weryfikacyjny przez allauth 65.x (z flagą signup=True!)
-        # Właśnie flaga signup=True decyduje, że allauth użyje Twoich szablonów email_confirmation_signup...
+
+        # Wysyła oficjalny e-mail weryfikacyjny allauth (szablon signup)
         send_verification_email_to_address(request, email_address, signup=True)
-        
-        # 3. Wyświetl informację "Sprawdź skrzynkę"
+
+        # Pokaż stronę "Sprawdź skrzynkę" — NIE logujemy użytkownika
         return render(request, "account/verification_sent.html", {"email": user.email})
-        
+
     return render(request, "matches/register.html", {"form": form})
 
 
