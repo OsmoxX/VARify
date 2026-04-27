@@ -178,7 +178,7 @@ def test_inactive_user_cannot_login(client):
 
     # Próba logowania przez allauth
     login_url = reverse("account_login")
-    response = client.post(login_url, {
+    client.post(login_url, {
         "login": "nieaktywny",
         "password": "Silne!Haslo123",
     })
@@ -208,7 +208,7 @@ def test_active_user_can_login(client):
     )
 
     login_url = reverse("account_login")
-    response = client.post(login_url, {
+    client.post(login_url, {
         "login": "aktywny",
         "password": "Silne!Haslo123",
     })
@@ -355,7 +355,7 @@ def test_social_login_blocked_for_other_social_provider(rf):
         verified=True,
     )
     # Tworzymy SocialAccount dla GitHub
-    social_app = SocialApp.objects.create(
+    SocialApp.objects.create(
         provider="github",
         name="GitHub",
         client_id="test-client-id",
