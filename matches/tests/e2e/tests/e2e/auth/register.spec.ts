@@ -19,13 +19,13 @@ test.describe('Registration page — UI', () => {
         await expect(page.locator('#id_email')).toBeVisible();
         await expect(page.locator('#id_password1')).toBeVisible();
         await expect(page.locator('#id_password2')).toBeVisible();
-        await expect(page.getByRole('button', { name: /Create Account/i })).toBeVisible();
+        await expect(page.locator('.btn-submit')).toBeVisible();
     });
 
     test('has a link back to the login page', async ({ page }) => {
         await page.goto('/register/');
 
-        const loginLink = page.getByRole('link', { name: /Sign in to your account/i });
+        const loginLink = page.locator('a[href*="login"]');
         await expect(loginLink).toBeVisible();
         await loginLink.click();
         await expect(page).toHaveURL(/\/login\//);
@@ -42,28 +42,28 @@ test.describe('Registration flow — validation', () => {
         await page.locator('#id_email').fill('newuser_xyz@example.com');
         await page.locator('#id_password1').fill('MyStr0ngPass!');
         await page.locator('#id_password2').fill('DifferentPass!99');
-        await page.getByRole('button', { name: /Create Account/i }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         // Should stay on register with validation error
         await expect(page).toHaveURL(/\/register\//);
-        const errorList = page.locator('.errorlist');
-        await expect(errorList).toBeVisible();
+        const errorList = page.locator('.errorlist').filter({ hasText: /hasł|match|pasuj/i });
+        await expect(errorList.first()).toBeVisible();
     });
 
     test('shows error when username already taken', async ({ page }) => {
-        const existingUsername = process.env.E2E_USERNAME ?? 'test_fan_99';
+        const existingUsername = process.env.E2E_USERNAME ?? 'e2e_free_user';
 
         await page.goto('/register/');
         await page.locator('#id_username').fill(existingUsername);
         await page.locator('#id_email').fill('totally_new@example.com');
         await page.locator('#id_password1').fill('MyStr0ngPass!');
         await page.locator('#id_password2').fill('MyStr0ngPass!');
-        await page.getByRole('button', { name: /Create Account/i }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         await expect(page).toHaveURL(/\/register\//);
-        const errorList = page.locator('.errorlist');
+        const errorList = page.locator('.errorlist').filter({ hasText: 'Użytkownik o tej nazwie już' });
         await expect(errorList).toBeVisible();
     });
 
@@ -74,7 +74,7 @@ test.describe('Registration flow — validation', () => {
         // intentionally leave email empty
         await page.locator('#id_password1').fill('MyStr0ngPass!');
         await page.locator('#id_password2').fill('MyStr0ngPass!');
-        await page.getByRole('button', { name: /Create Account/i }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         // Should stay on register

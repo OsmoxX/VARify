@@ -228,7 +228,6 @@ def test_confirm_email_activates_user():
     żeby użytkownik mógł się zalogować po kliknięciu linku.
     """
     from matches.adapter import CustomAccountAdapter
-    from unittest.mock import MagicMock
 
     # Tworzymy nieaktywnego usera i jego EmailAddress
     user = User.objects.create_user(
@@ -261,7 +260,6 @@ def test_confirm_email_activates_user():
 def test_confirm_email_already_active_user():
     """confirm_email() nie psuje kont, które są już aktywne."""
     from matches.adapter import CustomAccountAdapter
-    from unittest.mock import MagicMock
 
     user = User.objects.create_user(
         username="juz_aktywny",
@@ -296,7 +294,6 @@ def test_social_login_blocked_for_traditional_account(client, rf):
     """
     from matches.adapter import CustomSocialAccountAdapter
     from allauth.core.exceptions import ImmediateHttpResponse
-    from unittest.mock import MagicMock
 
     # Tworzymy tradycyjne konto
     user = User.objects.create_user(
@@ -344,7 +341,6 @@ def test_social_login_blocked_for_other_social_provider(rf):
     from matches.adapter import CustomSocialAccountAdapter
     from allauth.core.exceptions import ImmediateHttpResponse
     from allauth.socialaccount.models import SocialApp, SocialAccount
-    from unittest.mock import MagicMock
 
     # Tworzymy konto z powiązanym SocialAccount (np. GitHub)
     user = User.objects.create_user(
@@ -400,7 +396,6 @@ def test_social_login_allowed_for_new_email(rf):
     """
     from matches.adapter import CustomSocialAccountAdapter
     from allauth.core.exceptions import ImmediateHttpResponse
-    from unittest.mock import MagicMock
 
     mock_social_login = MagicMock()
     mock_social_login.is_existing = False
@@ -435,7 +430,6 @@ def test_social_login_existing_social_account_passes(rf):
     """
     from matches.adapter import CustomSocialAccountAdapter
     from allauth.core.exceptions import ImmediateHttpResponse
-    from unittest.mock import MagicMock
 
     mock_social_login = MagicMock()
     mock_social_login.is_existing = True  # konto social już w bazie

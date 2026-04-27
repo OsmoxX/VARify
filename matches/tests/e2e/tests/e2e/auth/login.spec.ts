@@ -21,29 +21,29 @@ test.describe('Login page — UI', () => {
         await expect(page).toHaveTitle(/VARify/);
         await expect(page.locator('#id_username')).toBeVisible();
         await expect(page.locator('#id_password')).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+        await expect(page.locator('.btn-submit')).toBeVisible();
     });
 
     test('shows link to registration page', async ({ page }) => {
         await page.goto('/login/');
 
-        const registerLink = page.getByRole('link', { name: /Create one now/i });
+        const registerLink = page.locator('.footer-link a');
         await expect(registerLink).toBeVisible();
         await registerLink.click();
-        await expect(page).toHaveURL(/\/register\//);
+        await expect(page).toHaveURL(/signup|register/);
     });
 });
 
 test.describe('Login flow — successful', () => {
     test.use({ storageState: { cookies: [], origins: [] } });
     test('logs in with valid credentials and redirects to home', async ({ page }) => {
-        const username = process.env.E2E_USERNAME ?? 'test_fan_99';
-        const password = process.env.E2E_PASSWORD ?? 'Strong!Password123#';
+        const username = process.env.E2E_USERNAME ?? 'e2e_free_user';
+        const password = process.env.E2E_PASSWORD ?? 'E2e!Free2024#';
 
         await page.goto('/login/');
         await page.locator('#id_username').fill(username);
         await page.locator('#id_password').fill(password);
-        await page.getByRole('button', { name: 'Sign In' }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         // Should be redirected away from login
@@ -51,13 +51,13 @@ test.describe('Login flow — successful', () => {
     });
 
     test('after login, user avatar button is visible in the navbar', async ({ page }) => {
-        const username = process.env.E2E_USERNAME ?? 'test_fan_99';
-        const password = process.env.E2E_PASSWORD ?? 'Strong!Password123#';
+        const username = process.env.E2E_USERNAME ?? 'e2e_free_user';
+        const password = process.env.E2E_PASSWORD ?? 'E2e!Free2024#';
 
         await page.goto('/login/');
         await page.locator('#id_username').fill(username);
         await page.locator('#id_password').fill(password);
-        await page.getByRole('button', { name: 'Sign In' }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         // User menu button should be visible
@@ -66,13 +66,13 @@ test.describe('Login flow — successful', () => {
     });
 
     test('after login, opening user menu shows logout link', async ({ page }) => {
-        const username = process.env.E2E_USERNAME ?? 'test_fan_99';
-        const password = process.env.E2E_PASSWORD ?? 'Strong!Password123#';
+        const username = process.env.E2E_USERNAME ?? 'e2e_free_user';
+        const password = process.env.E2E_PASSWORD ?? 'E2e!Free2024#';
 
         await page.goto('/login/');
         await page.locator('#id_username').fill(username);
         await page.locator('#id_password').fill(password);
-        await page.getByRole('button', { name: 'Sign In' }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         await page.getByRole('button', { name: 'Menu użytkownika' }).click();
@@ -88,7 +88,7 @@ test.describe('Login flow — validation errors', () => {
         await page.goto('/login/');
         await page.locator('#id_username').fill('test_fan_99');
         await page.locator('#id_password').fill('WrongPassword!999');
-        await page.getByRole('button', { name: 'Sign In' }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         // Should stay on login page and show error
@@ -99,7 +99,7 @@ test.describe('Login flow — validation errors', () => {
 
     test('shows error when submitting empty form', async ({ page }) => {
         await page.goto('/login/');
-        await page.getByRole('button', { name: 'Sign In' }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
 
         await expect(page).toHaveURL(/\/login\//);

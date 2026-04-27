@@ -15,13 +15,13 @@ test.describe('Logout flow', () => {
      * Helper: log in before each test in this describe block.
      */
     test.beforeEach(async ({ page }) => {
-        const username = process.env.E2E_USERNAME ?? 'test_fan_99';
-        const password = process.env.E2E_PASSWORD ?? 'Strong!Password123#';
+        const username = process.env.E2E_USERNAME ?? 'e2e_free_user';
+        const password = process.env.E2E_PASSWORD ?? 'E2e!Free2024#';
 
         await page.goto('/login/');
         await page.locator('#id_username').fill(username);
         await page.locator('#id_password').fill(password);
-        await page.getByRole('button', { name: 'Sign In' }).click();
+        await page.locator('.btn-submit').click();
         await page.waitForLoadState('networkidle');
     });
 

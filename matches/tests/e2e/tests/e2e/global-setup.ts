@@ -64,7 +64,7 @@ async function loginAndSave(
 
   await page.locator('#id_username').fill(username);
   await page.locator('#id_password').fill(password);
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.locator('.btn-submit').click();
   await page.waitForLoadState('networkidle');
 
   // Guard: must have left the login page
