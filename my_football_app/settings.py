@@ -94,6 +94,8 @@ INSTALLED_APPS = [
 SITE_ID = 1
 
 MIDDLEWARE = [
+    # Must be first: rejects bot probes before session/auth DB queries are made.
+    "matches.middleware.MaliciousBotDefenseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
