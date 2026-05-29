@@ -99,15 +99,19 @@ test.describe('/subscribe/ — pricing page renders', () => {
     await expect(pageFree).toHaveURL(/^https?:\/\/(localhost|127\.0\.0\.1):8000\/[a-z]{2}\/?$/);
   });
 
-  test('unauthenticated user is redirected to /login/ when visiting /subscribe/', async ({ browser }) => {
-    // /subscribe/ requires authentication (protected by global middleware).
-    // Unauthenticated visitors are correctly sent to login with ?next=/subscribe/
+  test('unauthenticated user can access the public /subscribe/ pricing page', async ({ browser }) => {
+    // /subscribe/ is public — guests browse pricing and get auth-modal CTAs.
     const ctx  = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const page = await ctx.newPage();
     await page.goto('/subscribe/');
     await page.waitForLoadState('networkidle');
 
-    await expect(page).toHaveURL(/\/login\//);
+    // No redirect to login; the pricing cards render for guests.
+    await expect(page).toHaveURL(/\/subscribe\//);
+    await expect(page).not.toHaveURL(/\/login\//);
+    await expect(page.locator('.sub-card-free')).toBeVisible();
+    await expect(page.locator('.sub-card-plus')).toBeVisible();
+    await expect(page.locator('.sub-card-premium')).toBeVisible();
     await ctx.close();
   });
 });

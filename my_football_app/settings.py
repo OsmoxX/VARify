@@ -50,6 +50,20 @@ CSRF_TRUSTED_ORIGINS = [
     "https://13.62.58.123.nip.io",
 ]
 
+# Django działa za nginx, który terminuje TLS i przekazuje X-Forwarded-Proto.
+# Bez tego request.is_secure() zawsze zwraca False za proxy, przez co logika
+# bezpiecznych ciasteczek i przekierowań HTTPS działa nieprawidłowo.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Loguje dokładny powód odrzucenia CSRF (widoczny w logach kontenera + Sentry),
+# np. "CSRF token incorrect", "CSRF cookie not set", "Origin checking failed".
+CSRF_FAILURE_VIEW = "my_football_app.csrf_failure.csrf_failure"
+
+# Na produkcji (wyłącznie HTTPS) przypinamy ciasteczka do bezpiecznego transportu.
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # ==========================================
 # MONITOROWANIE
 # ==========================================

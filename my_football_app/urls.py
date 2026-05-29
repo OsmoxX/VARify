@@ -158,6 +158,11 @@ urlpatterns.extend(
             ),
             path("register/", views.register, name="register"),
             path(
+                "register/verification-sent/",
+                views.verification_sent,
+                name="verification_sent",
+            ),
+            path(
                 "login/",
                 auth_views.LoginView.as_view(
                     template_name="matches/login.html", next_page="home"

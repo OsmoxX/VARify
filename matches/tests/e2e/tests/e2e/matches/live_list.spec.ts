@@ -8,7 +8,7 @@
 import { test, expect } from '../fixtures';
 
 test.describe('Live matches page — access control', () => {
-    test('unauthenticated user visiting / is redirected to login', async ({ browser }) => {
+    test('unauthenticated user can view / as a guest', async ({ browser }) => {
         // Create a fresh context with no cookies
         const freshContext = await browser.newContext({ storageState: { cookies: [], origins: [] } });
         const page = await freshContext.newPage();
@@ -16,7 +16,11 @@ test.describe('Live matches page — access control', () => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
 
-        await expect(page).toHaveURL(/\/login\//);
+        // Home is open to guests — no redirect to login, and the match list renders.
+        await expect(page).not.toHaveURL(/\/login\//);
+        await expect(page.getByRole('heading', { name: /Mecze na żywo/i })).toBeVisible();
+        // Guests see the "Zaloguj" link instead of a user menu.
+        await expect(page.getByRole('link', { name: /Zaloguj/i })).toBeVisible();
         await freshContext.close();
     });
 });

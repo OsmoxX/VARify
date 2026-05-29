@@ -25,7 +25,7 @@ test.describe('Logout flow', () => {
         await page.waitForLoadState('networkidle');
     });
 
-    test('clicking logout link in user menu redirects to login page', async ({ page }) => {
+    test('clicking logout link in user menu logs the user out and lands on a guest page', async ({ page }) => {
         // Open the user dropdown menu
         await page.getByRole('button', { name: 'Menu użytkownika' }).click();
 
@@ -35,20 +35,23 @@ test.describe('Logout flow', () => {
         await logoutLink.click();
         await page.waitForLoadState('networkidle');
 
-        // Should be redirected to login
-        await expect(page).toHaveURL(/\/login\//);
+        // Logout redirects to the (now guest-accessible) home page, NOT to /login/.
+        await expect(page).not.toHaveURL(/\/login\//);
+        // The navbar now shows the guest "Zaloguj" link instead of the user menu.
+        await expect(page.getByRole('link', { name: /Zaloguj/i })).toBeVisible();
     });
 
-    test('after logout, visiting home page redirects back to login', async ({ page }) => {
+    test('after logout, the home page is accessible as a guest', async ({ page }) => {
         // Logout via user menu
         await page.getByRole('button', { name: 'Menu użytkownika' }).click();
         await page.getByRole('link', { name: /Wyloguj/i }).click();
         await page.waitForLoadState('networkidle');
 
-        // Now try going home — should redirect to login (LoginRequiredMiddleware)
+        // Home is open to guests now — no redirect to login.
         await page.goto('/');
         await page.waitForLoadState('networkidle');
 
-        await expect(page).toHaveURL(/\/login\//);
+        await expect(page).not.toHaveURL(/\/login\//);
+        await expect(page.getByRole('link', { name: /Zaloguj/i })).toBeVisible();
     });
 });

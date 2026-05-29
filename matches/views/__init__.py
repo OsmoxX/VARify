@@ -29,7 +29,7 @@ from .team_views import team_detail_view
 from .player_views import player_detail
 
 # Auth
-from .auth_views import register, logout_view
+from .auth_views import register, logout_view, verification_sent
 
 # Account settings
 from .account_views import account_settings as account_settings
@@ -60,6 +60,7 @@ __all__ = [
     # Auth
     "register",
     "logout_view",
+    "verification_sent",
     # Account settings
     "account_settings",
     # Favorites

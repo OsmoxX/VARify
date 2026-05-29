@@ -7,6 +7,7 @@ Handles user registration and logout.
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import redirect, render
+from django.views.decorators.cache import never_cache
 from allauth.account.models import EmailAddress
 from allauth.account.internal.flows.email_verification import send_verification_email_to_address
 from ..models.team import Team, FavoriteTeam
@@ -16,6 +17,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
+@never_cache
 @login_not_required
 def register(request):
     """
@@ -24,7 +26,11 @@ def register(request):
     Sekwencja:
     1. Formularz waliduje unikalność e-maila i zapisuje użytkownika z is_active=False.
     2. Allauth rejestruje e-mail (verified=False) i wysyła link aktywacyjny.
-    3. Widok renderuje stronę "Sprawdź skrzynkę" — użytkownik NIE jest logowany.
+    3. Widok przekierowuje (PRG) na stronę "Sprawdź skrzynkę" — użytkownik NIE jest logowany.
+
+    @never_cache zapobiega przywróceniu nieaktualnego formularza (ze starym tokenem
+    CSRF) z back/forward cache przeglądarki. Wzorzec POST/Redirect/GET sprawia, że
+    odświeżenie strony po rejestracji nie wysyła formularza ponownie.
 
     Dzięki is_active=False ModelBackend odrzuci login nawet jeśli ktoś
     spróbuje zalogować się przy użyciu poprawnych danych przed aktywacją.
@@ -45,10 +51,19 @@ def register(request):
         # Wysyła oficjalny e-mail weryfikacyjny allauth (szablon signup)
         send_verification_email_to_address(request, email_address, signup=True)
 
-        # Pokaż stronę "Sprawdź skrzynkę" — NIE logujemy użytkownika
-        return render(request, "account/verification_sent.html", {"email": user.email})
+        # PRG: przekieruj na stronę "Sprawdź skrzynkę" zamiast renderować przez POST.
+        request.session["registration_email"] = user.email
+        return redirect("verification_sent")
 
     return render(request, "matches/register.html", {"form": form})
+
+
+@never_cache
+@login_not_required
+def verification_sent(request):
+    """Strona "Sprawdź skrzynkę" po rejestracji (cel przekierowania PRG)."""
+    email = request.session.get("registration_email")
+    return render(request, "account/verification_sent.html", {"email": email})
 
 
 def logout_view(request):

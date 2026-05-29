@@ -51,15 +51,17 @@ def test_register_creates_inactive_user(mock_send_email, client):
     Musi kliknąć link w e-mailu, żeby móc się zalogować.
     """
     url = reverse("register")
+    # follow=True podąża za przekierowaniem PRG na stronę "Sprawdź skrzynkę".
     response = client.post(url, {
         "username": "nowy_user",
         "email": "nowy@example.com",
         "password1": "Silne!Haslo123",
         "password2": "Silne!Haslo123",
-    })
+    }, follow=True)
 
-    # Widok pokazuje stronę "Sprawdź skrzynkę"
+    # Widok przekierowuje (PRG) na stronę "Sprawdź skrzynkę"
     assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == reverse("verification_sent")
     assert "account/verification_sent.html" in [t.name for t in response.templates]
 
     # KLUCZOWE: konto MUSI być nieaktywne
@@ -77,8 +79,8 @@ def test_register_creates_inactive_user(mock_send_email, client):
 @patch("matches.views.auth_views.send_verification_email_to_address")
 def test_register_view_post_valid(mock_send_email, client):
     """
-    Kompatybilność wsteczna: po rejestracji renderowany jest
-    szablon verification_sent.html i wywoływane jest form.save().
+    Po rejestracji następuje przekierowanie (PRG) na verification_sent.html
+    i wywoływane jest form.save().
     """
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -89,9 +91,10 @@ def test_register_view_post_valid(mock_send_email, client):
         "email": "nowy_kacper@wp.pl",
         "password1": "Silne!Haslo123",
         "password2": "Silne!Haslo123",
-    })
+    }, follow=True)
 
     assert response.status_code == 200
+    assert response.redirect_chain[-1][0] == reverse("verification_sent")
     assert "account/verification_sent.html" in [t.name for t in response.templates]
     assert User.objects.filter(username="nowy_kacper").exists()
 
