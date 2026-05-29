@@ -68,6 +68,9 @@ jobs:
           STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          # E2E hits the app over plain http://localhost — keep cookies non-Secure
+          # so WebKit (no localhost exemption) still persists the session cookie.
+          SECURE_COOKIES=False
           EOF
 
       # ── Docker: budujemy i startujemy kontenery (z katalogu głównego) ──────

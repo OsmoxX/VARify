@@ -60,9 +60,13 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_FAILURE_VIEW = "my_football_app.csrf_failure.csrf_failure"
 
 # Na produkcji (wyłącznie HTTPS) przypinamy ciasteczka do bezpiecznego transportu.
-if not DEBUG:
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+# Domyślnie włączone gdy DEBUG=False, ale można wymusić wyłączenie przez
+# SECURE_COOKIES=False — potrzebne dla testów e2e, które uderzają w aplikację
+# po zwykłym http://localhost (WebKit odrzuca Secure cookies przez HTTP, co
+# zrywa sesję i wszystkie testy wymagające logowania).
+SECURE_COOKIES = os.getenv("SECURE_COOKIES", "False" if DEBUG else "True") == "True"
+SESSION_COOKIE_SECURE = SECURE_COOKIES
+CSRF_COOKIE_SECURE = SECURE_COOKIES
 
 # ==========================================
 # MONITOROWANIE
