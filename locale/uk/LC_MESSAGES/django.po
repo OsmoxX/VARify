@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-10 14:34+0200\n"
+"POT-Creation-Date: 2026-05-29 09:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,142 +21,207 @@ msgstr ""
 "100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || "
 "(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 
-#: accounts/templates/accounts/subscribe.html:37
+#: accounts/templates/accounts/subscribe.html:106
 msgid "Wróć do aplikacji"
 msgstr "Повернутися до додатку"
 
-#: accounts/templates/accounts/subscribe.html:46
+#: accounts/templates/accounts/subscribe.html:114
 msgid "Odblokuj pełen potencjał"
 msgstr "Розблокуйте повний потенціал"
 
-#: accounts/templates/accounts/subscribe.html:48
+#: accounts/templates/accounts/subscribe.html:116
 msgid "Wybierz swój plan"
 msgstr "Виберіть свій план"
 
-#: accounts/templates/accounts/subscribe.html:49
+#: accounts/templates/accounts/subscribe.html:117
 msgid "Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców."
 msgstr ""
 "Отримайте повний доступ до статистики та випереджайте інших вболівальників."
 
-#: accounts/templates/accounts/subscribe.html:73
-#: accounts/templates/accounts/subscribe.html:101
-#: accounts/templates/accounts/subscribe.html:132
+#: accounts/templates/accounts/subscribe.html:141
+#: accounts/templates/accounts/subscribe.html:169
+#: accounts/templates/accounts/subscribe.html:206
 msgid "/miesiąc"
 msgstr "/місяць"
 
-#: accounts/templates/accounts/subscribe.html:76
-#: matches/templates/matches/base.html:52
+#: accounts/templates/accounts/subscribe.html:144
+#: matches/templates/matches/base.html:63
 #: matches/templates/matches/live_match_list.html:14
 msgid "Mecze na żywo"
 msgstr "Матчі наживо"
 
-#: accounts/templates/accounts/subscribe.html:77
+#: accounts/templates/accounts/subscribe.html:145
 msgid "Nadchodzące spotkania"
 msgstr "Майбутні матчі"
 
-#: accounts/templates/accounts/subscribe.html:78
-#: accounts/templates/accounts/subscribe.html:105
-#, fuzzy
-#| msgid "Wyszukiwarka klubów wymaga planu"
+#: accounts/templates/accounts/subscribe.html:146
+#: accounts/templates/accounts/subscribe.html:173
 msgid "Wyszukiwarka klubów"
-msgstr "Пошук клубів потребує плану"
+msgstr "Пошук клубів"
 
-#: accounts/templates/accounts/subscribe.html:79
-#: accounts/templates/accounts/subscribe.html:106
+#: accounts/templates/accounts/subscribe.html:147
+#: accounts/templates/accounts/subscribe.html:174
 msgid "Składy i historia spotkań"
 msgstr "Склади та історія зустрічей"
 
-#: accounts/templates/accounts/subscribe.html:80
+#: accounts/templates/accounts/subscribe.html:148
 msgid "Własny Nick w aplikacji"
 msgstr "Власний нік у додатку"
 
-#: accounts/templates/accounts/subscribe.html:84
-#: accounts/templates/accounts/subscribe.html:112
-#: accounts/templates/accounts/subscribe.html:143
+#: accounts/templates/accounts/subscribe.html:152
+#: accounts/templates/accounts/subscribe.html:180
+#: accounts/templates/accounts/subscribe.html:217
 msgid "Twój obecny plan"
 msgstr "Ваш поточний план"
 
-#: accounts/templates/accounts/subscribe.html:87
+#: accounts/templates/accounts/subscribe.html:155
 msgid "Pozostań na Free"
 msgstr "Залишатися на Free"
 
-#: accounts/templates/accounts/subscribe.html:95
+#: accounts/templates/accounts/subscribe.html:163
 msgid "Najczęściej wybierany"
 msgstr "Найчастіше обирають"
 
-#: accounts/templates/accounts/subscribe.html:104
-#, fuzzy
-#| msgid "Mecze na żywo"
+#: accounts/templates/accounts/subscribe.html:172
 msgid "Mecze na żywo i terminarz"
-msgstr "Матчі наживо"
+msgstr "Матчі наживо та розклад"
 
-#: accounts/templates/accounts/subscribe.html:107
+#: accounts/templates/accounts/subscribe.html:175
 msgid "Zmiana Nicku w aplikacji"
 msgstr "Зміна ніку у додатку"
 
-#: accounts/templates/accounts/subscribe.html:108
+#: accounts/templates/accounts/subscribe.html:176
 msgid "Zaawansowane statystyki graczy"
 msgstr "Розширена статистика гравців"
 
-#: accounts/templates/accounts/subscribe.html:118
+#: accounts/templates/accounts/subscribe.html:186
+#: accounts/templates/accounts/subscribe.html:193
 msgid "Zacznij z PLUS"
 msgstr "Почати з PLUS"
 
-#: accounts/templates/accounts/subscribe.html:135
+#: accounts/templates/accounts/subscribe.html:209
 msgid "Wszystko z pakietu PLUS"
 msgstr "Все з пакету PLUS"
 
-#: accounts/templates/accounts/subscribe.html:136
+#: accounts/templates/accounts/subscribe.html:210
 msgid "Wyszukiwarka zawodników"
 msgstr "Пошук гравців"
 
-#: accounts/templates/accounts/subscribe.html:137
+#: accounts/templates/accounts/subscribe.html:211
 msgid "Zaawansowane statystyki XG"
 msgstr "Розширена xG статистика"
 
-#: accounts/templates/accounts/subscribe.html:138
+#: accounts/templates/accounts/subscribe.html:212
 msgid "Brak reklam"
 msgstr "Без реклами"
 
-#: accounts/templates/accounts/subscribe.html:139
+#: accounts/templates/accounts/subscribe.html:213
 msgid "Priorytetowe wsparcie"
 msgstr "Пріоритетна підтримка"
 
-#: accounts/templates/accounts/subscribe.html:149
+#: accounts/templates/accounts/subscribe.html:223
+#: accounts/templates/accounts/subscribe.html:230
 #: matches/templates/matches/match_detail.html:463
 msgid "Wybierz Premium"
 msgstr "Вибрати Premium"
 
-#: accounts/templates/accounts/subscribe.html:162
+#: accounts/templates/accounts/subscribe.html:242
 msgid ""
 "Bezpieczna płatność przez Stripe · Anuluj w dowolnym momencie · Brak "
 "ukrytych opłat"
 msgstr ""
 "Безпечна оплата через Stripe · Скасувати будь-коли · Без прихованих комісій"
 
-#: matches/models/event.py:126
+#: accounts/templates/accounts/subscribe.html:255
+#: matches/templates/matches/base.html:222
+#: matches/templates/matches/base.html:375
+#: matches/templates/matches/base.html:384
+msgid "Zamknij"
+msgstr "Закрити"
+
+#: accounts/templates/accounts/subscribe.html:259
+msgid "Konto wymagane do zakupu"
+msgstr "Для покупки потрібен обліковий запис"
+
+#: accounts/templates/accounts/subscribe.html:261
+msgid ""
+"Aby aktywować plan Premium i otrzymywać powiadomienia Push,\n"
+"                załóż darmowe konto w&nbsp;<strong>10 sekund</strong>!"
+msgstr ""
+"Щоб активувати план Premium і отримувати Push-сповіщення, створіть "
+"безкоштовний обліковий запис за&nbsp;<strong>10 секунд</strong>!"
+
+#: accounts/templates/accounts/subscribe.html:269
+#: matches/templates/matches/live_match_list.html:91
+msgid "Utwórz darmowe konto"
+msgstr "Створити безкоштовний обліковий запис"
+
+#: accounts/templates/accounts/subscribe.html:271
+#: matches/templates/matches/login.html:94 templates/account/login.html:115
+msgid "lub"
+msgstr "або"
+
+#: accounts/templates/accounts/subscribe.html:275
+#: matches/templates/matches/live_match_list.html:92
+#: matches/templates/matches/login.html:9
+#: matches/templates/matches/login.html:75 templates/account/login.html:9
+#: templates/account/login.html:93
+msgid "Zaloguj się"
+msgstr "Увійти"
+
+#: matches/adapter.py:31
+msgid "Konto zostało pomyślnie aktywowane. Możesz się teraz zalogować! ⚽"
+msgstr "Обліковий запис успішно активовано. Тепер ви можете увійти! ⚽"
+
+#: matches/adapter.py:135
+msgid ""
+"Ten adres e-mail jest już powiązany z innym kontem społecznościowym. Zaloguj "
+"się tym samym dostawcą, którego użyłeś podczas rejestracji."
+msgstr ""
+"Ця електронна адреса вже пов'язана з іншим соціальним обліковим записом. "
+"Увійдіть через того самого провайдера, якого ви використали під час "
+"реєстрації."
+
+#: matches/adapter.py:152
+msgid ""
+"Ten adres e-mail jest już powiązany ze standardowym kontem. Zaloguj się za "
+"pomocą hasła."
+msgstr ""
+"Ця електронна адреса вже пов'язана зі стандартним обліковим записом. "
+"Увійдіть за допомогою пароля."
+
+#: matches/forms.py:19 matches/templates/matches/account_settings.html:124
+#: templates/account/password_reset.html:212
+msgid "Adres e-mail"
+msgstr "Електронна адреса"
+
+#: matches/forms.py:35
+msgid "Konto z tym adresem e-mail już istnieje."
+msgstr "Обліковий запис із цією електронною адресою вже існує."
+
+#: matches/models/event.py:157
 msgid "samobój"
 msgstr "автогол"
 
-#: matches/models/event.py:127
+#: matches/models/event.py:158
 msgid "karny"
 msgstr "пенальті"
 
-#: matches/models/event.py:128
+#: matches/models/event.py:159
 msgid "niestrzelony karny"
 msgstr "незабитий пенальті"
 
-#: matches/models/event.py:129
+#: matches/models/event.py:160
 msgid "karny nie uznany"
 msgstr "пенальті не зараховано"
 
-#: matches/models/event.py:130
+#: matches/models/event.py:161
 msgid "2× żółta"
 msgstr "2× жовта"
 
 #: matches/templates/matches/account_settings.html:5
 #: matches/templates/matches/account_settings.html:24
-#: matches/templates/matches/base.html:86
+#: matches/templates/matches/base.html:116
 msgid "Ustawienia konta"
 msgstr "Налаштування облікового запису"
 
@@ -218,188 +283,265 @@ msgid "Dane profilu"
 msgstr "Дані профілю"
 
 #: matches/templates/matches/account_settings.html:97
-#, fuzzy
-#| msgid "Menu użytkownika"
+#: matches/templates/matches/login.html:50
 msgid "Nazwa użytkownika"
-msgstr "Меню користувача"
+msgstr "Ім'я користувача"
 
 #: matches/templates/matches/account_settings.html:108
-#, fuzzy
-#| msgid "Wymaga planu PLUS"
 msgid "Zmiana nicku wymaga planu PLUS"
-msgstr "Потрібен план PLUS"
+msgstr "Зміна псевдоніма потребує плану PLUS"
 
 #: matches/templates/matches/account_settings.html:113
 msgid "Zmiana nicku dostępna od planu"
 msgstr "Зміна ніка доступна від плану"
-
-#: matches/templates/matches/account_settings.html:124
-#, fuzzy
-#| msgid "brak e-mail"
-msgid "Adres e-mail"
-msgstr "немає e-mail"
 
 #: matches/templates/matches/account_settings.html:130
 msgid "Zapisz zmiany"
 msgstr "Зберегти зміни"
 
 #: matches/templates/matches/account_settings.html:138
+msgid "Powiadomienia (Push)"
+msgstr "Сповіщення (Push)"
+
+#: matches/templates/matches/account_settings.html:142
+msgid "Wyniki na żywo i powiadomienia"
+msgstr "Результати наживо та сповіщення"
+
+#: matches/templates/matches/account_settings.html:143
+msgid "Bądź na bieżąco, nawet gdy aplikacja jest zamknięta."
+msgstr "Будьте в курсі, навіть коли застосунок закрито."
+
+#: matches/templates/matches/account_settings.html:155
 msgid "Zmiana hasła"
 msgstr "Змінити пароль"
 
-#: matches/templates/matches/account_settings.html:145
+#: matches/templates/matches/account_settings.html:162
 msgid "Obecne hasło"
 msgstr "Поточний пароль"
 
-#: matches/templates/matches/account_settings.html:160
+#: matches/templates/matches/account_settings.html:177
+#: templates/account/password_reset_from_key.html:4
 msgid "Nowe hasło"
 msgstr "Новий пароль"
 
-#: matches/templates/matches/account_settings.html:160
+#: matches/templates/matches/account_settings.html:177
 msgid "min. 8 znaków"
 msgstr "мін. 8 символів"
 
-#: matches/templates/matches/account_settings.html:175
+#: matches/templates/matches/account_settings.html:192
 msgid "Powtórz nowe hasło"
 msgstr "Повторіть новий пароль"
 
-#: matches/templates/matches/account_settings.html:190
+#: matches/templates/matches/account_settings.html:207
 msgid "Zmień hasło"
 msgstr "Змінити пароль"
 
-#: matches/templates/matches/base.html:30
+#: matches/templates/matches/base.html:41
 msgid "Szukaj drużyny (Enter)"
 msgstr "Пошук команди (Enter)"
 
-#: matches/templates/matches/base.html:36
+#: matches/templates/matches/base.html:47
 msgid "Wymaga planu PLUS"
 msgstr "Потрібен план PLUS"
 
-#: matches/templates/matches/base.html:38
+#: matches/templates/matches/base.html:49
 msgid "Szukaj drużyny..."
 msgstr "Пошук команди..."
 
-#: matches/templates/matches/base.html:42
+#: matches/templates/matches/base.html:53
 msgid "Wyszukiwarka klubów wymaga planu"
 msgstr "Пошук клубів потребує плану"
 
-#: matches/templates/matches/base.html:44
+#: matches/templates/matches/base.html:55
 msgid "Ulepsz teraz"
 msgstr "Оновити зараз"
 
-#: matches/templates/matches/base.html:55
+#: matches/templates/matches/base.html:66
 msgid "Kalendarz"
 msgstr "Календар"
 
-#: matches/templates/matches/base.html:61
-msgid "Menu użytkownika"
-msgstr "Меню користувача"
-
-#: matches/templates/matches/base.html:70
-msgid "brak e-mail"
-msgstr "немає e-mail"
-
-#: matches/templates/matches/base.html:91
-msgid "Wyloguj się"
-msgstr "Вийти"
-
-#: matches/templates/matches/base.html:97
-msgid "Zaloguj"
-msgstr "Увійти"
-
-#: matches/templates/matches/base.html:103
-#: matches/templates/matches/base.html:109
+#: matches/templates/matches/base.html:71
+#: matches/templates/matches/base.html:77
 msgid "Powiadomienia"
 msgstr "Сповіщення"
 
-#: matches/templates/matches/base.html:110
+#: matches/templates/matches/base.html:78
 msgid "Wyczyść wszystkie"
 msgstr "Очистити все"
 
-#: matches/templates/matches/base.html:117
+#: matches/templates/matches/base.html:85
 msgid "Brak powiadomień"
 msgstr "Немає сповіщень"
 
-#: matches/templates/matches/base.html:126
+#: matches/templates/matches/base.html:94
+msgid "Menu użytkownika"
+msgstr "Меню користувача"
+
+#: matches/templates/matches/base.html:120
+msgid "Ulubione drużyny"
+msgstr "Улюблені команди"
+
+#: matches/templates/matches/base.html:125
+msgid "Wyloguj się"
+msgstr "Вийти"
+
+#: matches/templates/matches/base.html:131
+msgid "Zaloguj"
+msgstr "Увійти"
+
+#: matches/templates/matches/base.html:140
+msgid "Przełącznik języka"
+msgstr "Перемикач мови"
+
+#: matches/templates/matches/base.html:164
 msgid "Zmień język"
 msgstr "Змінити мову"
 
-#: matches/templates/matches/base.html:193
+#: matches/templates/matches/base.html:210
 msgid "Gotowy do analizy"
 msgstr "Готовий до аналізу"
 
-#: matches/templates/matches/base.html:198
-#, fuzzy
-#| msgid "Wymaga planu PLUS"
+#: matches/templates/matches/base.html:215
 msgid "Wymaga planu Premium"
-msgstr "Потрібен план PLUS"
+msgstr "Потрібен план Premium"
 
-#: matches/templates/matches/base.html:205
-msgid "Zamknij"
-msgstr "Закрити"
-
-#: matches/templates/matches/base.html:205
+#: matches/templates/matches/base.html:222
 msgid "Zamknij panel AI"
 msgstr "Закрити панель AI"
 
-#: matches/templates/matches/base.html:209
+#: matches/templates/matches/base.html:226
 msgid "Wyczyść historię czatu"
 msgstr "Очистити історію чату"
 
-#: matches/templates/matches/base.html:223
+#: matches/templates/matches/base.html:240
 msgid "Cześć! Jestem Twoim AI Analitykiem sportowym."
 msgstr "Привіт! Я ваш AI-аналітик спорту."
 
-#: matches/templates/matches/base.html:224
+#: matches/templates/matches/base.html:241
 msgid "Zapytaj mnie o dowolny mecz, statystyki lub drużyny."
 msgstr "Запитайте мене про будь-який матч, статистику чи команди."
 
-#: matches/templates/matches/base.html:240
+#: matches/templates/matches/base.html:258
 msgid "Zapytaj o mecz, drużynę, statystyki..."
 msgstr "Запитайте про матч, команду, статистику..."
 
-#: matches/templates/matches/base.html:242
+#: matches/templates/matches/base.html:260
 msgid "Wiadomość do AI Analityka"
 msgstr "Повідомлення для AI-аналітика"
 
-#: matches/templates/matches/base.html:246
+#: matches/templates/matches/base.html:264
 msgid "Zatrzymaj generowanie"
 msgstr "Зупинити генерацію"
 
-#: matches/templates/matches/base.html:249
+#: matches/templates/matches/base.html:267
 msgid "Wyślij (Enter)"
 msgstr "Надіслати (Enter)"
 
-#: matches/templates/matches/base.html:249
-#: matches/templates/matches/base.html:314
+#: matches/templates/matches/base.html:267
+#: matches/templates/matches/base.html:333
 msgid "Wyślij wiadomość"
 msgstr "Надіслати повідомлення"
 
-#: matches/templates/matches/base.html:289
+#: matches/templates/matches/base.html:307
 msgid "AI Analityk Sportowy"
 msgstr "AI Спортивний Аналітик"
 
-#: matches/templates/matches/base.html:291
+#: matches/templates/matches/base.html:309
 msgid ""
 "Zadawaj pytania o mecze, drużyny i statystyki\n"
-"                            swojemu personalnemu asystentowi AI napędzonemu\n"
-"                            przez <strong style=\"color:#e2e8f0;\">Gemini "
-"2.5 Flash</strong>.\n"
-"                            Dostępne wyłącznie w planie <strong "
+"                                        swojemu personalnemu asystentowi AI "
+"napędzonemu\n"
+"                                        przez <strong "
+"style=\"color:#e2e8f0;\">Gemini 2.5 Flash</strong>.\n"
+"                                        Dostępne wyłącznie w planie <strong "
 "style=\"color:#f59e0b;\">Premium</strong>."
 msgstr ""
+"Став питання про матчі, команди та статистику своєму персональному AI-"
+"асистенту на базі <strong style=\"color:#e2e8f0;\">Gemini 2.5 Flash</"
+"strong>. Доступно виключно в плані <strong style=\"color:#f59e0b;\">Premium</"
+"strong>."
 
-#: matches/templates/matches/base.html:298
+#: matches/templates/matches/base.html:316
 msgid "Odblokuj AI Analityka"
 msgstr "Розблокувати AI аналітика"
 
-#: matches/templates/matches/base.html:309
+#: matches/templates/matches/base.html:328
 msgid "Dostępne tylko dla Premium..."
 msgstr "Доступно лише для Premium..."
 
-#: matches/templates/matches/base.html:312
+#: matches/templates/matches/base.html:331
 msgid "Input zablokowany — wymagane Premium"
 msgstr "Введення заблоковано — потрібен Premium"
+
+#: matches/templates/matches/base.html:351
+msgid "Bądź na bieżąco z bramkami!"
+msgstr "Будьте в курсі голів!"
+
+#: matches/templates/matches/base.html:352
+msgid ""
+"Włącz powiadomienia, aby otrzymywać wyniki na żywo i analizy AI prosto na "
+"Twój telefon."
+msgstr ""
+"Увімкніть сповіщення, щоб отримувати результати наживо та AI-аналітику прямо "
+"на свій телефон."
+
+#: matches/templates/matches/base.html:354
+#: matches/templates/matches/live_match_list.html:79
+msgid "Włącz powiadomienia"
+msgstr "Увімкнути сповіщення"
+
+#: matches/templates/matches/base.html:355
+#: matches/templates/matches/live_match_list.html:93
+msgid "Może później"
+msgstr "Можливо, пізніше"
+
+#: matches/templates/matches/base.html:370
+msgid "Zainstaluj aplikację na swoim urządzeniu!"
+msgstr "Встановіть застосунок на свій пристрій!"
+
+#: matches/templates/matches/base.html:373
+msgid "Instaluj"
+msgstr "Встановити"
+
+#: matches/templates/matches/base.html:382
+msgid "Instrukcja instalacji"
+msgstr "Інструкція зі встановлення"
+
+#: matches/templates/matches/base.html:390
+msgid "Zainstaluj VARify"
+msgstr "Встановити VARify"
+
+#: matches/templates/matches/base.html:391
+msgid "Dodaj aplikację do ekranu głównego, aby mieć ją zawsze pod ręką."
+msgstr "Додайте застосунок на головний екран, щоб він завжди був під рукою."
+
+#: matches/templates/matches/base.html:395
+msgid "Naciśnij ikonę"
+msgstr "Натисніть значок"
+
+#: matches/templates/matches/base.html:395
+msgid "Udostępnij"
+msgstr "Поділитися"
+
+#: matches/templates/matches/base.html:399
+msgid "Wybierz"
+msgstr "Виберіть"
+
+#: matches/templates/matches/base.html:399
+msgid "Dodaj do ekranu początkowego"
+msgstr "Додати на початковий екран"
+
+#: matches/templates/matches/base.html:403
+msgid "Naciśnij"
+msgstr "Натисніть"
+
+#: matches/templates/matches/base.html:403
+msgid "Dodaj"
+msgstr "Додати"
+
+#: matches/templates/matches/base.html:403
+msgid "w prawym górnym rogu"
+msgstr "у верхньому правому куті"
 
 #: matches/templates/matches/calendar.html:5
 #: matches/templates/matches/calendar.html:15
@@ -474,10 +616,8 @@ msgid "Czw"
 msgstr "Чт"
 
 #: matches/templates/matches/calendar.html:81
-#, fuzzy
-#| msgid "Pkt"
 msgid "Pt"
-msgstr "Очки"
+msgstr "Пт"
 
 #: matches/templates/matches/calendar.html:81
 msgid "Sob"
@@ -496,49 +636,167 @@ msgstr "Немає майбутніх матчів на цей день."
 msgid "Błąd ładowania meczów. Spróbuj odświeżyć stronę."
 msgstr "Помилка завантаження матчів. Спробуйте оновити сторінку."
 
+#: matches/templates/matches/favorite_teams.html:5
+#: matches/templates/matches/favorite_teams.html:18
+msgid "Moje ulubione drużyny"
+msgstr "Мої улюблені команди"
+
+#: matches/templates/matches/favorite_teams.html:27
+msgid "Zapisane drużyny"
+msgstr "Збережені команди"
+
+#: matches/templates/matches/favorite_teams.html:56
+#: matches/templates/matches/favorite_teams.html:58
+#: matches/templates/matches/favorite_teams.html:59
+#: matches/templates/matches/favorite_teams.html:149
+#: matches/templates/matches/favorite_teams.html:151
+#: matches/templates/matches/favorite_teams.html:152
+#: matches/templates/matches/team_detail.html:31
+#: matches/templates/matches/team_detail.html:32
+#: matches/templates/matches/team_detail.html:33
+msgid "Usuń z ulubionych"
+msgstr "Видалити з улюблених"
+
+#: matches/templates/matches/favorite_teams.html:57
+#: matches/templates/matches/favorite_teams.html:149
+#: matches/templates/matches/favorite_teams.html:150
+#: matches/templates/matches/favorite_teams.html:152
+#: matches/templates/matches/team_detail.html:30
+#: matches/templates/matches/team_detail.html:32
+#: matches/templates/matches/team_detail.html:33
+msgid "Dodaj do ulubionych"
+msgstr "Додати до улюблених"
+
+#: matches/templates/matches/favorite_teams.html:70
+msgid "Brak ulubionych drużyn"
+msgstr "Немає улюблених команд"
+
+#: matches/templates/matches/favorite_teams.html:71
+msgid "Kliknij gwiazdkę przy dowolnej drużynie, aby ją dodać."
+msgstr "Натисніть зірочку біля будь-якої команди, щоб додати її."
+
+#: matches/templates/matches/favorite_teams.html:77
+msgid "Nie masz jeszcze ulubionych drużyn"
+msgstr "У вас ще немає улюблених команд"
+
+#: matches/templates/matches/favorite_teams.html:78
+msgid ""
+"Wyszukaj drużynę poniżej lub kliknij gwiazdkę na stronie drużyny, aby ją "
+"dodać."
+msgstr ""
+"Знайдіть команду нижче або натисніть зірочку на сторінці команди, щоб додати "
+"її."
+
+#: matches/templates/matches/favorite_teams.html:88
+msgid "Dodaj nową drużynę"
+msgstr "Додати нову команду"
+
+#: matches/templates/matches/favorite_teams.html:91
+msgid "Wyczyść wyszukiwanie"
+msgstr "Очистити пошук"
+
+#: matches/templates/matches/favorite_teams.html:105
+msgid "Wpisz nazwę drużyny..."
+msgstr "Введіть назву команди..."
+
+#: matches/templates/matches/favorite_teams.html:112
+msgid "Szukaj"
+msgstr "Пошук"
+
+#: matches/templates/matches/favorite_teams.html:119
+#, python-format
+msgid ""
+"\n"
+"                Znaleziono <strong>%(count)s</strong> wyników dla „%(q)s\"\n"
+"            "
+msgstr ""
+"\n"
+"                Знайдено <strong>%(count)s</strong> результатів за запитом "
+"«%(q)s»\n"
+"            "
+
+#: matches/templates/matches/favorite_teams.html:123
+#, python-format
+msgid ""
+"\n"
+"                Brak wyników dla „%(q)s\"\n"
+"            "
+msgstr ""
+"\n"
+"                Немає результатів за запитом «%(q)s»\n"
+"            "
+
+#: matches/templates/matches/favorite_teams.html:161
+msgid "Nie znaleziono drużyn"
+msgstr "Команд не знайдено"
+
+#: matches/templates/matches/favorite_teams.html:162
+msgid "Spróbuj innej frazy wyszukiwania."
+msgstr "Спробуйте інший пошуковий запит."
+
 #: matches/templates/matches/live_match_list.html:5
 msgid "Centrum Wyników"
 msgstr "Центр результатів"
 
 #: matches/templates/matches/live_match_list.html:62
-#, fuzzy
-#| msgid "Błąd wyszukiwania. Spróbuj ponownie."
 msgid "Błąd połączenia. Spróbuj ponownie."
-msgstr "Помилка пошуку. Спробуйте ще раз."
+msgstr "Помилка з'єднання. Спробуйте ще раз."
 
 #: matches/templates/matches/live_match_list.html:78
-#, fuzzy
-#| msgid "Powiadomienia"
 msgid "Wyłącz powiadomienia"
-msgstr "Сповіщення"
-
-#: matches/templates/matches/live_match_list.html:79
-#, fuzzy
-#| msgid "Powiadomienia"
-msgid "Włącz powiadomienia"
-msgstr "Сповіщення"
+msgstr "Вимкнути сповіщення"
 
 #: matches/templates/matches/live_match_list.html:80
-#, fuzzy
-#| msgid "Powiadomienia"
 msgid "Powiadomienia włączone"
-msgstr "Сповіщення"
+msgstr "Сповіщення увімкнено"
 
 #: matches/templates/matches/live_match_list.html:81
-#, fuzzy
-#| msgid "Powiadomienia"
 msgid "Powiadomienia wyłączone"
-msgstr "Сповіщення"
+msgstr "Сповіщення вимкнено"
 
 #: matches/templates/matches/live_match_list.html:82
-#, fuzzy
-#| msgid "Tabela ligi"
 msgid "Inne ligi"
-msgstr "Таблиця ліги"
+msgstr "Інші ліги"
 
 #: matches/templates/matches/live_match_list.html:83
 msgid "Brak meczów na żywo w tym momencie."
 msgstr "Наразі немає матчів наживо."
+
+#: matches/templates/matches/live_match_list.html:89
+msgid "Zaloguj się, aby otrzymywać powiadomienia"
+msgstr "Увійдіть, щоб отримувати сповіщення"
+
+#: matches/templates/matches/live_match_list.html:90
+msgid ""
+"Powiadomienia Push na telefon wymagają konta. Załóż je w 10 sekund &mdash; "
+"to bezpłatne!"
+msgstr ""
+"Push-сповіщення на телефон потребують облікового запису. Створіть його за 10 "
+"секунд &mdash; це безкоштовно!"
+
+#: matches/templates/matches/login.html:54
+msgid "twoja_nazwa"
+msgstr "ваше_імʼя"
+
+#: matches/templates/matches/login.html:63 templates/account/login.html:84
+msgid "Hasło"
+msgstr "Пароль"
+
+#: matches/templates/matches/login.html:82 templates/account/login.html:100
+msgid "Zapomniałeś hasła?"
+msgstr "Забули пароль?"
+
+#: matches/templates/matches/login.html:97 templates/account/login.html:118
+msgid "Nie masz konta?"
+msgstr "Немає облікового запису?"
+
+#: matches/templates/matches/login.html:97 templates/account/login.html:118
+msgid "Utwórz je teraz"
+msgstr "Створіть його зараз"
+
+#: matches/templates/matches/login.html:110
+msgid "Przeglądaj bez logowania"
+msgstr "Переглядати без входу"
 
 #: matches/templates/matches/match_detail.html:16
 msgid "Wróć do wyników"
@@ -693,10 +951,8 @@ msgid "Brak zawodników pasujących do zapytania."
 msgstr "Немає гравців, що відповідають запиту."
 
 #: matches/templates/matches/search_results.html:14
-#, fuzzy
-#| msgid "Drużyna"
 msgid "Drużyny"
-msgstr "Команда"
+msgstr "Команди"
 
 #: matches/templates/matches/search_results.html:15
 msgid "Zawodnicy"
@@ -712,79 +968,276 @@ msgstr "Результати пошуку"
 
 #: matches/templates/matches/search_results.html:22
 msgid "Wróć"
-msgstr ""
+msgstr "Назад"
 
 #: matches/templates/matches/search_results.html:29
 msgid "Wyszukiwanie..."
 msgstr "Пошук..."
 
-#: matches/templates/matches/team_detail.html:24
+#: matches/templates/matches/team_detail.html:25
 msgid "Ładowanie..."
 msgstr "Завантаження..."
 
-#: matches/templates/matches/team_detail.html:32
+#: matches/templates/matches/team_detail.html:47
 msgid "Mecze"
 msgstr "Матчі"
 
-#: matches/templates/matches/team_detail.html:35
+#: matches/templates/matches/team_detail.html:50
 msgid "Tabela ligi"
 msgstr "Таблиця ліги"
 
-#: matches/templates/matches/team_detail.html:42
+#: matches/templates/matches/team_detail.html:57
 msgid "Ostatnie mecze"
 msgstr "Останні матчі"
 
-#: matches/templates/matches/team_detail.html:48
+#: matches/templates/matches/team_detail.html:63
 msgid "Skład (z ostatniego meczu)"
 msgstr "Склад (з останнього матчу)"
 
-#: matches/templates/matches/team_detail.html:56
+#: matches/templates/matches/team_detail.html:71
 msgid "Tabela ligowa"
 msgstr "Турнірна таблиця"
 
-#: matches/templates/matches/team_detail.html:62
+#: matches/templates/matches/team_detail.html:77
 msgid "Drużyna"
 msgstr "Команда"
 
-#: matches/templates/matches/team_detail.html:63
+#: matches/templates/matches/team_detail.html:78
 msgid "Mecze Rozegrane"
 msgstr "Зіграні матчі"
 
-#: matches/templates/matches/team_detail.html:64
+#: matches/templates/matches/team_detail.html:79
 msgid "Wygrane"
 msgstr "Перемоги"
 
-#: matches/templates/matches/team_detail.html:65
+#: matches/templates/matches/team_detail.html:80
 msgid "Remisy"
 msgstr "Нічиї"
 
-#: matches/templates/matches/team_detail.html:66
+#: matches/templates/matches/team_detail.html:81
 msgid "Porażki"
 msgstr "Поразки"
 
-#: matches/templates/matches/team_detail.html:67
+#: matches/templates/matches/team_detail.html:82
 msgid "Bramki"
 msgstr "Голи"
 
-#: matches/templates/matches/team_detail.html:68
+#: matches/templates/matches/team_detail.html:83
 msgid "Różnica Bramek"
 msgstr "Різниця голів"
 
-#: matches/templates/matches/team_detail.html:69
+#: matches/templates/matches/team_detail.html:84
 msgid "Pkt"
 msgstr "Очки"
 
-#: my_football_app/settings.py:296
+#: matches/templates/socialaccount/authentication_error.html:4
+msgid "Błąd logowania"
+msgstr "Помилка входу"
+
+#: matches/templates/socialaccount/authentication_error.html:93
+msgid "Problem z logowaniem"
+msgstr "Проблема зі входом"
+
+#: matches/templates/socialaccount/authentication_error.html:101
+msgid "Wystąpił nieoczekiwany błąd podczas logowania przez konto zewnętrzne."
+msgstr ""
+"Сталася неочікувана помилка під час входу через зовнішній обліковий запис."
+
+#: matches/templates/socialaccount/authentication_error.html:106
+#: templates/account/password_reset.html:231
+#: templates/account/password_reset_done.html:117
+msgid "Wróć do logowania"
+msgstr "Повернутися до входу"
+
+#: my_football_app/settings.py:220
 msgid "Polski"
 msgstr "Польська"
 
-#: my_football_app/settings.py:297
+#: my_football_app/settings.py:221
 msgid "English"
 msgstr "Англійська"
 
-#: my_football_app/settings.py:298
+#: my_football_app/settings.py:222
 msgid "Ukrainian"
 msgstr "Українська"
 
-#~ msgid "Witaj w VARify"
-#~ msgstr "Ласкаво просимо до VARify"
+#: templates/account/email_confirm.html:4
+msgid "Weryfikacja linku"
+msgstr "Перевірка посилання"
+
+#: templates/account/email_confirm.html:108
+msgid "Nieważny link aktywacyjny"
+msgstr "Недійсне посилання для активації"
+
+#: templates/account/email_confirm.html:111
+msgid "Ten link wygasł lub Twoje konto zostało już pomyślnie aktywowane."
+msgstr ""
+"Це посилання втратило чинність або ваш обліковий запис уже успішно "
+"активовано."
+
+#: templates/account/email_confirm.html:112
+msgid "Spróbuj się zalogować, aby sprawdzić status swojego konta."
+msgstr "Спробуйте увійти, щоб перевірити статус свого облікового запису."
+
+#: templates/account/email_confirm.html:117
+#: templates/account/password_reset_from_key_done.html:97
+msgid "Przejdź do logowania"
+msgstr "Перейти до входу"
+
+#: templates/account/email_confirm.html:122
+msgid "Wyślij nowy link weryfikacyjny"
+msgstr "Надіслати нове посилання для перевірки"
+
+#: templates/account/email_confirm.html:128
+#: templates/account/verification_sent.html:162
+msgid "Potwierdź swój adres e-mail"
+msgstr "Підтвердіть свою електронну адресу"
+
+#: templates/account/email_confirm.html:129
+#, python-format
+msgid ""
+"Kliknij poniższy przycisk, aby ostatecznie potwierdzić chęć aktywacji "
+"powiązaną z mailem %(email)s."
+msgstr ""
+"Натисніть кнопку нижче, щоб остаточно підтвердити активацію, пов'язану з "
+"%(email)s."
+
+#: templates/account/email_confirm.html:135
+#: templates/account/verification_sent.html:166
+msgid "Aktywuj konto"
+msgstr "Активувати обліковий запис"
+
+#: templates/account/login.html:27
+msgid "Zaloguj się, aby śledzić mecze na żywo"
+msgstr "Увійдіть, щоб стежити за матчами наживо"
+
+#: templates/account/login.html:73
+msgid "Nazwa użytkownika lub e-mail"
+msgstr "Ім'я користувача або e-mail"
+
+#: templates/account/login.html:77
+msgid "nazwa lub adres e-mail"
+msgstr "ім'я або електронна адреса"
+
+#: templates/account/login.html:110
+msgid "Zaloguj przez Google"
+msgstr "Увійти через Google"
+
+#: templates/account/password_reset.html:4
+#: templates/account/password_reset.html:189
+msgid "Resetowanie hasła"
+msgstr "Скидання пароля"
+
+#: templates/account/password_reset.html:190
+msgid "Podaj swój adres e-mail. Wyślemy Ci link do ustawienia nowego hasła."
+msgstr ""
+"Введіть свою електронну адресу. Ми надішлемо вам посилання для встановлення "
+"нового пароля."
+
+#: templates/account/password_reset.html:226
+msgid "Wyślij link resetujący"
+msgstr "Надіслати посилання для скидання"
+
+#: templates/account/password_reset_done.html:4
+msgid "Link wysłany"
+msgstr "Посилання надіслано"
+
+#: templates/account/password_reset_done.html:109
+msgid "Sprawdź skrzynkę"
+msgstr "Перевірте поштову скриньку"
+
+#: templates/account/password_reset_done.html:111
+msgid "Wysłaliśmy link do resetowania hasła na Twój adres e-mail."
+msgstr "Ми надіслали посилання для скидання пароля на вашу електронну адресу."
+
+#: templates/account/password_reset_done.html:112
+msgid "Kliknij w link, aby ustawić nowe hasło."
+msgstr "Натисніть посилання, щоб встановити новий пароль."
+
+#: templates/account/password_reset_done.html:121
+#: templates/account/verification_sent.html:175
+msgid "Nie widzisz maila? Sprawdź folder SPAM."
+msgstr "Не бачите листа? Перевірте папку СПАМ."
+
+#: templates/account/password_reset_from_key.html:138
+msgid "Nieważny link"
+msgstr "Недійсне посилання"
+
+#: templates/account/password_reset_from_key.html:140
+msgid "Ten link do resetowania hasła wygasł lub jest nieprawidłowy."
+msgstr "Це посилання для скидання пароля втратило чинність або є недійсним."
+
+#: templates/account/password_reset_from_key.html:141
+msgid "Spróbuj ponownie."
+msgstr "Спробуйте ще раз."
+
+#: templates/account/password_reset_from_key.html:145
+msgid "Wyślij nowy link"
+msgstr "Надіслати нове посилання"
+
+#: templates/account/password_reset_from_key.html:150
+msgid "Ustaw nowe hasło"
+msgstr "Встановити новий пароль"
+
+#: templates/account/password_reset_from_key.html:151
+msgid "Wpisz nowe hasło dla swojego konta."
+msgstr "Введіть новий пароль для свого облікового запису."
+
+#: templates/account/password_reset_from_key.html:170
+msgid "Zapisz nowe hasło"
+msgstr "Зберегти новий пароль"
+
+#: templates/account/password_reset_from_key_done.html:4
+msgid "Hasło zmienione"
+msgstr "Пароль змінено"
+
+#: templates/account/password_reset_from_key_done.html:92
+msgid "Hasło zostało zmienione!"
+msgstr "Ваш пароль змінено!"
+
+#: templates/account/password_reset_from_key_done.html:93
+msgid "Twoje nowe hasło zostało zapisane. Możesz się teraz zalogować."
+msgstr "Ваш новий пароль збережено. Тепер ви можете увійти."
+
+#: templates/account/verification_sent.html:5
+msgid "Sprawdź skrzynkę — VARify"
+msgstr "Перевірте поштову скриньку — VARify"
+
+#: templates/account/verification_sent.html:147
+msgid "Sprawdź swoją skrzynkę"
+msgstr "Перевірте свою поштову скриньку"
+
+#: templates/account/verification_sent.html:150
+msgid "Wysłaliśmy link weryfikacyjny na adres"
+msgstr "Ми надіслали посилання для перевірки на адресу"
+
+#: templates/account/verification_sent.html:152
+msgid "Kliknij w link, aby aktywować konto."
+msgstr "Натисніть посилання, щоб активувати обліковий запис."
+
+#: templates/account/verification_sent.html:158
+msgid "Otwórz aplikację pocztową lub webmail."
+msgstr "Відкрийте поштовий застосунок або вебпошту."
+
+#: templates/account/verification_sent.html:162
+msgid "Znajdź wiadomość od"
+msgstr "Знайдіть повідомлення від"
+
+#: templates/account/verification_sent.html:162
+msgid "z tematem"
+msgstr "з темою"
+
+#: templates/account/verification_sent.html:166
+msgid "Kliknij przycisk"
+msgstr "Натисніть кнопку"
+
+#: templates/account/verification_sent.html:166
+msgid "w mailu."
+msgstr "у листі."
+
+#: templates/account/verification_sent.html:171
+msgid "Wróć do strony głównej"
+msgstr "Повернутися на головну сторінку"
+
+#~ msgid "brak e-mail"
+#~ msgstr "немає e-mail"

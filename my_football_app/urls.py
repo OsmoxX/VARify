@@ -33,6 +33,8 @@ from django.contrib.auth import views as auth_views
 from matches import api_views
 from matches.views.ai_views import ai_chat_endpoint
 from django.views.generic.base import RedirectView
+from django.views.i18n import set_language
+from django.contrib.auth.decorators import login_not_required
 from django.conf.urls.i18n import i18n_patterns
 from typing import Any, cast
 from django.views.generic import TemplateView
@@ -40,7 +42,9 @@ from matches.views.auth_views import toggle_favorite_team
 from accounts import views as account_views
 
 urlpatterns = [
-    path("i18n/", include("django.conf.urls.i18n")),
+    # set_language must stay accessible to guests — LoginRequiredMiddleware
+    # would otherwise block language switching for unauthenticated users.
+    path("i18n/setlang/", login_not_required(set_language), name="set_language"),
     path("rosetta/", include("rosetta.urls")),
     # ── REST API ────────────────────────────────────────────────────────────────
     # Leagues
