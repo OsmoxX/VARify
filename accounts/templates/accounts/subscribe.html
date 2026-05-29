@@ -11,10 +11,79 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'accounts/css/subscribe.css' %}">
+    <style>
+        /* ── guest-auth modal ── */
+        .guest-auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.72);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .guest-auth-overlay.open { display: flex; }
+        .guest-auth-box {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 1.25rem;
+            padding: 2.5rem 2rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            animation: gaFadeIn .25s ease;
+        }
+        @keyframes gaFadeIn { from { opacity:0; transform:scale(.94) } to { opacity:1; transform:scale(1) } }
+        .guest-auth-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: none; border: none; color: #94a3b8;
+            font-size: 1.1rem; cursor: pointer; padding: .25rem .5rem;
+        }
+        .guest-auth-close:hover { color: #f1f5f9; }
+        .guest-auth-icon {
+            font-size: 2.8rem; margin-bottom: 1rem;
+        }
+        .guest-auth-box h2 {
+            color: #f1f5f9; font-size: 1.35rem; font-weight: 700;
+            margin: 0 0 .75rem;
+        }
+        .guest-auth-box p {
+            color: #94a3b8; font-size: .95rem; line-height: 1.6;
+            margin: 0 0 1.75rem;
+        }
+        .guest-auth-actions { display: flex; flex-direction: column; gap: .75rem; }
+        .ga-btn-primary {
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            background: linear-gradient(135deg,#10b981,#059669);
+            color: #fff; font-weight: 700; font-size: 1rem;
+            border: none; border-radius: .75rem; padding: .85rem 1.5rem;
+            text-decoration: none; cursor: pointer;
+            transition: opacity .2s;
+        }
+        .ga-btn-primary:hover { opacity: .88; }
+        .ga-btn-outline {
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            background: transparent;
+            color: #94a3b8; font-size: .9rem;
+            border: 1px solid rgba(255,255,255,.12); border-radius: .75rem;
+            padding: .7rem 1.5rem; text-decoration: none; cursor: pointer;
+            transition: border-color .2s, color .2s;
+        }
+        .ga-btn-outline:hover { border-color: #60a5fa; color: #93c5fd; }
+        .guest-auth-divider {
+            display: flex; align-items: center; gap: .75rem; margin: .25rem 0;
+            color: #475569; font-size: .8rem;
+        }
+        .guest-auth-divider::before, .guest-auth-divider::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08);
+        }
+    </style>
 </head>
 <body>
 
-    {# ── Animated background (identyczny jak login) ── #}
+    {# ── Animated background ── #}
     <div class="pitch-bg"></div>
     <div class="ball ball-1"></div>
     <div class="ball ball-2"></div>
@@ -27,7 +96,7 @@
     <div class="float-football" style="--delay:7s; --dur:15s; --x:45%; --size:2.5rem;">⚽</div>
     <div class="float-football" style="--delay:12s; --dur:20s; --x:65%; --size:1.2rem;">⚽</div>
 
-    {# ── Nawigacja (powrót) ── #}
+    {# ── Nawigacja ── #}
     <nav class="sub-nav">
         <a href="/" class="sub-nav-brand">
             <div class="sub-nav-icon"><i class="fa-solid fa-futbol"></i></div>
@@ -40,7 +109,6 @@
 
     <main class="sub-main">
 
-        {# ── Nagłówek ── #}
         <div class="sub-header">
             <div class="sub-badge">
                 <i class="fa-solid fa-trophy"></i> {% trans "Odblokuj pełen potencjał" %}
@@ -48,7 +116,6 @@
             <h1>{% trans "Wybierz swój plan" %}</h1>
             <p class="sub-subtitle">{% trans "Zdobądź pełny dostęp do statystyk i wyprzedź innych kibiców." %}</p>
 
-            {# Messages (np. po przekierowaniu z widoku z tieram) #}
             {% if messages %}
             <div class="sub-messages">
                 {% for message in messages %}
@@ -64,6 +131,7 @@
         <div class="carousel-container">
             <button class="carousel-nav carousel-prev" id="carousel-prev" aria-label="Poprzedni plan"><i class="fa-solid fa-chevron-left"></i></button>
             <div class="sub-cards" id="sub-cards">
+
             {# ─── FREE ─── #}
             <div class="sub-card sub-card-free">
                 <div class="sub-card-inner">
@@ -79,7 +147,7 @@
                         <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Składy i historia spotkań" %}</li>
                         <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Własny Nick w aplikacji" %}</li>
                     </ul>
-                    {% if user.profile.tier == 'FREE' %}
+                    {% if user.is_authenticated and user.profile.tier == 'FREE' %}
                     <button class="plan-btn plan-btn-current" disabled>
                         <i class="fa-solid fa-circle-check"></i> {% trans "Twój obecny plan" %}
                     </button>
@@ -89,7 +157,7 @@
                 </div>
             </div>
 
-            {# ─── PLUS (highlighted) ─── #}
+            {# ─── PLUS ─── #}
             <div class="sub-card sub-card-plus">
                 <div class="popular-badge">
                     <i class="fa-solid fa-star"></i> {% trans "Najczęściej wybierany" %}
@@ -107,17 +175,23 @@
                         <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Zmiana Nicku w aplikacji" %}</li>
                         <li class="locked"><i class="fa-solid fa-lock"></i> {% trans "Zaawansowane statystyki graczy" %}</li>
                     </ul>
-                    {% if user.profile.tier == 'PLUS' %}
+                    {% if user.is_authenticated and user.profile.tier == 'PLUS' %}
                     <button class="plan-btn plan-btn-current" disabled>
                         <i class="fa-solid fa-circle-check"></i> {% trans "Twój obecny plan" %}
                     </button>
-                    {% else %}
+                    {% elif user.is_authenticated %}
                     <form action="{% url 'create-checkout-session' 'plus' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="plan-btn plan-btn-plus">
                             <i class="fa-solid fa-bolt"></i> {% trans "Zacznij z PLUS" %}
                         </button>
                     </form>
+                    {% else %}
+                    {# Gość: przycisk otwiera modal rejestracji #}
+                    <button type="button" class="plan-btn plan-btn-plus guest-buy-btn"
+                            data-plan="plus">
+                        <i class="fa-solid fa-bolt"></i> {% trans "Zacznij z PLUS" %}
+                    </button>
                     {% endif %}
                 </div>
             </div>
@@ -138,22 +212,28 @@
                         <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Brak reklam" %}</li>
                         <li class="ok"><i class="fa-solid fa-check"></i> {% trans "Priorytetowe wsparcie" %}</li>
                     </ul>
-                    {% if user.profile.tier == 'PREMIUM' %}
+                    {% if user.is_authenticated and user.profile.tier == 'PREMIUM' %}
                     <button class="plan-btn plan-btn-current" disabled>
                         <i class="fa-solid fa-circle-check"></i> {% trans "Twój obecny plan" %}
                     </button>
-                    {% else %}
+                    {% elif user.is_authenticated %}
                     <form action="{% url 'create-checkout-session' 'premium' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="plan-btn plan-btn-premium">
                             <i class="fa-solid fa-crown"></i> {% trans "Wybierz Premium" %}
                         </button>
                     </form>
+                    {% else %}
+                    {# Gość: przycisk otwiera modal rejestracji #}
+                    <button type="button" class="plan-btn plan-btn-premium guest-buy-btn"
+                            data-plan="premium">
+                        <i class="fa-solid fa-crown"></i> {% trans "Wybierz Premium" %}
+                    </button>
                     {% endif %}
                 </div>
             </div>
 
-        </div>{# /sub-cards #}
+            </div>{# /sub-cards #}
             <button class="carousel-nav carousel-next" id="carousel-next" aria-label="Następny plan"><i class="fa-solid fa-chevron-right"></i></button>
         </div>{# /carousel-container #}
 
@@ -164,52 +244,103 @@
 
     </main>
 
+    {# ═══════════════════════════════════════════════════
+         GUEST AUTH MODAL
+         Pojawia się gdy niezalogowany gość klika "Kup teraz".
+    ════════════════════════════════════════════════════ #}
+    <div id="guest-auth-overlay" class="guest-auth-overlay" role="dialog"
+         aria-modal="true" aria-labelledby="guest-auth-title">
+        <div class="guest-auth-box">
+            <button class="guest-auth-close" id="guest-auth-close"
+                    aria-label="{% trans 'Zamknij' %}">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="guest-auth-icon">🔐</div>
+            <h2 id="guest-auth-title">{% trans "Konto wymagane do zakupu" %}</h2>
+            <p>
+                {% blocktrans %}Aby aktywować plan Premium i otrzymywać powiadomienia Push,
+                załóż darmowe konto w&nbsp;<strong>10 sekund</strong>!{% endblocktrans %}
+            </p>
+            <div class="guest-auth-actions">
+                <a id="guest-auth-register-btn"
+                   href="{% url 'register' %}?next={{ request.path }}"
+                   class="ga-btn-primary">
+                    <i class="fa-solid fa-user-plus"></i>
+                    {% trans "Utwórz darmowe konto" %}
+                </a>
+                <div class="guest-auth-divider">{% trans "lub" %}</div>
+                <a href="{% url 'login' %}?next={{ request.path }}"
+                   class="ga-btn-outline">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    {% trans "Zaloguj się" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Micro animacja wejścia kart
+        // ── Karuzela ──────────────────────────────────────────────
         document.querySelectorAll('.sub-card').forEach((card, i) => {
             card.style.animationDelay = `${i * 0.12}s`;
         });
 
-        // Obsługa karuzeli dla mobile (strzałki znikają jeśli jesteśmy na początku/końcu)
         const container = document.getElementById('sub-cards');
         const btnPrev = document.getElementById('carousel-prev');
         const btnNext = document.getElementById('carousel-next');
 
         const updateButtons = () => {
-            if (window.innerWidth > 900) return; // logika tylko dla mobile
-            
+            if (window.innerWidth > 900) return;
             const maxScrollLeft = container.scrollWidth - container.clientWidth;
-            
-            if (container.scrollLeft <= 10) {
-                btnPrev.style.display = 'none';
-            } else {
-                btnPrev.style.display = 'flex';
-            }
-
-            // check if there is room to scroll right
-            if (Math.ceil(container.scrollLeft) >= maxScrollLeft - 10) {
-                btnNext.style.display = 'none';
-            } else {
-                btnNext.style.display = 'flex';
-            }
+            btnPrev.style.display = container.scrollLeft <= 10 ? 'none' : 'flex';
+            btnNext.style.display = Math.ceil(container.scrollLeft) >= maxScrollLeft - 10 ? 'none' : 'flex';
         };
 
         if (container && btnPrev && btnNext) {
             container.addEventListener('scroll', updateButtons);
             window.addEventListener('resize', updateButtons);
-            // Wywołaj inicjalnie
             setTimeout(updateButtons, 100);
 
             btnPrev.addEventListener('click', () => {
                 const cardWidth = container.querySelector('.sub-card').offsetWidth;
                 container.scrollBy({ left: -cardWidth - 20, behavior: 'smooth' });
             });
-
             btnNext.addEventListener('click', () => {
                 const cardWidth = container.querySelector('.sub-card').offsetWidth;
                 container.scrollBy({ left: cardWidth + 20, behavior: 'smooth' });
             });
         }
+
+        // ── Guest-auth modal ──────────────────────────────────────
+        const overlay   = document.getElementById('guest-auth-overlay');
+        const closeBtn  = document.getElementById('guest-auth-close');
+        const registerBtn = document.getElementById('guest-auth-register-btn');
+
+        function openGuestModal(plan) {
+            // Update register link to carry the chosen plan as a hint
+            const base = registerBtn.dataset.baseHref || registerBtn.getAttribute('href').split('?')[0];
+            registerBtn.dataset.baseHref = base;
+            registerBtn.href = `${base}?next={{ request.path }}&plan=${plan}`;
+            overlay.classList.add('open');
+            closeBtn.focus();
+        }
+
+        function closeGuestModal() {
+            overlay.classList.remove('open');
+        }
+
+        document.querySelectorAll('.guest-buy-btn').forEach(btn => {
+            btn.addEventListener('click', () => openGuestModal(btn.dataset.plan));
+        });
+
+        closeBtn.addEventListener('click', closeGuestModal);
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeGuestModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeGuestModal();
+        });
     </script>
 </body>
 </html>

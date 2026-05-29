@@ -14,6 +14,7 @@ from typing import Literal, cast
 
 
 # Create your views here.
+@login_not_required
 def subscribe_view(request):
     return render(request, "accounts/subscribe.html")
 

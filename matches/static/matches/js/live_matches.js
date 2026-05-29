@@ -10,15 +10,59 @@
 // ────────────────────────────────────────────────
 const _liveI18nEl = document.getElementById('live-i18n');
 const _liveI18n = {
-    bellOff:       _liveI18nEl ? _liveI18nEl.dataset.bellOff    : 'Wyłącz powiadomienia',
-    bellOn:        _liveI18nEl ? _liveI18nEl.dataset.bellOn     : 'Włącz powiadomienia',
-    notifOn:       _liveI18nEl ? _liveI18nEl.dataset.notifOn    : 'Powiadomienia włączone',
-    notifOff:      _liveI18nEl ? _liveI18nEl.dataset.notifOff   : 'Powiadomienia wyłączone',
-    otherLeagues:  _liveI18nEl ? _liveI18nEl.dataset.otherLeagues : 'Inne ligi',
-    noLive:        _liveI18nEl ? _liveI18nEl.dataset.noLive     : 'Brak meczów na żywo w tym momencie.',
-    loadingText:   _liveI18nEl ? _liveI18nEl.dataset.loadingText : 'Ładowanie meczów...',
-    errorLoad:     _liveI18nEl ? _liveI18nEl.dataset.errorLoad  : 'Błąd ładowania meczów. Spróbuj odświeżyć stronę.',
+    bellOff:            _liveI18nEl ? _liveI18nEl.dataset.bellOff         : 'Wyłącz powiadomienia',
+    bellOn:             _liveI18nEl ? _liveI18nEl.dataset.bellOn          : 'Włącz powiadomienia',
+    notifOn:            _liveI18nEl ? _liveI18nEl.dataset.notifOn         : 'Powiadomienia włączone',
+    notifOff:           _liveI18nEl ? _liveI18nEl.dataset.notifOff        : 'Powiadomienia wyłączone',
+    otherLeagues:       _liveI18nEl ? _liveI18nEl.dataset.otherLeagues    : 'Inne ligi',
+    noLive:             _liveI18nEl ? _liveI18nEl.dataset.noLive          : 'Brak meczów na żywo w tym momencie.',
+    loadingText:        _liveI18nEl ? _liveI18nEl.dataset.loadingText     : 'Ładowanie meczów...',
+    errorLoad:          _liveI18nEl ? _liveI18nEl.dataset.errorLoad       : 'Błąd ładowania meczów. Spróbuj odświeżyć stronę.',
+    guestBellTitle:     _liveI18nEl ? _liveI18nEl.dataset.guestBellTitle  : 'Zaloguj się, aby otrzymywać powiadomienia',
+    guestBellBody:      _liveI18nEl ? _liveI18nEl.dataset.guestBellBody   : 'Powiadomienia Push na telefon wymagają konta.',
+    guestBellRegister:  _liveI18nEl ? _liveI18nEl.dataset.guestBellRegister : 'Utwórz darmowe konto',
+    guestBellLogin:     _liveI18nEl ? _liveI18nEl.dataset.guestBellLogin  : 'Zaloguj się',
+    guestBellDismiss:   _liveI18nEl ? _liveI18nEl.dataset.guestBellDismiss : 'Może później',
 };
+
+// ── user auth state (injected from Django template) ─────────────────────────
+const _userAuthenticated = _liveI18nEl
+    ? _liveI18nEl.dataset.userAuthenticated === 'true'
+    : false;
+
+// ── guest-bell modal helper ──────────────────────────────────────────────────
+(function initGuestBellModal() {
+    const modal    = document.getElementById('guest-bell-modal');
+    if (!modal) return;
+
+    const closeBtn     = document.getElementById('guest-bell-close');
+    const dismissBtn   = document.getElementById('guest-bell-dismiss-btn');
+    const registerBtn  = document.getElementById('guest-bell-register-btn');
+    const loginBtn     = document.getElementById('guest-bell-login-btn');
+
+    // Fill in translated text
+    document.getElementById('guest-bell-title').textContent    = _liveI18n.guestBellTitle;
+    modal.querySelector('p').innerHTML                          = _liveI18n.guestBellBody;
+    document.getElementById('guest-bell-register-label').textContent = _liveI18n.guestBellRegister;
+    document.getElementById('guest-bell-login-label').textContent    = _liveI18n.guestBellLogin;
+    document.getElementById('guest-bell-dismiss-label').textContent  = _liveI18n.guestBellDismiss;
+
+    // Set hrefs (from data attrs on i18n element)
+    const loginUrl    = _liveI18nEl ? _liveI18nEl.dataset.loginUrl    : '/login/';
+    const registerUrl = _liveI18nEl ? _liveI18nEl.dataset.registerUrl : '/register/';
+    registerBtn.href = registerUrl + '?next=' + encodeURIComponent(window.location.pathname);
+    loginBtn.href    = loginUrl    + '?next=' + encodeURIComponent(window.location.pathname);
+
+    function openModal()  { modal.style.display = 'flex'; closeBtn.focus(); }
+    function closeModal() { modal.style.display = 'none'; }
+
+    closeBtn.addEventListener('click', closeModal);
+    dismissBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    window._openGuestBellModal = openModal;
+})();
 
 // ────────────────────────────────────────────────
 // CSRF HELPER
@@ -137,11 +181,20 @@ function buildMatchRow(match) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+
+        // Niezalogowany gość → pokaż modal rejestracji zamiast wysyłać fetch
+        if (!_userAuthenticated) {
+            if (typeof window._openGuestBellModal === 'function') {
+                window._openGuestBellModal();
+            }
+            return;
+        }
+
         const matchId = parseInt(btn.dataset.matchId, 10);
-        
+
         // Dynamicznie ustal prefix językowy np. /pl/ na podstawie taga HTML
         const lang = document.documentElement.lang || 'pl';
-        
+
         fetch(`/${lang}/toggle-notifications/${matchId}/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }

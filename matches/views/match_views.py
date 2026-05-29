@@ -7,10 +7,11 @@ Live match listing, match detail page, and WebSocket notification endpoints.
 import json
 import logging
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_not_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.cache import patch_cache_control
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
@@ -37,6 +38,7 @@ from .helpers import (
 logger = logging.getLogger(__name__)
 
 
+@login_not_required
 def live_matches_view(request):
     """Strona główna: lista meczów live pogrupowanych wg ligi."""
     live_matches = LiveMatch.objects.filter(status__icontains="half").select_related(
@@ -52,6 +54,7 @@ def live_matches_view(request):
     )
 
 
+@login_not_required
 def match_detail_view(request, match_id):
     """Szczegółowa strona meczu: wynik, oś czasu, składy, statystyki."""
     match = get_object_or_404(LiveMatch, id=match_id)
@@ -150,7 +153,8 @@ def match_detail_view(request, match_id):
     return response
 
 
-class HomeView(LoginRequiredMixin, ListView):
+@method_decorator(login_not_required, name="dispatch")
+class HomeView(ListView):
     """Strona główna: lista meczów live pogrupowanych wg ligi."""
 
     model = LiveMatch
@@ -181,6 +185,7 @@ class HomeView(LoginRequiredMixin, ListView):
         return context
 
 
+@login_not_required
 @require_POST
 def toggle_notifications(request, match_id):
     """
@@ -251,6 +256,7 @@ def toggle_notifications(request, match_id):
     })
 
 
+@login_not_required
 def active_match_ids(request):
     """Zwraca podzbiór podanych api_id meczów, które są nadal live (status != 'Ended')."""
     ids_param = request.GET.get("ids", "")

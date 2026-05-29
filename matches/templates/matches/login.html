@@ -96,6 +96,20 @@
         <div class="footer-link">
             {% trans "Nie masz konta?" %} <a href="{% url 'register' %}">{% trans "Utwórz je teraz" %} →</a>
         </div>
+
+        <div style="text-align:center; margin-top:14px;">
+            <a href="{% url 'home' %}"
+               style="display:inline-flex; align-items:center; justify-content:center; gap:6px;
+                      color:#64748b; font-size:0.85rem; text-decoration:none;
+                      border:1px solid rgba(255,255,255,0.10); border-radius:8px;
+                      padding:10px 20px; width:100%; box-sizing:border-box;
+                      transition:color .2s, border-color .2s, background .2s;"
+               onmouseover="this.style.color='#94a3b8';this.style.borderColor='rgba(255,255,255,0.25)'"
+               onmouseout="this.style.color='#64748b';this.style.borderColor='rgba(255,255,255,0.10)'">
+                <i class="fa-solid fa-eye"></i>
+                {% trans "Przeglądaj bez logowania" %}
+            </a>
+        </div>
     </div>
 
     <script src="{% static 'matches/js/login.js' %}"></script>

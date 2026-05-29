@@ -4,11 +4,13 @@ views/league_views.py
 League detail page with standings, upcoming and recent matches.
 """
 
+from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import render
 
 from matches.models import League, LeagueStandings, LiveMatch, UpcomingMatch
 
 
+@login_not_required
 def league_detail_view(request, api_id):
     """Strona ligi — tabela, nadchodzące i ostatnie mecze."""
     league = League.objects.filter(api_id=api_id).first()

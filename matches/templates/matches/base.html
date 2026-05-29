@@ -34,7 +34,7 @@
                 {% webpush_button with_class="btn btn-warning" %}
             </div>
 
-            {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
+            {% if user.is_authenticated and user.profile.tier == 'PLUS' or user.is_authenticated and user.profile.tier == 'PREMIUM' %}
             {# ── PLUS/PREMIUM: pełna wyszukiwarka ── #}
                 <div class="nav-search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>

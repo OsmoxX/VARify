@@ -83,6 +83,63 @@
     data-no-live="{% trans 'Brak meczów na żywo w tym momencie.' %}"
     data-loading-text="{% trans 'Ładowanie meczów...' %}"
     data-error-load="{% trans 'Błąd ładowania meczów. Spróbuj odświeżyć stronę.' %}"
+    data-user-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+    data-login-url="{% url 'login' %}"
+    data-register-url="{% url 'register' %}"
+    data-guest-bell-title="{% trans 'Zaloguj się, aby otrzymywać powiadomienia' %}"
+    data-guest-bell-body="{% blocktrans %}Powiadomienia Push na telefon wymagają konta. Załóż je w 10 sekund &mdash; to bezpłatne!{% endblocktrans %}"
+    data-guest-bell-register="{% trans 'Utwórz darmowe konto' %}"
+    data-guest-bell-login="{% trans 'Zaloguj się' %}"
+    data-guest-bell-dismiss="{% trans 'Może później' %}"
 ></div>
+
+{# ── Modal dla niezalogowanego gościa klikającego dzwoneczek ── #}
+<div id="guest-bell-modal" role="dialog" aria-modal="true"
+     aria-labelledby="guest-bell-title"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7);
+            z-index:8000; align-items:center; justify-content:center; padding:1rem;">
+    <div style="background:#1e293b; border:1px solid rgba(255,255,255,.1);
+                border-radius:1.25rem; padding:2rem 1.75rem; max-width:380px; width:100%;
+                text-align:center; animation:gbmFade .22s ease; position:relative;">
+        <style>
+            @keyframes gbmFade { from{opacity:0;transform:scale(.93)} to{opacity:1;transform:scale(1)} }
+        </style>
+        <button id="guest-bell-close"
+                style="position:absolute;top:.85rem;right:.9rem;background:none;border:none;
+                       color:#94a3b8;font-size:1rem;cursor:pointer;padding:.3rem .5rem;"
+                aria-label="Zamknij">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div style="font-size:2.5rem; margin-bottom:.75rem;">🔔</div>
+        <h3 id="guest-bell-title"
+            style="color:#f1f5f9;font-size:1.15rem;font-weight:700;margin:0 0 .6rem;"></h3>
+        <p style="color:#94a3b8;font-size:.9rem;line-height:1.6;margin:0 0 1.5rem;"></p>
+        <div style="display:flex;flex-direction:column;gap:.6rem;">
+            <a id="guest-bell-register-btn"
+               href="#"
+               style="display:flex;align-items:center;justify-content:center;gap:.45rem;
+                      background:linear-gradient(135deg,#10b981,#059669);color:#fff;
+                      font-weight:700;font-size:.95rem;border-radius:.7rem;
+                      padding:.8rem 1.25rem;text-decoration:none;transition:opacity .2s;">
+                <i class="fa-solid fa-user-plus"></i>
+                <span id="guest-bell-register-label"></span>
+            </a>
+            <a id="guest-bell-login-btn"
+               href="#"
+               style="display:flex;align-items:center;justify-content:center;gap:.45rem;
+                      color:#94a3b8;font-size:.88rem;border:1px solid rgba(255,255,255,.1);
+                      border-radius:.7rem;padding:.65rem 1.25rem;text-decoration:none;
+                      transition:border-color .2s,color .2s;">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span id="guest-bell-login-label"></span>
+            </a>
+            <button id="guest-bell-dismiss-btn"
+                    style="background:none;border:none;color:#475569;font-size:.82rem;
+                           cursor:pointer;padding:.4rem;margin-top:.1rem;">
+                <span id="guest-bell-dismiss-label"></span>
+            </button>
+        </div>
+    </div>
+</div>
 <script src="{% static 'matches/js/live_matches.js' %}"></script>
 {% endblock %}

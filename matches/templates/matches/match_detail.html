@@ -221,7 +221,7 @@
         {# ======================= SKŁADY (wymaga PLUS) ======================= #}
         <div id="lineups-tab" class="tab-content" style="display: none;">
 
-            {% if user.profile.tier == 'PLUS' or user.profile.tier == 'PREMIUM' %}
+            {% if user.is_authenticated and user.profile.tier == 'PLUS' or user.is_authenticated and user.profile.tier == 'PREMIUM' %}
             {# ██ PLUS/PREMIUM: pełne składy ██ #}
 
             {# ══════ BOISKO ══════ #}
@@ -412,7 +412,7 @@
         {# ======================= STATYSTYKI xG (wymaga PREMIUM) ============== #}
         <div id="stats-tab" class="tab-content" style="display: none;">
 
-            {% if user.profile.tier == 'PREMIUM' %}
+            {% if user.is_authenticated and user.profile.tier == 'PREMIUM' %}
             {# ██ PREMIUM: pełne statystyki ██ #}
             {% if stats_periods %}
             <div class="stats-container">
