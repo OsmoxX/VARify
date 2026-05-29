@@ -136,14 +136,14 @@ def test_match_detail_view_ended_with_data(setup_match_data):
 # TESTY: HomeView (Class Based View - Strona Główna)
 # ==========================================
 @pytest.mark.django_db
-def test_home_view_requires_login():
+def test_home_view_accessible_to_guests():
     factory = RequestFactory()
     request = factory.get("/")
     request.user = AnonymousUser()
+    request.session = MagicMock(session_key="guest-session-key")
 
     response = HomeView.as_view()(request)
-    assert response.status_code == 302
-    assert "login" in getattr(response, "url", "")
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

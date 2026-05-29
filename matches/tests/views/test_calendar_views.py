@@ -67,16 +67,14 @@ def setup_calendar_data(db):
 # TESTY: CalendarView (Zakończone mecze)
 # ==========================================
 @pytest.mark.django_db
-def test_calendar_view_requires_login():
-    # Używamy RequestFactory do "zbudowania" żądania omijając urls.py
+def test_calendar_view_accessible_to_guests():
     factory = RequestFactory()
     request = factory.get("/cokolwiek/")
-    request.user = AnonymousUser()  # Udajemy niezalogowanego gościa
+    request.user = AnonymousUser()
 
     response = CalendarView.as_view()(request)
 
-    assert response.status_code == 302
-    assert "login" in getattr(response, "url", "")
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

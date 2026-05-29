@@ -6,15 +6,17 @@ Calendar (ended matches) and upcoming matches views.
 
 from collections import defaultdict, OrderedDict
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_not_required
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from matches.models import LiveMatch, UpcomingMatch
 
 from .helpers import TOP_LEAGUES_CONFIG, _build_league_groups, _league_entry
 
 
-class CalendarView(LoginRequiredMixin, ListView):
+@method_decorator(login_not_required, name="dispatch")
+class CalendarView(ListView):
     """Kalendarz zakończonych meczów pogrupowanych wg daty, kraju i ligi."""
 
     model = LiveMatch
@@ -68,6 +70,7 @@ class CalendarView(LoginRequiredMixin, ListView):
         return context
 
 
+@login_not_required
 def upcoming_matches_view(request):
     """Widok nadchodzących meczów pogrupowanych wg ligi."""
     upcoming = UpcomingMatch.objects.select_related(

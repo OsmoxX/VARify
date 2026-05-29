@@ -38,8 +38,7 @@ def _make_async(path, params=None):
     mw = MaliciousBotDefenseMiddleware(_async_ok)
     rf = RequestFactory()
     req = rf.get(path, params or {})
-    coro = mw(req)
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(mw(req))
 
 
 # ── legitimate requests ───────────────────────────────────────────────────────

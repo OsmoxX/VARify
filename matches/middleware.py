@@ -1,8 +1,8 @@
 import asyncio
 import re
 
+from asgiref.sync import markcoroutinefunction
 from django.http import HttpResponseForbidden
-from django.utils.decorators import markcoroutinefunction
 
 # Sensitive paths/extensions probed by vulnerability scanners.
 # Checked against the full URL (path + query string).

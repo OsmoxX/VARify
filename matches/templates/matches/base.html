@@ -184,53 +184,53 @@
         {% block extra_js %}{% endblock %}
 
     {# ======================= FLOATING AI CHAT WIDGET ======================= #}
-        {% if user.is_authenticated %}
+    {# Visible to everyone — guests and free/plus users see the paywall CTA #}
 
     {# ── FAB (przycisk otwierający) ── #}
-            <button id="ai-chat-fab" title="VARify AI Analyst" aria-label="Otwórz AI Analityka" aria-expanded="false">
-                <i class="fa-solid fa-robot"></i>
-            </button>
+        <button id="ai-chat-fab" title="VARify AI Analyst" aria-label="Otwórz AI Analityka" aria-expanded="false">
+            <i class="fa-solid fa-robot"></i>
+        </button>
 
     {# ── Overlay (tło za panelem) ── #}
-            <div id="ai-chat-overlay"></div>
+        <div id="ai-chat-overlay"></div>
 
     {# ── Sliding Panel ── #}
-            <div id="ai-chat-panel" role="dialog" aria-label="VARify AI Analyst" data-api-url="{% url 'ai_chat_api' %}">
+        <div id="ai-chat-panel" role="dialog" aria-label="VARify AI Analyst" data-api-url="{% url 'ai_chat_api' %}">
 
         {# NAGŁÓWEK #}
-                <div class="ai-chat-header">
-                    <div class="ai-chat-header-icon">
-                        <i class="fa-solid fa-robot"></i>
-                    </div>
-                    <div class="ai-chat-header-text">
-                        <h4>VARify AI Analyst</h4>
-                        {% if user.profile.tier == 'PREMIUM' %}
-                            <span>
-                                <span class="ai-status-dot"></span>
-                                {% trans "Gotowy do analizy" %}
-                            </span>
-                        {% else %}
-                            <span style="color:#64748b;">
-                                <i class="fa-solid fa-lock" style="font-size:0.65rem;"></i>
-                                {% trans "Wymaga planu Premium" %}
-                            </span>
-                        {% endif %}
-                    </div>
-                    <div class="ai-premium-badge">
-                        <i class="fa-solid fa-crown"></i> Premium
-                    </div>
-                    <button id="ai-chat-close-btn" title="{% trans 'Zamknij' %}" aria-label="{% trans 'Zamknij panel AI' %}">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    {% if user.profile.tier == 'PREMIUM' %}
-                        <button id="ai-chat-clear-btn" title="{% trans 'Wyczyść historię czatu' %}" aria-label="{% trans 'Wyczyść historię czatu' %}">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+            <div class="ai-chat-header">
+                <div class="ai-chat-header-icon">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="ai-chat-header-text">
+                    <h4>VARify AI Analyst</h4>
+                    {% if user.is_authenticated and user.profile.tier == 'PREMIUM' %}
+                        <span>
+                            <span class="ai-status-dot"></span>
+                            {% trans "Gotowy do analizy" %}
+                        </span>
+                    {% else %}
+                        <span style="color:#64748b;">
+                            <i class="fa-solid fa-lock" style="font-size:0.65rem;"></i>
+                            {% trans "Wymaga planu Premium" %}
+                        </span>
                     {% endif %}
                 </div>
+                <div class="ai-premium-badge">
+                    <i class="fa-solid fa-crown"></i> Premium
+                </div>
+                <button id="ai-chat-close-btn" title="{% trans 'Zamknij' %}" aria-label="{% trans 'Zamknij panel AI' %}">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                {% if user.is_authenticated and user.profile.tier == 'PREMIUM' %}
+                    <button id="ai-chat-clear-btn" title="{% trans 'Wyczyść historię czatu' %}" aria-label="{% trans 'Wyczyść historię czatu' %}">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                {% endif %}
+            </div>
 
-        {# TREŚĆ — rozgałęzienie Premium vs Free/Plus #}
-                {% if user.profile.tier == 'PREMIUM' %}
+        {# TREŚĆ — rozgałęzienie Premium vs Free/Plus/Gość #}
+            {% if user.is_authenticated and user.profile.tier == 'PREMIUM' %}
 
             {# ██ PREMIUM: pełny czat ██ #}
                     <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite">
@@ -337,10 +337,9 @@
 
                 {% endif %}
 
-            </div>{# /ai-chat-panel #}
+        </div>{# /ai-chat-panel #}
 
-            <script src="{% static 'matches/ai_chat.js' %}"></script>
-        {% endif %}
+        <script src="{% static 'matches/ai_chat.js' %}"></script>
 
     <!-- PUSH MODAL -->
         {% if user.is_authenticated %}
