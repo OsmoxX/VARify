@@ -15,7 +15,6 @@ import os
 from dotenv import load_dotenv
 import sentry_sdk
 from celery.schedules import crontab
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 # Ładuje zmienne z pliku .env
@@ -31,13 +30,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Jeśli w .env nie ma DEBUG=True, domyślnie będzie False (bezpieczne na serwerze)
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# Klucz z .env. W produkcji (DEBUG=False) jest WYMAGANY — jego brak powoduje
-# twardy błąd zamiast cichego użycia niebezpiecznego klucza domyślnego.
-SECRET_KEY = os.environ.get("SECRET_KEY") or ("django-insecure-dev-only-key" if DEBUG else "")
-if not SECRET_KEY:
-    raise ImproperlyConfigured(
-        "SECRET_KEY environment variable is required when DEBUG=False"
-    )
+# Klucz z .env. Lokalnie (DEBUG=True) używamy jawnie deweloperskiego klucza;
+# w produkcji MUSI pochodzić z .env. Przy braku klucza w produkcji zostawiamy
+# pusty łańcuch — Django samo rzuci ImproperlyConfigured przy pierwszym użyciu
+# (podpisywanie sesji/CSRF), więc brak konfiguracji jest natychmiast widoczny.
+# Świadomie NIE podnosimy wyjątku na poziomie importu, aby narzędzia statyczne
+# (mypy + django-stubs robią django.setup()) mogły zaimportować ustawienia bez
+# ustawionych sekretów.
+SECRET_KEY = os.environ.get("SECRET_KEY") or (
+    "django-insecure-dev-only-key" if DEBUG else ""
+)
 
 # Dozwolone adresy IP i domeny
 ALLOWED_HOSTS = ["13.62.58.123", "13.62.58.123.nip.io", "localhost", "127.0.0.1"]
