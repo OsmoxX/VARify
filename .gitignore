@@ -1,5 +1,8 @@
 # Sekrety i konfiguracja
 .env
+.evn
+.env.local
+.env.prod
 
 # Środowisko wirtualne
 venv/
@@ -14,15 +17,18 @@ __pycache__/
 
 # Baza danych i pliki eksportu
 db.sqlite3
+db.sqlite3_old
 *.sqlite3
+*.sqlite3_old
 stare_mecze.json
 
 # Pliki systemowe
 .DS_Store
 Thumbs.db
 
-# Statyczne pliki (opcjonalnie, jeśli używasz collectstatic)
+# Statyczne pliki generowane przez collectstatic (nie wersjonujemy)
 staticfiles/
+static_root/
 .coverage
 .coverage.*
 htmlcov/
@@ -31,3 +37,5 @@ playwright-report/
 blob-report/
 playwright/.auth/
 message.txt
+# Claude Code local (personal) settings
+.claude/settings.local.json

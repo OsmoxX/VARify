@@ -15,6 +15,7 @@ import os
 from dotenv import load_dotenv
 import sentry_sdk
 from celery.schedules import crontab
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 # Ładuje zmienne z pliku .env
@@ -27,11 +28,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # BEZPIECZEŃSTWO (Dostosowane pod produkcję)
 # ==========================================
 
-# Pobiera klucz z .env. Brak wartości domyślnej w repo!
-SECRET_KEY = os.environ.get("SECRET_KEY")
-
 # Jeśli w .env nie ma DEBUG=True, domyślnie będzie False (bezpieczne na serwerze)
 DEBUG = os.getenv("DEBUG", "False") == "True"
+
+# Klucz z .env. W produkcji (DEBUG=False) jest WYMAGANY — jego brak powoduje
+# twardy błąd zamiast cichego użycia niebezpiecznego klucza domyślnego.
+SECRET_KEY = os.environ.get("SECRET_KEY") or ("django-insecure-dev-only-key" if DEBUG else "")
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "SECRET_KEY environment variable is required when DEBUG=False"
+    )
 
 # Dozwolone adresy IP i domeny
 ALLOWED_HOSTS = ["13.62.58.123", "13.62.58.123.nip.io", "localhost", "127.0.0.1"]
@@ -50,10 +56,15 @@ CSRF_TRUSTED_ORIGINS = [
     "https://13.62.58.123.nip.io",
 ]
 
-# Django działa za nginx, który terminuje TLS i przekazuje X-Forwarded-Proto.
-# Bez tego request.is_secure() zawsze zwraca False za proxy, przez co logika
-# bezpiecznych ciasteczek i przekierowań HTTPS działa nieprawidłowo.
+# Aplikacja działa za reverse-proxy (Caddy na produkcji), który terminuje TLS
+# i przekazuje X-Forwarded-Proto/Host. Bez tego request.is_secure() zawsze
+# zwraca False za proxy, przez co logika bezpiecznych ciasteczek i przekierowań
+# HTTPS działa nieprawidłowo. Lokalnie (brak proxy) nagłówki są nieobecne →
+# ustawienia są bezpieczne i nieaktywne.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
 
 # Loguje dokładny powód odrzucenia CSRF (widoczny w logach kontenera + Sentry),
 # np. "CSRF token incorrect", "CSRF cookie not set", "Origin checking failed".
@@ -189,8 +200,9 @@ LOGOUT_REDIRECT_URL = "/"
 
 # Konfiguracja Allauth
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
+# ACCOUNT_SIGNUP_FIELDS z "email*" wymusza e-mail — zastępuje przestarzałe
+# ACCOUNT_EMAIL_REQUIRED (usunięte, by nie generować ostrzeżeń deprecacji).
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"       # blokuje login do czasu weryfikacji
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True             # link w mailu aktywuje od razu (GET)
@@ -230,7 +242,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_HOST_USER", "noreply.varify@wp.pl")
 # TŁUMACZENIA (i18n)
 # ==========================================
 LANGUAGE_CODE = "pl"
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/Warsaw"
 USE_I18N = True
 USE_TZ = True
 
