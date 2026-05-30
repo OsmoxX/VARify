@@ -28,7 +28,6 @@ before ProtocolTypeRouter creates any coroutine task, preventing the
 """
 
 import os
-import re
 
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -36,24 +35,11 @@ from django.core.asgi import get_asgi_application
 
 from matches import routing
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "my_football_app.settings")
+# Single source of truth for the denylist — the ASGI shield fires first but
+# rejects exactly the same paths as the WSGI/sync middleware.
+from matches.middleware import _MALICIOUS_PATH_RE as _SHIELD_RE
 
-# ── patterns mirrored from matches/middleware.py (ASGI layer fires first) ────
-_SHIELD_RE = re.compile(
-    r"""
-    (?:
-        \.env(?:[.\-_]|$)
-      | /\.git(?:/|$)
-      | \.git/config
-      | \.(bak|old|save|orig|swp|sql|dump|log)(?:/|\?|&|\#|$)
-      | wp-(?:admin|login|config)
-      | phpMyAdmin | phpmyadmin
-      | /etc/(?:passwd|shadow|hosts)
-      | (?:^|/)\.ht(?:access|passwd)
-    )
-    """,
-    re.IGNORECASE | re.VERBOSE,
-)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "my_football_app.settings")
 
 _403_START = {
     "type": "http.response.start",

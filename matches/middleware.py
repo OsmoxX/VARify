@@ -6,6 +6,9 @@ from django.http import HttpResponseForbidden
 
 # Sensitive paths/extensions probed by vulnerability scanners.
 # Checked against the full URL (path + query string).
+# Single source of truth for the path denylist. The ASGI shield in
+# my_football_app/asgi.py imports this compiled regex directly (it fires first,
+# before the WSGI/sync middleware), so both layers reject identical paths.
 _MALICIOUS_PATH_RE = re.compile(
     r"""
     (?:
@@ -18,6 +21,37 @@ _MALICIOUS_PATH_RE = re.compile(
       | phpMyAdmin | phpmyadmin                  # phpMyAdmin
       | /etc/(?:passwd|shadow|hosts)             # LFI probes
       | (?:^|/)\.ht(?:access|passwd)             # .htaccess / .htpasswd
+
+      # ── Spring Boot / Java actuator probes (this is a Django app) ──
+      | /actuator(?:/|$)
+      | (?:^|/)(?:heapdump|threaddump|configprops|logfile|env)(?:/|\?|$)
+
+      # ── cloud credential dirs / dotfiles ──
+      | (?:^|/)\.(?:aws|gcloud|azure|config|docker|credentials)(?:/|$)
+      | (?:^|/)credentials(?:/|\?|$)
+
+      # ── credential / secret / config dump files ──
+      | (?:credentials|service[-_]?account|serviceaccount|secrets?
+           |api[-_]?keys?|keys|appsettings|application|configuration
+           |config|settings|database|private|aws|gcp|google|firebase
+           |firebase-adminsdk|cloud|azure)
+        \.(?:json|ya?ml|properties|ini|db)(?:/|\?|$)
+
+      # ── server-side scripts this stack never serves ──
+      | \.(?:php|phtml|asp|aspx|jsp|jspx|cgi)(?:/|\?|$)
+
+      # ── framework profilers ──
+      | (?:^|/)_?profiler(?:/|$)
+
+      # ── infra / IaC manifests ──
+      | docker-?compose[\w.\-]*\.ya?ml
+      | (?:^|/)Dockerfile(?:/|\?|$)
+      | (?:kubernetes|k8s)\.ya?ml
+      | terraform\.tfvars
+
+      # ── compressed dumps / archives ──
+      | \.(?:sql|tar)\.(?:gz|bz2|xz)(?:/|\?|$)
+      | \.zip(?:/|\?|$)
     )
     """,
     re.IGNORECASE | re.VERBOSE,

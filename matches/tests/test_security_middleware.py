@@ -50,7 +50,13 @@ class TestLegitimateRequests:
         "/uk/player/42/",
         "/api/matches/",
         "/api/leagues/",
+        "/api/live-matches/",
+        "/api/search/",
         "/webhook/",
+        "/sw.js",
+        "/static/matches/manifest.json",   # not a credential dump
+        "/static/matches/js/base.js",      # .js must never be blocked
+        "/environment/",                   # must not collide with bare 'env'
         "/",
     ])
     def test_allows_normal_paths_sync(self, path):
@@ -107,6 +113,53 @@ MALICIOUS_PATHS = [
     # LFI
     "/etc/passwd",
     "/etc/shadow",
+    # Spring Boot / actuator probes
+    "/actuator/heapdump",
+    "/app/actuator/env",
+    "/v1/actuator/configprops",
+    "/api/heapdump",
+    "/api/configprops",
+    "/api/env",
+    # cloud credential dirs / dotfiles
+    "/.aws/credentials",
+    "/.gcloud/credentials.json",
+    "/config/.aws/credentials",
+    "/.docker/config.json",
+    "/credentials",
+    # credential / secret / config dump files
+    "/service-account.json",
+    "/serviceaccount.json",
+    "/firebase-credentials.json",
+    "/secrets.json",
+    "/secrets.yaml",
+    "/config.json",
+    "/api/application.yml",
+    "/appsettings.json",
+    "/app/settings.json",
+    "/api/database.yml",
+    # server-side scripts (Django serves none)
+    "/phpinfo.php",
+    "/info.php",
+    "/settings.php",
+    "/admin/phpinfo.php",
+    # framework profilers
+    "/_profiler",
+    "/profiler/phpinfo",
+    "/_profiler/open",
+    # infra / IaC manifests
+    "/docker-compose.yml",
+    "/docker-compose.prod.yml",
+    "/backend/docker-compose.yml",
+    "/Dockerfile",
+    "/kubernetes.yaml",
+    "/k8s.yml",
+    "/deploy/terraform.tfvars",
+    # compressed dumps / archives
+    "/backup.sql.gz",
+    "/backup.tar.gz",
+    "/backup.tar.bz2",
+    "/backup.zip",
+    "/www.zip",
 ]
 
 
