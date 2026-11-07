@@ -1,0 +1,316 @@
+// ============================================================
+// VARify — Prisma Schema
+// MySQL 8.0 | NestJS backend
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum SubscriptionTier {
+  FREE
+  PLUS
+  PREMIUM
+}
+
+// ─── Auth & Users ─────────────────────────────────────────────────────────────
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String?  // null for OAuth users
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile             Profile?
+  matchSubscriptions  MatchSubscription[]
+  favoriteTeams       FavoriteTeam[]
+
+  @@map("users")
+}
+
+model Profile {
+  id                     Int               @id @default(autoincrement())
+  userId                 Int               @unique
+  tier                   SubscriptionTier  @default(FREE)
+  stripeCustomerId       String?           @db.VarChar(255)
+  stripeSubscriptionId   String?           @db.VarChar(255)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ─── Leagues & Teams ──────────────────────────────────────────────────────────
+
+model League {
+  id      Int    @id @default(autoincrement())
+  apiId   String @unique @db.VarChar(100)   // SportAPI unique-tournament ID (string!)
+  name    String @db.VarChar(255)
+  country String? @db.VarChar(100)
+
+  liveMatches     LiveMatch[]
+  upcomingMatches UpcomingMatch[]
+  standings       LeagueStandings[]
+
+  @@map("leagues")
+}
+
+model Team {
+  id    Int    @id @default(autoincrement())
+  apiId Int    @unique
+  name  String @db.VarChar(255)
+
+  homeLiveMatches       LiveMatch[]       @relation("HomeLiveMatches")
+  awayLiveMatches       LiveMatch[]       @relation("AwayLiveMatches")
+  homeUpcomingMatches   UpcomingMatch[]   @relation("HomeUpcomingMatches")
+  awayUpcomingMatches   UpcomingMatch[]   @relation("AwayUpcomingMatches")
+  players               Player[]
+  standings             LeagueStandings[]
+  favoritedBy           FavoriteTeam[]
+
+  @@map("teams")
+}
+
+// ─── Matches ──────────────────────────────────────────────────────────────────
+
+model LiveMatch {
+  id          Int      @id @default(autoincrement())
+  apiId       Int      @unique
+  leagueId    Int?
+  homeTeamId  Int?
+  awayTeamId  Int?
+  countryName String?  @db.VarChar(100)
+
+  homeScore Int    @default(0)
+  awayScore Int    @default(0)
+  status    String @db.VarChar(50)
+  minute    Int    @default(0)
+  matchTime String? @db.VarChar(20)  // period start unix timestamp (for JS calc)
+
+  homeFormation String? @db.VarChar(20)
+  awayFormation String? @db.VarChar(20)
+  statsJson     Json?
+
+  matchDate    DateTime? @db.Date
+  isTop        Boolean   @default(false)
+  updatedAt    DateTime  @updatedAt
+
+  // Push notification tracking
+  notifiedEventIds  Json    @default("[]")
+  lastNotifiedScore String  @default("0:0") @db.VarChar(10)
+  hasIncidentData   Boolean @default(true)
+
+  league   League? @relation(fields: [leagueId], references: [id])
+  homeTeam Team?   @relation("HomeLiveMatches", fields: [homeTeamId], references: [id])
+  awayTeam Team?   @relation("AwayLiveMatches", fields: [awayTeamId], references: [id])
+
+  events         MatchEvent[]
+  lineups        MatchLineup[]
+  missingPlayers MissingPlayer[]
+  subscriptions  MatchSubscription[]
+
+  @@map("live_matches")
+}
+
+model UpcomingMatch {
+  id            Int       @id @default(autoincrement())
+  apiId         Int       @unique
+  homeTeamId    Int?
+  awayTeamId    Int?
+  leagueId      Int?
+  startDatetime DateTime?
+  isTop         Boolean   @default(false)
+  updatedAt     DateTime  @updatedAt
+
+  league   League? @relation(fields: [leagueId], references: [id])
+  homeTeam Team?   @relation("HomeUpcomingMatches", fields: [homeTeamId], references: [id])
+  awayTeam Team?   @relation("AwayUpcomingMatches", fields: [awayTeamId], references: [id])
+
+  @@map("upcoming_matches")
+}
+
+// ─── Match Events ─────────────────────────────────────────────────────────────
+
+model MatchEvent {
+  id      Int @id @default(autoincrement())
+  matchId Int
+
+  incidentType  String  @db.VarChar(50)
+  eventId       String  @db.VarChar(50)   // SportAPI incident ID
+  time          Int     @default(0)
+  addedTime     Int     @default(0)
+  isHome        Boolean @default(true)
+
+  // Goal fields
+  playerName       String? @db.VarChar(100)
+  assistPlayerName String? @db.VarChar(100)
+  assist2PlayerName String? @db.VarChar(100)
+  homeScore        Int?
+  awayScore        Int?
+  incidentClass    String? @db.VarChar(50)  // regular / ownGoal / penalty
+
+  // Card fields
+  reason     String? @db.VarChar(100)
+  rescinded  Boolean @default(false)
+
+  // Substitution fields
+  playerInName  String? @db.VarChar(100)
+  playerOutName String? @db.VarChar(100)
+  injury        Boolean @default(false)
+
+  // Period fields
+  text   String? @db.VarChar(100)
+  isLive Boolean @default(false)
+
+  // InjuryTime
+  injuryTimeLength Int?
+
+  // VAR / InGamePenalty
+  confirmed Boolean?
+
+  match LiveMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, eventId])
+  @@index([matchId, time])
+  @@map("match_events")
+}
+
+// ─── Lineups ──────────────────────────────────────────────────────────────────
+
+model MatchLineup {
+  id           Int     @id @default(autoincrement())
+  matchId      Int
+  playerName   String  @db.VarChar(100)
+  playerApiId  Int?
+  shirtNumber  Int?
+  position     String? @db.VarChar(50)   // G / D / M / F
+  isHomeTeam   Boolean @default(true)
+  isStartingXi Boolean @default(true)
+  isCaptain    Boolean @default(false)
+  avgRating    String? @db.VarChar(10)
+
+  match LiveMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerName, isHomeTeam])
+  @@map("match_lineups")
+}
+
+model MissingPlayer {
+  id         Int     @id @default(autoincrement())
+  matchId    Int
+  playerName String  @db.VarChar(100)
+  type       String  @db.VarChar(50)  // missing / doubtful
+  reason     String? @db.VarChar(255)
+  isHomeTeam Boolean @default(true)
+
+  match LiveMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@map("missing_players")
+}
+
+// ─── Notifications & Subscriptions ───────────────────────────────────────────
+
+model MatchSubscription {
+  id         Int      @id @default(autoincrement())
+  matchId    Int
+  userId     Int?
+  sessionKey String?  @db.VarChar(100)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  match LiveMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // FIX BUG #4: added composite index for _is_match_of_interest query
+  @@index([matchId, isActive])
+  @@map("match_subscriptions")
+}
+
+model FavoriteTeam {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  teamId    Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@index([teamId, isActive])
+  @@map("favorite_teams")
+}
+
+// ─── Players ──────────────────────────────────────────────────────────────────
+
+model Player {
+  id             Int      @id @default(autoincrement())
+  apiId          Int      @unique
+  name           String   @db.VarChar(255)
+  firstName      String?  @db.VarChar(100)
+  lastName       String?  @db.VarChar(100)
+  teamId         Int?
+  position       String?  @db.VarChar(50)
+  jerseyNumber   Int?
+  nationality    String?  @db.VarChar(50)
+  dateOfBirth    DateTime? @db.Date
+  height         Int?
+  weight         Int?
+  imageUrl       String?  @db.VarChar(500)
+  preferredFoot  String?  @db.VarChar(50)
+  marketValue    BigInt?
+  contractUntil  DateTime? @db.Date
+  retired        Boolean  @default(false)
+
+  team Team? @relation(fields: [teamId], references: [id])
+
+  @@map("players")
+}
+
+// ─── Standings ────────────────────────────────────────────────────────────────
+
+model LeagueStandings {
+  id             Int      @id @default(autoincrement())
+  leagueId       Int
+  teamId         Int
+  position       Int
+  points         Int
+  matchesPlayed  Int
+  matchesWon     Int
+  matchesDrawn   Int
+  matchesLost    Int
+  goalsFor       Int
+  goalsAgainst   Int
+  goalDifference Int
+  updatedAt      DateTime @updatedAt
+
+  league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("league_standings")
+}
+
+// ─── Image Cache ──────────────────────────────────────────────────────────────
+
+model CachedImage {
+  id          Int      @id @default(autoincrement())
+  entityType  String   @db.VarChar(20)  // "team" | "player"
+  apiId       Int
+  content     Bytes
+  contentType String   @default("image/jpeg") @db.VarChar(100)
+  createdAt   DateTime @default(now())
+
+  @@unique([entityType, apiId])
+  @@map("cached_images")
+}
