@@ -393,7 +393,7 @@ input:checked+.slider:before {
 
 .empty-state i {
     font-size: 2.5rem;
-    margin-bottom: 15px;
+    margin: 0 auto 15px; /* FontAwesome 7 nadaje ikonie stałą szerokość — bez auto ląduje po lewej */
     display: block;
     color: #444;
 }
