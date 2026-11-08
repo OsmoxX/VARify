@@ -1,17 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SportApiService } from '../sport-api/sport-api.service.js';
+import { EntitiesService, isForeignKeyViolation } from '../entities/entities.service.js';
+import { LockService } from '../common/lock/lock.service.js';
 import { MatchesGateway } from './matches.gateway.js';
-import { LiveMatch, Prisma } from '@prisma/client';
+import { MATCH_INCLUDE } from './match-dto.js';
+import { mapIncident } from './domain/incident-mapper.js';
+import { type Json, arr, bool, num, obj, str } from '../common/utils/json.js';
+import { unixToDate } from '../common/utils/timezone.js';
 
-type ApiEvent = Record<string, unknown>;
+/** Fragmenty statusu świadczące, że mecz jest "w trakcie" (Django: regex w sync_live_matches). */
+const LIVE_STATUS_WORDS = [
+  'half',
+  'extra',
+  'awaiting',
+  'penalt',
+  'break',
+  'live',
+  'progress',
+  'period',
+  'paused',
+  'interval',
+];
+const ENDED_LIST = [...SportApiService.ENDED_STATUSES];
 
-/**
- * MatchesService
- *
- * Odpowiednik Django: matches/services/match_service.py
- * Zawiera poprawki logiczne (BUG #1, #2, #3).
- */
+export interface LiveFilters {
+  league?: string;
+  top?: boolean;
+  search?: string;
+}
+
 @Injectable()
 export class MatchesService {
   private readonly logger = new Logger(MatchesService.name);
@@ -20,114 +39,18 @@ export class MatchesService {
     private readonly prisma: PrismaService,
     private readonly sportApi: SportApiService,
     private readonly gateway: MatchesGateway,
+    private readonly entities: EntitiesService,
+    private readonly lock: LockService,
   ) {}
-
-  // ===========================================================================
-  //  INCIDENT MAPPERS  (odpowiednik Django _map_* functions)
-  // ===========================================================================
-
-  private safeNested(
-    data: ApiEvent,
-    ...keys: string[]
-  ): unknown {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cur: any = data;
-    for (const key of keys) {
-      if (cur == null || typeof cur !== 'object') return null;
-      cur = cur[key];
-    }
-    return cur ?? null;
-  }
-
-  private mapIncident(item: ApiEvent): Prisma.MatchEventCreateInput & { matchId?: number } {
-    const iType = (item['incidentType'] as string) ?? '';
-    const base = {
-      incidentType: iType,
-      eventId: String(item['id'] ?? ''),
-      time: (item['time'] as number) ?? 0,
-      addedTime: (item['addedTime'] as number) ?? 0,
-      isHome: item['isHome'] !== false,
-      match: { connect: { id: 0 } }, // placeholder, overridden in caller
-    };
-
-    switch (iType) {
-      case 'goal': {
-        const player = this.safeNested(item, 'player', 'name') as string | null;
-        return {
-          ...base,
-          playerName: player ?? (item['playerName'] as string) ?? '',
-          assistPlayerName:
-            (this.safeNested(item, 'assist1', 'name') as string | null) ??
-            (item['assist1Name'] as string | null),
-          assist2PlayerName:
-            (this.safeNested(item, 'assist2', 'name') as string | null) ??
-            (item['assist2Name'] as string | null),
-          homeScore: item['homeScore'] as number | null,
-          awayScore: item['awayScore'] as number | null,
-          incidentClass: item['incidentClass'] as string | null,
-        };
-      }
-      case 'card':
-        return {
-          ...base,
-          playerName:
-            (this.safeNested(item, 'player', 'name') as string | null) ??
-            (item['playerName'] as string) ?? '',
-          incidentClass: item['incidentClass'] as string | null,
-          reason: item['reason'] as string | null,
-          rescinded: (item['rescinded'] as boolean) ?? false,
-        };
-      case 'substitution': {
-        const pIn = (item['playerIn'] as ApiEvent) ?? {};
-        const pOut = (item['playerOut'] as ApiEvent) ?? {};
-        return {
-          ...base,
-          playerInName:
-            (pIn['name'] as string | null) ??
-            (item['playerNameIn'] as string) ?? '',
-          playerOutName:
-            (pOut['name'] as string | null) ??
-            (item['playerNameOut'] as string) ?? '',
-          playerName:
-            (pIn['name'] as string | null) ??
-            (item['playerNameIn'] as string) ?? '',
-          injury: (item['injury'] as boolean) ?? false,
-        };
-      }
-      case 'period':
-        return {
-          ...base,
-          text: item['text'] as string | null,
-          homeScore: item['homeScore'] as number | null,
-          awayScore: item['awayScore'] as number | null,
-          isLive: (item['isLive'] as boolean) ?? false,
-        };
-      case 'injuryTime':
-        return { ...base, injuryTimeLength: item['length'] as number | null };
-      case 'varDecision':
-      case 'inGamePenalty':
-        return {
-          ...base,
-          playerName:
-            (this.safeNested(item, 'player', 'name') as string | null) ??
-            (item['playerName'] as string) ?? '',
-          incidentClass: item['incidentClass'] as string | null,
-          reason: item['reason'] as string | null,
-          confirmed: item['confirmed'] as boolean | null,
-        };
-      default:
-        return base;
-    }
-  }
 
   // ===========================================================================
   //  SYNC LIVE MATCHES
   // ===========================================================================
 
   /**
-   * Synchronizuje mecze live z API → DB.
-   * Zwraca listę api_id meczów, w których nastąpiła zmiana.
-   * Odpowiednik Django sync_live_matches() — z FIX BUG #3 (timezone).
+   * Synchronizuje mecze live API → DB. Zwraca api_id meczów ze zmianą wyniku/statusu
+   * (te trafiają do kolejki powiadomień). Pomija sync całkowicie, gdy API zawiedzie —
+   * wtedy NIE kończymy "zaginionych" meczów (inaczej awaria API zamknęłaby wszystkie).
    */
   async syncLiveMatches(): Promise<number[]> {
     const data = await this.sportApi.fetchLiveMatches();
@@ -136,372 +59,355 @@ export class MatchesService {
       return [];
     }
 
-    const changedApiIds: number[] = [];
+    const events = arr(data['events']);
+    const changed: number[] = [];
+    const liveIds = new Set<number>();
 
-    for (const event of data['events'] as ApiEvent[]) {
+    for (const event of events) {
+      const id = num(event['id']);
+      if (id !== null) liveIds.add(id);
       try {
-        const changedId = await this.upsertMatch(event);
-        if (changedId !== null) changedApiIds.push(changedId);
+        let changedId: number | null;
+        try {
+          changedId = await this.upsertMatch(event);
+        } catch (err) {
+          // Liga/drużyna usunięta z bazy spod cache'u ID → wyczyść cache i spróbuj raz jeszcze.
+          if (!isForeignKeyViolation(err)) throw err;
+          this.entities.clearCache();
+          changedId = await this.upsertMatch(event);
+        }
+        if (changedId !== null) changed.push(changedId);
       } catch (err) {
-        this.logger.error(
-          `Error processing event ${event['id']}: ${String(err)}`,
-        );
+        this.logger.error(`Error processing event ${id ?? '?'}: ${String(err)}`);
       }
     }
 
+    const ended = await this.endStaleMatches(liveIds);
+    for (const id of ended) if (!changed.includes(id)) changed.push(id);
+
     this.logger.log(
-      `syncLiveMatches: processed ${(data['events'] as ApiEvent[]).length} events, ${changedApiIds.length} changed`,
+      `syncLiveMatches: ${events.length} events, ${changed.length} changed, ${ended.length} auto-ended`,
     );
-    return changedApiIds;
+    return changed;
   }
 
-  /**
-   * Upsert jednego meczu z API do DB.
-   * Zwraca api_id jeśli wynik/status się zmienił, null w przeciwnym razie.
-   * FIX BUG #3: timestamp → Date używa UTC (bez hardkodowanego +2h).
-   */
-  private async upsertMatch(event: ApiEvent): Promise<number | null> {
-    const leagueData = event['tournament'] as ApiEvent;
-    const uniqueTournament = (leagueData['uniqueTournament'] as ApiEvent) ?? {};
-    const leagueApiId = String(
-      uniqueTournament['id'] ?? (leagueData['id'] as number),
-    );
-    const leagueName =
-      (uniqueTournament['name'] as string) ?? (leagueData['name'] as string);
-    const category = (leagueData['category'] as ApiEvent) ?? {};
-    const countryName = (category['name'] as string) ?? 'Other';
+  private async upsertMatch(event: Json): Promise<number | null> {
+    const apiId = num(event['id']);
+    const tournament = obj(event['tournament']);
+    const unique = obj(tournament['uniqueTournament']);
+    const leagueApiId = str(unique['id']) ?? str(tournament['id']);
+    const home = obj(event['homeTeam']);
+    const away = obj(event['awayTeam']);
+    const homeApiId = num(home['id']);
+    const awayApiId = num(away['id']);
+    if (apiId === null || !leagueApiId || homeApiId === null || awayApiId === null) {
+      throw new Error('malformed event (missing id/tournament/teams)');
+    }
 
-    // Upsert League
-    const league = await this.prisma.league.upsert({
-      where: { apiId: leagueApiId },
-      create: { apiId: leagueApiId, name: leagueName, country: countryName },
-      update: { name: leagueName, country: countryName },
-    });
+    const leagueName = str(unique['name']) ?? str(tournament['name']) ?? 'Unknown league';
+    const countryName = str(obj(tournament['category'])['name']) ?? 'Other';
 
-    const homeData = event['homeTeam'] as ApiEvent;
-    const awayData = event['awayTeam'] as ApiEvent;
+    const [leagueId, homeTeamId, awayTeamId] = await Promise.all([
+      this.entities.ensureLeague(leagueApiId, leagueName, countryName),
+      this.entities.ensureTeam(homeApiId, str(home['name']) ?? 'Home'),
+      this.entities.ensureTeam(awayApiId, str(away['name']) ?? 'Away'),
+    ]);
 
-    // Upsert Teams
-    const homeTeam = await this.prisma.team.upsert({
-      where: { apiId: homeData['id'] as number },
-      create: { apiId: homeData['id'] as number, name: homeData['name'] as string },
-      update: { name: homeData['name'] as string },
-    });
-    const awayTeam = await this.prisma.team.upsert({
-      where: { apiId: awayData['id'] as number },
-      create: { apiId: awayData['id'] as number, name: awayData['name'] as string },
-      update: { name: awayData['name'] as string },
-    });
+    const status = str(obj(event['status'])['description']) ?? '';
+    // startTimestamp to Unix UTC — zapisujemy 1:1 (Django dodawało na sztywno +2h).
+    const startDatetime = unixToDate(event['startTimestamp']);
 
-    const statusData = (event['status'] as ApiEvent) ?? {};
-    const statusDesc = (statusData['description'] as string) ?? '';
-    const startTs = event['startTimestamp'] as number | null;
+    const time = obj(event['time']);
+    const periodStart = num(time['currentPeriodStartTimestamp']);
+    const initialMin = Math.floor((num(time['initial']) ?? 0) / 60);
 
-    // FIX BUG #3: UTC timestamp → Date (bez hardkodowanego +2h)
-    const matchDate = startTs ? new Date(startTs * 1000) : null;
+    const homeScore = num(obj(event['homeScore'])['current']) ?? 0;
+    const awayScore = num(obj(event['awayScore'])['current']) ?? 0;
 
-    const timeData =
-      typeof event['time'] === 'object' && event['time'] !== null
-        ? (event['time'] as ApiEvent)
-        : {};
-
-    const periodStartTs = timeData['currentPeriodStartTimestamp'] as
-      | number
-      | null;
-    const initialMin =
-      Math.floor(((timeData['initial'] as number) ?? 0) / 60);
-
-    const matchTime = periodStartTs ? String(periodStartTs) : null;
-    const minute = periodStartTs ? initialMin : 0;
-
-    const homeScore =
-      ((event['homeScore'] as ApiEvent)?.['current'] as number) ?? 0;
-    const awayScore =
-      ((event['awayScore'] as ApiEvent)?.['current'] as number) ?? 0;
-    const isTop = SportApiService.TOP_LEAGUE_IDS.has(leagueApiId);
-
-    // Check for existing match to detect changes
     const existing = await this.prisma.liveMatch.findUnique({
-      where: { apiId: event['id'] as number },
+      where: { apiId },
+      select: { homeScore: true, awayScore: true, status: true },
     });
 
-    const scoreChanged = existing
-      ? existing.homeScore < homeScore || existing.awayScore < awayScore
-      : false;
-    const statusChanged = existing
-      ? existing.status !== statusDesc && !!statusDesc
-      : false;
+    const homeUp = !!existing && homeScore > existing.homeScore;
+    const awayUp = !!existing && awayScore > existing.awayScore;
+    const scoreChanged = homeUp || awayUp;
+    const scoreDiffers =
+      !!existing && (homeScore !== existing.homeScore || awayScore !== existing.awayScore);
+    const newlyLive =
+      !existing &&
+      !!status &&
+      !SportApiService.isNotStartedStatus(status) &&
+      !SportApiService.isEndedStatus(status);
+    const statusChanged = (!!existing && !!status && existing.status !== status) || newlyLive;
 
-    // WebSocket: score update
-    if (existing && scoreChanged) {
-      this.gateway.broadcastScoreUpdate(event['id'] as number, {
-        homeScore,
-        awayScore,
-        status: statusDesc,
-      });
-    }
-
-    // WebSocket: status update
-    if (existing && statusChanged && !scoreChanged) {
-      this.gateway.broadcastStatusUpdate(event['id'] as number, {
-        status: statusDesc,
-      });
-    }
-
-    const matchData = {
-      leagueId: league.id,
-      homeTeamId: homeTeam.id,
-      awayTeamId: awayTeam.id,
+    const data = {
+      leagueId,
+      homeTeamId,
+      awayTeamId,
       homeScore,
       awayScore,
-      status: statusDesc,
-      minute,
-      matchTime,
-      matchDate,
-      countryName,
-      isTop,
+      status: status.slice(0, 50),
+      minute: periodStart ? initialMin : 0,
+      matchTime: periodStart ? String(periodStart) : null,
+      startDatetime,
+      matchDate: startDatetime ? new Date(startDatetime.toISOString().slice(0, 10)) : null,
+      countryName: countryName.slice(0, 100),
+      isTop: SportApiService.isTopLeague(leagueApiId),
     };
 
     await this.prisma.liveMatch.upsert({
-      where: { apiId: event['id'] as number },
-      create: { apiId: event['id'] as number, ...matchData },
-      update: matchData,
+      where: { apiId },
+      create: { apiId, ...data },
+      update: data,
     });
 
-    if (scoreChanged || statusChanged) {
-      return event['id'] as number;
+    // Broadcast PO zapisie — klient, który odświeży REST po evencie, zobaczy spójny stan.
+    if (scoreDiffers) {
+      this.gateway.broadcastScoreUpdate(apiId, {
+        homeScore,
+        awayScore,
+        status,
+        goal: scoreChanged,
+        scoringSide: homeUp && !awayUp ? 'home' : awayUp && !homeUp ? 'away' : null,
+      });
     }
-    return null;
+    if (statusChanged && !scoreDiffers) {
+      this.gateway.broadcastStatusUpdate(apiId, { status });
+    }
+
+    return scoreChanged || statusChanged ? apiId : null;
+  }
+
+  /** Mecze "w trakcie", których nie ma już w feedzie live → Ended (+ broadcast). */
+  private async endStaleMatches(liveIds: Set<number>): Promise<number[]> {
+    const stale = await this.prisma.liveMatch.findMany({
+      where: {
+        apiId: { notIn: [...liveIds] },
+        OR: LIVE_STATUS_WORDS.map((w) => ({ status: { contains: w } })),
+        NOT: { status: { in: ENDED_LIST } },
+      },
+      select: { id: true, apiId: true },
+    });
+    for (const m of stale) {
+      await this.prisma.liveMatch.update({ where: { id: m.id }, data: { status: 'Ended' } });
+      this.gateway.broadcastStatusUpdate(m.apiId, { status: 'Ended' });
+    }
+    return stale.map((m) => m.apiId);
   }
 
   // ===========================================================================
-  //  FETCH MATCH DETAILS (lineups, events, stats)
+  //  FETCH MATCH DETAILS (stan, zdarzenia, składy, statystyki)
   // ===========================================================================
 
   /**
-   * Pobiera szczegóły meczu z API: zdarzenia, składy, statystyki.
-   * FIX BUG #2: Ta metoda jest wywoływana przez job kolejkowy (BullMQ),
-   * NIE blokuje worker HTTP.
+   * Jak fetchMatchDetails, ale z blokadą 60 s per mecz (Django cache.add) — chroni limit API
+   * przy wielu wejściach na stronę meczu. Zwraca false, gdy pobranie pominięto.
    */
-  async fetchMatchDetails(
-    localMatchId: number,
-    apiMatchId: number,
-  ): Promise<void> {
-    this.logger.log(
-      `fetchMatchDetails: local=${localMatchId} api=${apiMatchId}`,
-    );
+  async fetchMatchDetailsThrottled(localId: number, apiId: number): Promise<boolean> {
+    const token = await this.lock.acquire(`match-details:${apiId}`, 60_000);
+    if (!token) return false; // celowo bez release — TTL działa jak throttle
+    await this.fetchMatchDetails(localId, apiId);
+    return true;
+  }
 
-    const [incidentsData, lineupData] = await Promise.all([
-      this.sportApi.fetchIncidents(apiMatchId),
-      this.sportApi.fetchLineups(apiMatchId),
+  async fetchMatchDetails(localId: number, apiId: number): Promise<void> {
+    const match = await this.prisma.liveMatch.findUnique({
+      where: { id: localId },
+      include: { league: true },
+    });
+    if (!match) return;
+
+    await this.refreshMatchState(match.id, apiId);
+
+    // Niszowe ligi: pomijamy incydenty/składy/statystyki (oszczędność limitu API).
+    if (!SportApiService.isTopLeague(match.league?.apiId)) return;
+
+    const [[incidents], lineups, stats] = await Promise.all([
+      this.sportApi.fetchIncidents(apiId),
+      this.sportApi.fetchLineups(apiId),
+      this.sportApi.fetchStatistics(apiId),
     ]);
 
-    const [incidents, hasIncidentData] = incidentsData;
-
-    // Blacklist — mecz bez danych incydentów
-    if (!hasIncidentData) {
+    await this.saveIncidents(match.id, incidents);
+    if (lineups) await this.saveLineups(match.id, lineups);
+    if (stats && stats.length > 0) {
       await this.prisma.liveMatch.update({
-        where: { id: localMatchId },
-        data: { hasIncidentData: false },
+        where: { id: match.id },
+        data: { statsJson: stats as unknown as Prisma.InputJsonValue },
       });
-      return;
-    }
-
-    // Save events
-    if (incidents.length > 0) {
-      await this.saveIncidents(localMatchId, incidents);
-    }
-
-    // Save lineups
-    if (lineupData) {
-      await this.saveLineups(localMatchId, lineupData);
     }
   }
 
-  private async saveIncidents(
-    matchId: number,
-    incidents: ApiEvent[],
-  ): Promise<void> {
-    for (const item of incidents) {
-      try {
-        const mapped = this.mapIncident(item);
-        const { match: _m, matchId: _mid, ...data } = mapped as Record<string, unknown>;
+  /** Odświeża wynik/status/minutę z /event/{id}. */
+  private async refreshMatchState(localId: number, apiId: number): Promise<void> {
+    const ev = await this.sportApi.fetchMatchDetail(apiId);
+    if (!ev || Object.keys(ev).length === 0) return;
 
-        await this.prisma.matchEvent.upsert({
-          where: {
-            matchId_eventId: {
-              matchId,
-              eventId: data['eventId'] as string,
-            },
-          },
-          create: {
-            ...(data as Prisma.MatchEventUncheckedCreateInput),
-            matchId,
-          },
-          update: data as Prisma.MatchEventUncheckedUpdateInput,
-        });
-      } catch (err) {
-        this.logger.warn(`saveIncidents skip item ${item['id']}: ${String(err)}`);
+    const time = obj(ev['time']);
+    const periodStart = num(time['currentPeriodStartTimestamp']);
+    const initialMin = Math.floor((num(time['initial']) ?? 0) / 60);
+    const status = str(obj(ev['status'])['description']);
+    const homeScore = num(obj(ev['homeScore'])['current']);
+    const awayScore = num(obj(ev['awayScore'])['current']);
+
+    const data: Prisma.LiveMatchUpdateInput = {};
+    if (periodStart) {
+      data.matchTime = String(periodStart);
+      data.minute = initialMin;
+    } else {
+      const exact = num(time['current']) ?? num(time['played']) ?? 0;
+      if (exact > 0) {
+        data.minute = exact;
+        data.matchTime = null;
       }
     }
+    if (status) data.status = status.slice(0, 50);
+    if (homeScore !== null) data.homeScore = homeScore;
+    if (awayScore !== null) data.awayScore = awayScore;
+    if (Object.keys(data).length > 0) {
+      await this.prisma.liveMatch.update({ where: { id: localId }, data });
+    }
   }
 
-  private async saveLineups(
-    matchId: number,
-    lineupData: ApiEvent,
-  ): Promise<void> {
-    const sides = [
-      { key: 'home', isHomeTeam: true },
-      { key: 'away', isHomeTeam: false },
-    ];
+  private async saveIncidents(matchId: number, incidents: Json[]): Promise<void> {
+    const CHUNK = 10;
+    for (let i = 0; i < incidents.length; i += CHUNK) {
+      await Promise.all(
+        incidents.slice(i, i + CHUNK).map(async (item) => {
+          try {
+            const mapped = mapIncident(item);
+            await this.prisma.matchEvent.upsert({
+              where: { matchId_eventId: { matchId, eventId: mapped.eventId } },
+              create: { ...mapped, matchId },
+              update: mapped,
+            });
+          } catch (err) {
+            this.logger.warn(`saveIncidents skip ${str(item['id']) ?? '?'}: ${String(err)}`);
+          }
+        }),
+      );
+    }
+  }
 
-    for (const { key, isHomeTeam } of sides) {
-      const side = lineupData[key] as ApiEvent | null;
-      if (!side) continue;
+  private async saveLineups(matchId: number, lineupData: Json): Promise<void> {
+    for (const [key, isHomeTeam] of [
+      ['home', true],
+      ['away', false],
+    ] as const) {
+      const side = obj(lineupData[key]);
+      if (Object.keys(side).length === 0) continue;
 
-      const players = (side['players'] as ApiEvent[]) ?? [];
-      const formation = (side['formation'] as string) ?? null;
-
-      // Update formation on match
+      const formation = str(side['formation']);
       if (formation) {
-        const updateData = isHomeTeam
-          ? { homeFormation: formation }
-          : { awayFormation: formation };
         await this.prisma.liveMatch.update({
           where: { id: matchId },
-          data: updateData,
+          data: isHomeTeam
+            ? { homeFormation: formation.slice(0, 20) }
+            : { awayFormation: formation.slice(0, 20) },
         });
       }
 
-      for (const p of players) {
-        const playerData = (p['player'] as ApiEvent) ?? {};
-        const playerName = (playerData['name'] as string) ?? 'Unknown';
-
+      for (const p of arr(side['players'])) {
+        const info = obj(p['player']);
+        const playerName = (str(info['name']) ?? 'Unknown').slice(0, 100);
+        const position = str(info['position']);
+        const substitute = (bool(p['substitute']) ?? false) || position === 'S';
+        const fields = {
+          playerApiId: num(info['id']),
+          shirtNumber: num(info['jerseyNumber']) ?? num(p['shirtNumber']),
+          position: position ? position.slice(0, 50) : null,
+          isStartingXi: !substitute,
+          isCaptain: bool(p['captain']) ?? false,
+          avgRating: str(obj(p['statistics'])['rating'])?.slice(0, 10) ?? null,
+        };
         try {
           await this.prisma.matchLineup.upsert({
-            where: {
-              matchId_playerName_isHomeTeam: {
-                matchId,
-                playerName,
-                isHomeTeam,
-              },
-            },
-            create: {
-              matchId,
-              playerName,
-              isHomeTeam,
-              playerApiId: playerData['id'] as number | null,
-              shirtNumber: p['shirtNumber'] as number | null,
-              position: p['position'] as string | null,
-              isStartingXi: (p['substitute'] as boolean) !== true,
-              isCaptain: (p['captain'] as boolean) ?? false,
-              avgRating: p['avgRating'] != null
-                ? String(p['avgRating'])
-                : null,
-            },
-            update: {
-              shirtNumber: p['shirtNumber'] as number | null,
-              isStartingXi: (p['substitute'] as boolean) !== true,
-              isCaptain: (p['captain'] as boolean) ?? false,
-              avgRating: p['avgRating'] != null
-                ? String(p['avgRating'])
-                : null,
-            },
+            where: { matchId_playerName_isHomeTeam: { matchId, playerName, isHomeTeam } },
+            create: { matchId, playerName, isHomeTeam, ...fields },
+            update: fields,
           });
         } catch (err) {
           this.logger.warn(`saveLineups skip ${playerName}: ${String(err)}`);
         }
       }
 
-      // Missing players
-      const missing = (side['missingPlayers'] as ApiEvent[]) ?? [];
-      for (const mp of missing) {
-        const playerData = (mp['player'] as ApiEvent) ?? {};
+      for (const mp of arr(side['missingPlayers'])) {
+        const name = str(obj(mp['player'])['name']);
+        if (!name) continue;
+        const playerName = name.slice(0, 100);
+        const fields = {
+          type: (str(mp['type']) ?? 'missing').slice(0, 50),
+          reason: str(mp['reason'])?.slice(0, 255) ?? null,
+        };
         try {
           await this.prisma.missingPlayer.upsert({
-            where: {
-              id: 0, // force create; use findFirst pattern below
-            },
-            create: {
-              matchId,
-              playerName: (playerData['name'] as string) ?? 'Unknown',
-              type: (mp['type'] as string) ?? 'missing',
-              reason: mp['reason'] as string | null,
-              isHomeTeam,
-            },
-            update: {},
-          }).catch(() => {
-            // If upsert fails (id=0), try create
-            return this.prisma.missingPlayer.create({
-              data: {
-                matchId,
-                playerName: (playerData['name'] as string) ?? 'Unknown',
-                type: (mp['type'] as string) ?? 'missing',
-                reason: mp['reason'] as string | null,
-                isHomeTeam,
-              },
-            });
+            where: { matchId_playerName_isHomeTeam: { matchId, playerName, isHomeTeam } },
+            create: { matchId, playerName, isHomeTeam, ...fields },
+            update: fields,
           });
-        } catch {
-          // ignore duplicates
+        } catch (err) {
+          this.logger.warn(`saveMissing skip ${playerName}: ${String(err)}`);
         }
       }
     }
   }
 
   // ===========================================================================
-  //  QUERIES (REST endpoints)
+  //  QUERIES
   // ===========================================================================
 
-  /**
-   * FIX BUG #1: zwraca mecze ze WSZYSTKICH statusów live, nie tylko "half".
-   */
-  async findAllLive() {
+  /** Mecze w trakcie (wszystkie statusy live — Django filtrowało tylko "half"). */
+  findAllLive(filters: LiveFilters = {}) {
+    const and: Prisma.LiveMatchWhereInput[] = [
+      { status: { notIn: ['', ...ENDED_LIST] } },
+      { NOT: { status: { startsWith: 'Not' } } },
+    ];
+    if (filters.league) and.push({ league: { apiId: filters.league } });
+    if (filters.top) and.push({ isTop: true });
+    if (filters.search) {
+      and.push({
+        OR: [
+          { homeTeam: { name: { contains: filters.search } } },
+          { awayTeam: { name: { contains: filters.search } } },
+          { league: { name: { contains: filters.search } } },
+        ],
+      });
+    }
     return this.prisma.liveMatch.findMany({
-      where: {
-        status: {
-          notIn: [...SportApiService.ENDED_STATUSES, 'Not started'],
-          not: { startsWith: 'Not' },
-        },
-      },
-      include: {
-        league: true,
-        homeTeam: true,
-        awayTeam: true,
-      },
+      where: { AND: and },
+      include: MATCH_INCLUDE,
       orderBy: [{ league: { name: 'asc' } }, { id: 'asc' }],
     });
   }
 
-  async findMatchById(id: number) {
+  findMatchById(id: number) {
     return this.prisma.liveMatch.findUnique({
       where: { id },
       include: {
-        league: true,
-        homeTeam: true,
-        awayTeam: true,
-        events: {
-          orderBy: [{ time: 'desc' }, { addedTime: 'desc' }, { id: 'desc' }],
-        },
+        ...MATCH_INCLUDE,
+        events: { orderBy: [{ time: 'desc' }, { addedTime: 'desc' }, { id: 'desc' }] },
         lineups: { orderBy: { shirtNumber: 'asc' } },
         missingPlayers: true,
       },
     });
   }
 
-  /** Zwraca listę api_id meczów, dla których ktoś ma aktywną subskrypcję */
-  async getSubscribedMatchApiIds(): Promise<number[]> {
-    const subscriptions = await this.prisma.matchSubscription.findMany({
-      where: { isActive: true },
-      select: { match: { select: { apiId: true } } },
-      distinct: ['matchId'],
+  /** Podzbiór podanych api_id, które nadal trwają (Django active_match_ids). */
+  async activeApiIds(ids: number[]): Promise<number[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.liveMatch.findMany({
+      where: { apiId: { in: ids }, status: { notIn: ['', ...ENDED_LIST] } },
+      select: { apiId: true },
     });
-    return subscriptions.map((s) => s.match.apiId);
+    return rows.map((r) => r.apiId);
   }
 
+  /** Czy ktokolwiek śledzi mecz (dzwoneczek lub ulubiona drużyna)? */
   async isMatchOfInterest(matchId: number): Promise<boolean> {
     const sub = await this.prisma.matchSubscription.findFirst({
       where: { matchId, isActive: true },
+      select: { id: true },
     });
     if (sub) return true;
 
@@ -509,14 +415,41 @@ export class MatchesService {
       where: { id: matchId },
       select: { homeTeamId: true, awayTeamId: true },
     });
-    if (!match) return false;
-
-    const teamIds = [match.homeTeamId, match.awayTeamId].filter(Boolean) as number[];
+    const teamIds = [match?.homeTeamId, match?.awayTeamId].filter(
+      (x): x is number => typeof x === 'number',
+    );
     if (teamIds.length === 0) return false;
-
     const fav = await this.prisma.favoriteTeam.findFirst({
       where: { teamId: { in: teamIds }, isActive: true },
+      select: { id: true },
     });
     return !!fav;
+  }
+
+  /**
+   * Odbiorcy powiadomień: subskrybenci dzwoneczka + fani drużyn, minus użytkownicy, którzy
+   * aktywnie wyciszyli mecz (subskrypcja z isActive=false).
+   */
+  async resolveRecipientUserIds(matchId: number, teamIds: number[]): Promise<number[]> {
+    const [subs, muted, fans] = await Promise.all([
+      this.prisma.matchSubscription.findMany({
+        where: { matchId, isActive: true, userId: { not: null } },
+        select: { userId: true },
+      }),
+      this.prisma.matchSubscription.findMany({
+        where: { matchId, isActive: false, userId: { not: null } },
+        select: { userId: true },
+      }),
+      teamIds.length
+        ? this.prisma.favoriteTeam.findMany({
+            where: { teamId: { in: teamIds }, isActive: true },
+            select: { userId: true },
+          })
+        : Promise.resolve([] as { userId: number }[]),
+    ]);
+    const mutedIds = new Set(muted.map((m) => m.userId as number));
+    const result = new Set<number>(subs.map((s) => s.userId as number));
+    for (const f of fans) if (!mutedIds.has(f.userId)) result.add(f.userId);
+    return [...result];
   }
 }

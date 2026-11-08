@@ -1,38 +1,56 @@
-import { Controller, Post, Delete, Param, UseGuards, Req, ParseIntPipe, Get } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, ParseIntPipe, Post, ServiceUnavailableException, UseGuards } from '@nestjs/common';
 import { NotificationsService } from './notifications.service.js';
+import { PushService } from './push.service.js';
 import { OptionalJwtGuard } from '../common/guards/optional-jwt.guard.js';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+import { CurrentUser, GuestId, type AuthUser } from '../common/decorators/current-user.decorator.js';
+import { PushSubscribeDto, PushUnsubscribeDto } from './dto.js';
 
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notifications: NotificationsService,
+    private readonly push: PushService,
+  ) {}
 
-  /**
-   * POST /api/notifications/matches/:matchId/toggle
-   * Odpowiednik Django toggle_notifications()
-   */
+  /** POST /api/notifications/matches/:matchId/toggle  (matchId = lokalne id meczu) */
   @Post('matches/:matchId/toggle')
+  @HttpCode(200)
   @UseGuards(OptionalJwtGuard)
-  async toggle(
+  toggle(
     @Param('matchId', ParseIntPipe) matchId: number,
-    @Req() req: { user?: { id: number }; sessionId?: string },
+    @CurrentUser() user: AuthUser | null,
+    @GuestId() guestId: string | null,
   ) {
-    const userId = req.user?.id ?? null;
-    const sessionKey = req.sessionId ?? null;
-    return this.notificationsService.toggleMatchSubscription(
-      matchId,
-      userId,
-      sessionKey,
-    );
+    return this.notifications.toggleMatchSubscription(matchId, user?.id ?? null, guestId);
   }
 
-  /** GET /api/notifications/subscribed — ID meczów z aktywną subskrypcją */
+  /** GET /api/notifications/subscribed */
   @Get('subscribed')
   @UseGuards(OptionalJwtGuard)
-  async getSubscribed(
-    @Req() req: { user?: { id: number }; sessionId?: string },
-  ) {
-    const userId = req.user?.id ?? null;
-    const sessionKey = req.sessionId ?? null;
-    return this.notificationsService.getSubscribedMatchIds(userId, sessionKey);
+  @Header('Cache-Control', 'no-store')
+  subscribed(@CurrentUser() user: AuthUser | null, @GuestId() guestId: string | null) {
+    return this.notifications.getSubscribed(user?.id ?? null, guestId);
+  }
+
+  @Get('push/public-key')
+  publicKey() {
+    const key = this.push.getPublicKey();
+    if (!key) throw new ServiceUnavailableException('Web Push is not configured');
+    return { publicKey: key };
+  }
+
+  @Post('push/subscribe')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard)
+  async subscribePush(@CurrentUser() user: AuthUser | null, @Body() dto: PushSubscribeDto) {
+    await this.push.subscribe(user!.id, dto.endpoint, dto.keys.p256dh, dto.keys.auth);
+  }
+
+  @Post('push/unsubscribe')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard)
+  async unsubscribePush(@CurrentUser() user: AuthUser | null, @Body() dto: PushUnsubscribeDto) {
+    await this.push.unsubscribe(user!.id, dto.endpoint);
   }
 }

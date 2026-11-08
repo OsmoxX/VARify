@@ -1,38 +1,26 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bull';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SportApiService } from '../sport-api/sport-api.service.js';
 import { MatchesGateway } from '../matches/matches.gateway.js';
 import { MatchesService } from '../matches/matches.service.js';
+import { PushService } from '../notifications/push.service.js';
+import { LockService } from '../common/lock/lock.service.js';
+import { currentMatchMinute } from '../matches/domain/match-minute.js';
+import { planNotifications } from '../matches/domain/push-planner.js';
+
+const MAX_REMEMBERED_IDS = 500;
 
 /**
- * PushNotifyProcessor — odpowiednik Celery push_tasks.py
+ * Odpowiednik Celery process_match_incidents_and_notify + send_match_event_notification.
+ * Wywoływany wyłącznie dla meczów, w których sync wykrył zmianę wyniku/statusu.
  *
- * Przetwarza incydenty meczu (gole, kartki, zmiany) i wysyła:
- *   1. WebSocket broadcast (MatchesGateway)
- *
- * FIX BUG #8: retry z exponential backoff (konfigurowane w SyncMatchesJob.queue.add)
+ * Kolejność: (1) ustal co jest nowe, (2) ZAPISZ stan (notifiedEventIds / lastNotifiedScore),
+ * (3) roześlij. Zapis przed wysyłką + blokada per mecz = brak duplikatów przy ponowieniu joba
+ * (cena: przy awarii w trakcie rozsyłania powiadomienie może zostać zgubione, nie zdublowane).
  */
-
-const EVENT_LABELS: Record<string, [string, string]> = {
-  'goal:regular': ['⚽', 'GOOOL!'],
-  'goal:ownGoal': ['⚽', 'Own goal!'],
-  'goal:penalty': ['⚽', 'Penalty goal!'],
-  'card:yellow': ['🟨', 'Yellow card!'],
-  'card:red': ['🟥', 'Red card!'],
-  'card:yellowRed': ['🟨🟥', 'Second yellow → red!'],
-  'varDecision:goalCancelled': ['❌', 'Goal cancelled (VAR)!'],
-  'varDecision:cardUpgrade': ['📺', 'Card upgraded (VAR)!'],
-  'varDecision:penaltyNotGiven': ['📺', 'Penalty overturned (VAR)!'],
-  'varDecision:penaltyGiven': ['🎯', 'Penalty awarded (VAR)!'],
-  'inGamePenalty:scored': ['🎯', 'Penalty - GOAL!'],
-  'inGamePenalty:missed': ['💨', 'Penalty missed!'],
-  'inGamePenalty:penaltyAwarded': ['🎯', 'Penalty awarded!'],
-};
-
-type ApiIncident = Record<string, unknown>;
-
 @Processor('push-notify')
 export class PushNotifyProcessor {
   private readonly logger = new Logger(PushNotifyProcessor.name);
@@ -41,89 +29,115 @@ export class PushNotifyProcessor {
     private readonly prisma: PrismaService,
     private readonly sportApi: SportApiService,
     private readonly gateway: MatchesGateway,
-    private readonly matchesService: MatchesService,
+    private readonly matches: MatchesService,
+    private readonly push: PushService,
+    private readonly lock: LockService,
+    private readonly config: ConfigService,
   ) {}
 
   @Process('process-incidents')
-  async handleProcessIncidents(job: Job<{ apiId: number }>) {
+  async handle(job: Job<{ apiId: number }>) {
     const { apiId } = job.data;
-    this.logger.log(`PushNotify: processing apiId=${apiId}`);
+    const key = `process-incidents:${apiId}`;
+    const token = await this.lock.acquire(key, 30_000);
+    if (!token) {
+      this.logger.debug(`match ${apiId}: another worker is processing — skip`);
+      return;
+    }
+    try {
+      await this.process(apiId);
+    } finally {
+      await this.lock.release(key, token);
+    }
+  }
 
+  private async process(apiId: number): Promise<void> {
     const match = await this.prisma.liveMatch.findUnique({
       where: { apiId },
-      include: { homeTeam: true, awayTeam: true },
+      include: { homeTeam: true, awayTeam: true, league: true },
     });
+    if (!match || !match.homeTeam || !match.awayTeam) return;
 
-    if (!match) {
-      this.logger.warn(`PushNotify: match apiId=${apiId} not found in DB`);
+    // Blacklista meczów bez danych incydentów (404/403/204 z API)
+    if (!match.hasIncidentData) return;
+
+    // Niszowe ligi — oszczędzamy limit API (wyłączalne: PUSH_ALL_LEAGUES=true)
+    if (
+      this.config.get<string>('PUSH_ALL_LEAGUES') !== 'true' &&
+      !SportApiService.isTopLeague(match.league?.apiId)
+    ) {
       return;
     }
 
-    // Skip blacklisted matches (no incident data)
-    if (!match.hasIncidentData) {
-      this.logger.debug(`PushNotify: match ${apiId} blacklisted, skipping`);
-      return;
-    }
-
-    // Skip if nobody is watching
-    const isInteresting = await this.matchesService.isMatchOfInterest(match.id);
-    if (!isInteresting) {
-      this.logger.debug(`PushNotify: match ${apiId} not of interest`);
-      return;
-    }
+    // Pre-flight: nikt nie obserwuje → zero zapytań do API
+    if (!(await this.matches.isMatchOfInterest(match.id))) return;
 
     const [incidents, hasData] = await this.sportApi.fetchIncidents(apiId);
-
     if (!hasData) {
-      await this.prisma.liveMatch.update({
-        where: { id: match.id },
-        data: { hasIncidentData: false },
-      });
+      await this.prisma.liveMatch.update({ where: { id: match.id }, data: { hasIncidentData: false } });
+      this.logger.log(`🚫 blacklisted match ${apiId} (no incident data)`);
       return;
     }
 
-    const notifiedIds = (match.notifiedEventIds as string[]) ?? [];
-    const newNotifiedIds = [...notifiedIds];
-    const homeName = match.homeTeam?.name ?? 'Home';
-    const awayName = match.awayTeam?.name ?? 'Away';
+    const stored = Array.isArray(match.notifiedEventIds)
+      ? (match.notifiedEventIds as unknown[]).filter((x): x is string => typeof x === 'string')
+      : [];
 
-    for (const inc of incidents as ApiIncident[]) {
-      const eventId = String(inc['id'] ?? '');
-      if (!eventId || notifiedIds.includes(eventId)) continue;
+    const plan = planNotifications({
+      homeName: match.homeTeam.name,
+      awayName: match.awayTeam.name,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+      status: match.status,
+      currentMinute: currentMatchMinute(match),
+      notifiedEventIds: stored,
+      lastNotifiedScore: match.lastNotifiedScore,
+      incidents,
+    });
 
-      const iType = inc['incidentType'] as string;
-      const iClass = inc['incidentClass'] as string | undefined;
-      const labelKey = iClass ? `${iType}:${iClass}` : iType;
-      const [icon, label] = EVENT_LABELS[labelKey] ?? ['ℹ️', 'Match event'];
-
-      const player = ((inc['player'] as Record<string, unknown>)?.['name'] as string) ?? '';
-      const minute = inc['time'] as number | undefined;
-      const isHome = inc['isHome'] !== false;
-      const teamName = isHome ? homeName : awayName;
-
-      let message = `${teamName}: ${label}`;
-      if (player) message += ` — ${player}`;
-      if (minute != null) message += ` (${minute}')`;
-
-      // WebSocket broadcast
-      this.gateway.broadcastMatchEvent(apiId, {
-        eventType: iType,
-        icon,
-        message,
-        homeScore: match.homeScore,
-        awayScore: match.awayScore,
-        status: match.status,
-      });
-
-      newNotifiedIds.push(eventId);
-    }
-
-    // Update notified event IDs
-    if (newNotifiedIds.length !== notifiedIds.length) {
+    if (plan.dirty) {
       await this.prisma.liveMatch.update({
         where: { id: match.id },
-        data: { notifiedEventIds: newNotifiedIds },
+        data: {
+          notifiedEventIds: [
+            ...stored.filter((id) => !plan.removedNotifiedIds.includes(id)),
+            ...plan.newNotifiedIds,
+          ].slice(-MAX_REMEMBERED_IDS),
+          lastNotifiedScore: plan.lastNotifiedScore,
+        },
       });
+    }
+    if (plan.notifications.length === 0) return;
+
+    const recipients = await this.matches.resolveRecipientUserIds(match.id, [
+      match.homeTeam.id,
+      match.awayTeam.id,
+    ]);
+    const base = (this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000').split(',')[0]!.trim();
+    const url = `${base}/match/${match.id}`;
+
+    for (const n of plan.notifications) {
+      try {
+        this.gateway.broadcastMatchEvent(apiId, recipients, {
+          key: `${apiId}:${n.key}`,
+          eventType: n.eventType,
+          icon: n.icon,
+          title: n.title,
+          message: n.body,
+          homeScore: n.homeScore,
+          awayScore: n.awayScore,
+          status: match.status,
+        });
+        const sent = await this.push.sendToUsers(recipients, {
+          title: n.title,
+          body: n.body,
+          url,
+          key: `${apiId}:${n.key}`,
+        });
+        this.logger.log(`🔔 ${apiId} "${n.title}" → ${recipients.length} user(s), ${sent} push`);
+      } catch (err) {
+        this.logger.warn(`dispatch failed for ${apiId} (${n.key}): ${String(err)}`);
+      }
     }
   }
 }

@@ -1,66 +1,83 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
-  Post,
-  Param,
-  Req,
-  Res,
-  UseGuards,
-  HttpCode,
+  Get,
   Headers,
-  Logger,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import type { Request } from 'express';
 import { AccountsService } from './accounts.service.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+import { CurrentUser, type AuthUser } from '../common/decorators/current-user.decorator.js';
+import { ChangePasswordDto, CheckoutDto, UpdateProfileDto } from './dto.js';
+import { planToTier } from './subscription-state.js';
 
 @Controller('stripe')
-export class AccountsController {
-  private readonly logger = new Logger(AccountsController.name);
+export class StripeController {
+  constructor(private readonly accounts: AccountsService) {}
 
-  constructor(private readonly accountsService: AccountsService) {}
-
-  /**
-   * POST /api/stripe/checkout/:plan
-   * Odpowiednik Django create_checkout_session()
-   */
+  /** POST /api/stripe/checkout/:plan  (plus | premium) → { url } */
   @Post('checkout/:plan')
+  @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  async createCheckoutSession(
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async checkout(
     @Param('plan') plan: string,
-    @Req() req: { user: { id: number } },
+    @CurrentUser() user: AuthUser | null,
+    @Body() body: CheckoutDto,
   ) {
-    if (!['plus', 'premium'].includes(plan)) {
-      return { error: 'Invalid plan' };
-    }
-    const url = await this.accountsService.createCheckoutSession(
-      req.user.id,
-      plan as 'plus' | 'premium',
-    );
-    return { url };
+    if (!planToTier(plan)) throw new BadRequestException('Invalid plan');
+    return { url: await this.accounts.createCheckoutSession(user!.id, plan as 'plus' | 'premium', body.locale) };
+  }
+
+  /** POST /api/stripe/portal → { url } (zarządzanie / anulowanie subskrypcji) */
+  @Post('portal')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  async portal(@CurrentUser() user: AuthUser | null) {
+    return { url: await this.accounts.createPortalSession(user!.id) };
   }
 
   /**
-   * POST /api/stripe/webhook
-   * Odpowiednik Django stripe_webhook()
-   * FIX BUG #7: zapisuje ZARÓWNO stripe_customer_id JAK I stripe_subscription_id
+   * POST /api/stripe/webhook — publiczny, chroniony wyłącznie podpisem `stripe-signature`.
+   * 400 = zły podpis; 5xx = błąd przetwarzania (Stripe ponowi dostawę).
    */
   @Post('webhook')
   @HttpCode(200)
-  async webhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Headers('stripe-signature') signature: string,
-    @Res() res: Response,
-  ) {
-    try {
-      await this.accountsService.handleWebhook(
-        req.rawBody as Buffer,
-        signature,
-      );
-      res.status(200).send('OK');
-    } catch (err: unknown) {
-      this.logger.error('Stripe webhook error', err);
-      res.status(400).send('Webhook error');
-    }
+  @SkipThrottle()
+  async webhook(@Req() req: RawBodyRequest<Request>, @Headers('stripe-signature') signature?: string) {
+    const result = await this.accounts.handleWebhook(req.rawBody, signature);
+    return { received: true, result };
+  }
+}
+
+@Controller('account')
+@UseGuards(JwtAuthGuard)
+export class AccountController {
+  constructor(private readonly accounts: AccountsService) {}
+
+  @Get()
+  get(@CurrentUser() user: AuthUser | null) {
+    return this.accounts.getAccount(user!.id);
+  }
+
+  @Patch('profile')
+  update(@CurrentUser() user: AuthUser | null, @Body() dto: UpdateProfileDto) {
+    return this.accounts.updateProfile(user!.id, dto);
+  }
+
+  @Post('password')
+  @HttpCode(204)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async password(@CurrentUser() user: AuthUser | null, @Body() dto: ChangePasswordDto) {
+    await this.accounts.changePassword(user!.id, dto.currentPassword, dto.newPassword);
   }
 }

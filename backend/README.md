@@ -1,132 +1,73 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# VARify — backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Przepisanie backendu Django na NestJS 12 + Prisma (MySQL 8) + BullMQ (Redis) + Socket.IO.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Uruchomienie
 
 ```bash
-$ npm install
+cp .env.example .env            # uzupełnij DATABASE_URL, REDIS_URL, JWT_SECRET, SPORT_API_KEY…
+npm ci
+npx prisma migrate deploy       # stosuje prisma/migrations
+npm run start:dev               # API: http://localhost:3001/api, Swagger: /api/docs (poza produkcją)
 ```
 
-## Compile and run the project
+Cały stack (MySQL + Redis + API + frontend): `docker compose -f docker-compose.nest.yml up --build` (z katalogu głównego).
+
+## Testy i jakość
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run build && npm run lint && npm test
+# testy integracyjne na prawdziwej bazie (bez zmiennej są pomijane):
+DATABASE_URL=mysql://… npx prisma migrate deploy
+TEST_DATABASE_URL=mysql://… npm test
 ```
 
-## Run tests
+## Architektura
 
-```bash
-# unit tests
-$ npm run test
+| Obszar | Odpowiednik Django | Gdzie |
+|---|---|---|
+| Modele | `matches/models`, `accounts/models.py` | `prisma/schema.prisma` (+ `PushSubscription`, `StripeEvent`) |
+| Sync live co 60 s | Celery `sync_live_matches` | `jobs/sync-matches.job.ts`, `matches/matches.service.ts` |
+| Push / powiadomienia | `process_match_incidents_and_notify` | `jobs/push-notify.processor.ts` + czysta logika `matches/domain/push-planner.ts` |
+| WebSocket | Channels `MatchConsumer` | `matches/matches.gateway.ts` (pokoje `match:*`, `user:*`, `global`) |
+| Tiery / paywall | `@require_tier` | `TierGuard` + `@RequireTier()` (tier czytany z DB per żądanie) |
+| Stripe | `accounts/views.py` | `accounts/` (podpis, idempotencja, `subscription.*`, `invoice.*`) |
+| AI | `ai_agent.py` | `ai/` (PREMIUM, retry 503/500, bez ponowień 429) |
 
-# e2e tests
-$ npm run test:e2e
+### Endpointy (`/api`)
 
-# test coverage
-$ npm run test:cov
-```
+| Metoda i ścieżka | Dostęp |
+|---|---|
+| `POST auth/register`, `POST auth/login`, `GET auth/me` | publiczne / JWT |
+| `GET account`, `PATCH account/profile`, `POST account/password` | JWT (zmiana nazwy użytkownika: PLUS) |
+| `GET matches/live?league=&top=&search=`, `GET matches/active?ids=` | publiczne |
+| `GET matches/:id` | publiczne; składy+boisko **PLUS**, statystyki **PREMIUM** (reszta `null`) |
+| `GET matches/:id/events?page=` / `GET matches/:id/lineups?team=` | publiczne / **PLUS** |
+| `POST notifications/matches/:matchId/toggle`, `GET notifications/subscribed` | JWT **lub** nagłówek `X-Guest-Id` (UUID) |
+| `GET notifications/push/public-key`, `POST notifications/push/(un)subscribe` | publiczne / JWT |
+| `GET favorites`, `GET favorites/search?q=`, `POST favorites/:teamId/toggle`, `PATCH favorites/:teamId` | JWT |
+| `GET teams`, `GET teams/:id`, `…/standings`, `…/matches` | **PLUS** |
+| `GET leagues`, `GET leagues/:apiId`, `…/standings` | publiczne |
+| `GET players?search=&team=`, `GET players/:apiId` | publiczne |
+| `GET search?q=` | **PLUS** |
+| `GET calendar?date=YYYY-MM-DD&tz=Europe/Warsaw&league=&top=` | publiczne |
+| `GET images/(team\|player)/:apiId` | publiczne (cache w DB) |
+| `POST ai/chat` | **PREMIUM** |
+| `POST stripe/checkout/:plan`, `POST stripe/portal` | JWT |
+| `POST stripe/webhook` | podpis `stripe-signature` |
+| `GET health` | publiczne |
 
-## Deployment
+Identyfikatory: mecze, drużyny, ulubione, subskrypcje = **lokalne `id`**; ligi i zawodnicy = **`apiId`** (jak strony Django).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Zasady, które warto znać
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Czas:** `startTimestamp` z API zapisujemy 1:1 jako UTC (Django dodawało na sztywno +2 h). Kalendarz liczy granice dnia w strefie z parametru `tz`.
+- **SportAPI:** retry z backoffem i jitterem dla 5xx/timeoutów, `Retry-After` dla 429/503; po wyczerpaniu limitu (429) wywołania są wstrzymywane lokalnie (cooldown).
+- **Duplikaty powiadomień:** `notifiedEventIds` + `lastNotifiedScore` + markery `score:H:A`; cold-start uciszają historię starszą niż 2 min; blokada Redis per mecz.
+- **Blacklista:** mecze, dla których `/incidents` zwraca 404/403/204, mają `hasIncidentData=false` i są pomijane.
+- **Dzwoneczek:** atomowy `INSERT … ON DUPLICATE KEY UPDATE isActive = NOT isActive` + unikalne `(userId,matchId)` / `(sessionKey,matchId)`.
+- **Webhook Stripe:** weryfikacja podpisu na surowym ciele, id zdarzenia zapisywane w tej samej transakcji (idempotencja); `past_due` nie odbiera planu, `subscription.deleted` → FREE.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Znane braki względem Django
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project, run this and approve the code it prints at [observe.nestjs.com/link](https://observe.nestjs.com/link) - signing up for free if you have no account:
-
-```bash
-$ npx @nestjs/observe link
-```
-
-It installs `@nestjs/observe`, wires it into `AppModule` and `main.ts`, and writes the app key and secret into `.env`, which every `nest start` script (`start`, `start:dev`, `start:debug`) then loads. In production, set `OBSERVE_APP_KEY` and `OBSERVE_APP_SECRET` in the environment instead.
-
-Or do it by hand:
-
-```bash
-$ npm install @nestjs/observe
-```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/sdk) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Logowanie społecznościowe (Google/allauth), weryfikacja e-mail i reset hasła, i18n (pl/uk — UI jest po angielsku), narzędzie `dev/simulate-push`, panel admina, widok „zakończone mecze wg dni” (nieużywany w URL-ach Django).

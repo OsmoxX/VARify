@@ -29,6 +29,17 @@
 
 ---
 
+## 🆕 Przepisanie: NestJS + Next.js
+
+W katalogach [`backend/`](backend) (NestJS, Prisma, BullMQ, Socket.IO) i [`frontend/`](frontend) (Next.js 16, React 19, Tailwind 4) znajduje się przepisanie aplikacji; Django pozostaje referencją.
+Szczegóły, tabelę endpointów i zasady działania opisuje [`backend/README.md`](backend/README.md).
+
+```bash
+cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env.local
+docker compose -f docker-compose.nest.yml up --build     # frontend :3000, API :3001
+```
+
+
 ## 📋 Table of Contents
 
 - [About](#-about)

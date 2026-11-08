@@ -1,24 +1,39 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { AiService, ChatMessage } from './ai.service.js';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { Type } from 'class-transformer';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { AiService, MAX_HISTORY_TURNS, validateHistory } from './ai.service.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+import { TierGuard } from '../common/guards/tier.guard.js';
+import { RequireTier } from '../common/decorators/require-tier.decorator.js';
 
-class ChatDto {
-  history!: ChatMessage[];
-  message!: string;
+class ChatTurnDto {
+  @IsIn(['user', 'assistant']) role!: 'user' | 'assistant';
+  @IsString() @MaxLength(8000) content!: string;
 }
 
-@Controller('ai')
-export class AiController {
-  constructor(private readonly aiService: AiService) {}
+class ChatDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(MAX_HISTORY_TURNS * 2)
+  @ValidateNested({ each: true })
+  @Type(() => ChatTurnDto)
+  history!: ChatTurnDto[];
+}
 
+/** AI Analyst — plan PREMIUM (Django @require_tier(PREMIUM)). */
+@Controller('ai')
+@UseGuards(JwtAuthGuard, TierGuard)
+@RequireTier('PREMIUM')
+export class AiController {
+  constructor(private readonly ai: AiService) {}
+
+  /** POST /api/ai/chat  { history: [{role, content}…] }  → { response } */
   @Post('chat')
-  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  @Throttle({ default: { limit: 12, ttl: 60_000 } })
   async chat(@Body() body: ChatDto) {
-    try {
-      const reply = await this.aiService.chat(body.history ?? [], body.message);
-      return { reply };
-    } catch (err: unknown) {
-      return { error: err instanceof Error ? err.message : String(err) };
-    }
+    const history = validateHistory(body.history);
+    return { response: await this.ai.chat(history) };
   }
 }

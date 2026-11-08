@@ -1,18 +1,22 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 /**
- * OptionalJwtGuard — nie rzuca błędu gdy brak tokenu JWT.
- * Pozwala na dostęp publiczny, ale ustawia req.user jeśli token jest obecny.
+ * OptionalJwtGuard — nie rzuca błędu, gdy brak/nieprawidłowy token.
+ * Ustawia req.user, gdy token jest poprawny; w przeciwnym razie req.user = null.
  */
 @Injectable()
 export class OptionalJwtGuard extends AuthGuard('jwt') {
-  canActivate(context: ExecutionContext) {
-    return super.canActivate(context);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    try {
+      await super.canActivate(context);
+    } catch {
+      // brak tokenu → gość
+    }
+    return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handleRequest(_err: any, user: any) {
-    return user ?? null; // null = niezalogowany, nie rzucamy błędu
+  handleRequest<TUser>(_err: unknown, user: TUser): TUser | null {
+    return user ?? null;
   }
 }

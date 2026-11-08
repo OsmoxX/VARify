@@ -1,133 +1,66 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Header, Query } from '@nestjs/common';
+import { IsBoolean, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { SportApiService } from '../sport-api/sport-api.service.js';
+import { CalendarService } from './calendar.service.js';
+import { groupByLeague } from '../common/utils/group.js';
+import { dayBoundsUtc, isValidIsoDate, isValidTimeZone, todayIn } from '../common/utils/timezone.js';
+
+export class CalendarQueryDto {
+  /** YYYY-MM-DD — dzień kalendarzowy w strefie `tz` */
+  @IsOptional() @IsString() @MaxLength(10) date?: string;
+  /** IANA, np. Europe/Warsaw (domyślnie UTC) */
+  @IsOptional() @IsString() @MaxLength(64) tz?: string;
+  @IsOptional() @IsString() @Matches(/^\d{1,10}$/) league?: string;
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true' || value === '1')
+  @IsBoolean()
+  top?: boolean;
+}
 
 @Controller('calendar')
 export class CalendarController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly sportApi: SportApiService,
+    private readonly calendar: CalendarService,
   ) {}
 
   /**
-   * GET /api/calendar?date=2026-11-07
-   * Odpowiednik Django calendar_views.py
-   * Zwraca nadchodzące mecze dla podanej daty (lub dziś).
+   * GET /api/calendar?date=2026-11-07&tz=Europe/Warsaw
+   * "Dzień" to dzień lokalny użytkownika: granice liczymy w jego strefie i konwertujemy do UTC,
+   * więc mecz o 23:30 UTC trafia do właściwego dnia w Warszawie / Nowym Jorku.
    */
   @Get()
-  async getCalendar(@Query('date') dateStr?: string) {
-    const targetDate = dateStr ? new Date(dateStr) : new Date();
-    const dateOnly = targetDate.toISOString().split('T')[0]!;
+  @Header('Cache-Control', 'public, max-age=60')
+  async day(@Query() q: CalendarQueryDto) {
+    const tz = q.tz ?? 'UTC';
+    if (!isValidTimeZone(tz)) throw new BadRequestException('Invalid time zone');
+    const date = q.date ?? todayIn(tz);
+    if (!isValidIsoDate(date)) throw new BadRequestException('date must be YYYY-MM-DD');
 
-    // Check DB for cached data
-    const startOfDay = new Date(dateOnly + 'T00:00:00Z');
-    const endOfDay = new Date(dateOnly + 'T23:59:59Z');
+    const { start, end } = dayBoundsUtc(date, tz);
+    await this.calendar.ensureRange(start, end);
 
-    const cachedCount = await this.prisma.upcomingMatch.count({
+    const rows = await this.prisma.upcomingMatch.findMany({
       where: {
-        startDatetime: { gte: startOfDay, lte: endOfDay },
+        startDatetime: { gte: start, lt: end },
+        ...(q.league ? { league: { apiId: q.league } } : {}),
+        ...(q.top ? { isTop: true } : {}),
       },
+      include: { homeTeam: true, awayTeam: true, league: true },
+      orderBy: [{ startDatetime: 'asc' }, { id: 'asc' }],
     });
 
-    if (cachedCount === 0) {
-      // Fetch from API and cache
-      const data = await this.sportApi.fetchScheduledEvents(dateOnly);
-      if (data && Array.isArray(data['events'])) {
-        await this.syncUpcomingMatches(data['events'] as Record<string, unknown>[]);
-      }
-    }
+    const matches = rows.map((m) => ({
+      id: m.id,
+      apiId: m.apiId,
+      league: m.league,
+      isTop: m.isTop,
+      startDatetime: m.startDatetime ? m.startDatetime.toISOString() : null,
+      homeTeam: m.homeTeam && { id: m.homeTeam.id, apiId: m.homeTeam.apiId, name: m.homeTeam.name },
+      awayTeam: m.awayTeam && { id: m.awayTeam.id, apiId: m.awayTeam.apiId, name: m.awayTeam.name },
+    }));
 
-    const matches = await this.prisma.upcomingMatch.findMany({
-      where: {
-        startDatetime: { gte: startOfDay, lte: endOfDay },
-      },
-      include: {
-        homeTeam: true,
-        awayTeam: true,
-        league: true,
-      },
-      orderBy: { startDatetime: 'asc' },
-    });
-
-    // Group by league
-    const leagueMap = new Map<string, {
-      leagueName: string;
-      isTop: boolean;
-      matches: typeof matches;
-    }>();
-
-    for (const match of matches) {
-      const key = match.league?.apiId ?? 'unknown';
-      if (!leagueMap.has(key)) {
-        leagueMap.set(key, {
-          leagueName: match.league?.name ?? 'Unknown',
-          isTop: match.isTop,
-          matches: [],
-        });
-      }
-      leagueMap.get(key)!.matches.push(match);
-    }
-
-    return {
-      date: dateOnly,
-      leagues: [...leagueMap.values()].sort((a, b) => {
-        if (a.isTop && !b.isTop) return -1;
-        if (!a.isTop && b.isTop) return 1;
-        return a.leagueName.localeCompare(b.leagueName);
-      }),
-      total: matches.length,
-    };
-  }
-
-  private async syncUpcomingMatches(events: Record<string, unknown>[]) {
-    for (const event of events) {
-      try {
-        const leagueData = event['tournament'] as Record<string, unknown>;
-        const uniqueTournament = (leagueData['uniqueTournament'] as Record<string, unknown>) ?? {};
-        const leagueApiId = String(uniqueTournament['id'] ?? leagueData['id']);
-        const leagueName = (uniqueTournament['name'] ?? leagueData['name']) as string;
-
-        const league = await this.prisma.league.upsert({
-          where: { apiId: leagueApiId },
-          create: { apiId: leagueApiId, name: leagueName },
-          update: { name: leagueName },
-        });
-
-        const homeData = event['homeTeam'] as Record<string, unknown>;
-        const awayData = event['awayTeam'] as Record<string, unknown>;
-
-        const homeTeam = await this.prisma.team.upsert({
-          where: { apiId: homeData['id'] as number },
-          create: { apiId: homeData['id'] as number, name: homeData['name'] as string },
-          update: {},
-        });
-        const awayTeam = await this.prisma.team.upsert({
-          where: { apiId: awayData['id'] as number },
-          create: { apiId: awayData['id'] as number, name: awayData['name'] as string },
-          update: {},
-        });
-
-        // FIX BUG #3: UTC timestamp, nie +2h
-        const startTs = event['startTimestamp'] as number | null;
-        const startDatetime = startTs ? new Date(startTs * 1000) : null;
-
-        const isTop = SportApiService.TOP_LEAGUE_IDS.has(leagueApiId);
-
-        await this.prisma.upcomingMatch.upsert({
-          where: { apiId: event['id'] as number },
-          create: {
-            apiId: event['id'] as number,
-            homeTeamId: homeTeam.id,
-            awayTeamId: awayTeam.id,
-            leagueId: league.id,
-            startDatetime,
-            isTop,
-          },
-          update: { startDatetime, isTop },
-        });
-      } catch {
-        // skip individual errors
-      }
-    }
+    return { date, tz, leagues: groupByLeague(matches), total: matches.length };
   }
 }

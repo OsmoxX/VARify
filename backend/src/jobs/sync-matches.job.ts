@@ -3,59 +3,46 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { MatchesService } from '../matches/matches.service.js';
+import { LockService } from '../common/lock/lock.service.js';
 
 /**
- * SyncMatchesJob — odpowiednik Celery sync_live_matches task
- *
- * Architektura:
- *   @Cron (co 60s) → syncLiveMatches → wykrywa zmiany
- *     → kolejkuje push-notify job dla każdego zmienionego meczu
- *
- * FIX BUG #2: Wszystko asynchroniczne — żaden HTTP worker nie jest blokowany.
+ * Odpowiednik Celery sync_live_matches (Beat co 60 s).
+ * Blokada Redis (55 s) zapobiega nakładaniu się synchronizacji także między instancjami
+ * (poprzednie `isRunning` w pamięci działało tylko w obrębie jednego procesu).
  */
 @Injectable()
 export class SyncMatchesJob {
   private readonly logger = new Logger(SyncMatchesJob.name);
-  private isRunning = false; // lock (odpowiednik Django cache.add)
 
   constructor(
-    private readonly matchesService: MatchesService,
+    private readonly matches: MatchesService,
+    private readonly lock: LockService,
     @InjectQueue('push-notify') private readonly pushQueue: Queue,
-    @InjectQueue('calendar-sync') private readonly calendarQueue: Queue,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleCron() {
-    if (this.isRunning) {
-      this.logger.warn('SyncMatchesJob: skipping (already running)');
+    const token = await this.lock.acquire('sync-live-matches', 55_000);
+    if (!token) {
+      this.logger.debug('sync skipped (locked)');
       return;
     }
-
-    this.isRunning = true;
     try {
-      this.logger.log('SyncMatchesJob: starting sync...');
-      const changedApiIds = await this.matchesService.syncLiveMatches();
-
-      if (changedApiIds.length > 0) {
-        for (const apiId of changedApiIds) {
-          await this.pushQueue.add(
+      const changed = await this.matches.syncLiveMatches();
+      await Promise.all(
+        changed.map((apiId) =>
+          this.pushQueue.add(
             'process-incidents',
             { apiId },
-            {
-              attempts: 3,
-              backoff: { type: 'exponential', delay: 2000 },
-              removeOnComplete: true,
-            },
-          );
-        }
-        this.logger.log(
-          `SyncMatchesJob: queued ${changedApiIds.length} push-notify jobs`,
-        );
-      } else {
-        this.logger.log('SyncMatchesJob: no changes detected');
-      }
+            { attempts: 3, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: true, removeOnFail: 200 },
+          ),
+        ),
+      );
+      if (changed.length) this.logger.log(`queued ${changed.length} process-incidents job(s)`);
+    } catch (err) {
+      this.logger.error(`sync failed: ${String(err)}`);
     } finally {
-      this.isRunning = false;
+      await this.lock.release('sync-live-matches', token);
     }
   }
 }

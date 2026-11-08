@@ -1,70 +1,50 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { SportApiService } from '../sport-api/sport-api.service.js';
+import { PlayersService, playerView } from './players.service.js';
+import { pageParams, paginated } from '../common/utils/pagination.js';
+
+class PlayersQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @IsString() @MaxLength(100) search?: string;
+  /** api_id drużyny */
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) team?: number;
+}
 
 @Controller('players')
 export class PlayersController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly sportApi: SportApiService,
+    private readonly players: PlayersService,
   ) {}
 
-  /** GET /api/players/search?q=Messi */
-  @Get('search')
-  async search(@Query('q') q: string) {
-    if (!q || q.length < 2) return { players: [] };
-    const results = await this.sportApi.searchPlayers(q);
-    return { players: results ?? [] };
+  /** GET /api/players?search=&team=&page= */
+  @Get()
+  async list(@Query() q: PlayersQueryDto) {
+    const { page, skip, take } = pageParams(q.page);
+    const where = {
+      ...(q.search ? { name: { contains: q.search } } : {}),
+      ...(q.team ? { team: { apiId: q.team } } : {}),
+    };
+    const [rows, count] = await Promise.all([
+      this.prisma.player.findMany({
+        where,
+        include: { team: true },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+        skip,
+        take,
+      }),
+      this.prisma.player.count({ where }),
+    ]);
+    return paginated(rows.map(playerView), count, page);
   }
 
-  /** GET /api/players/:id */
-  @Get(':id')
-  async getPlayer(@Param('id', ParseIntPipe) id: number) {
-    // Check DB first
-    let player = await this.prisma.player.findUnique({
-      where: { apiId: id },
-      include: { team: true },
-    });
-
-    if (!player) {
-      // Fetch from API and cache
-      const data = await this.sportApi.fetchPlayer(id);
-      if (!data) return { error: 'Player not found' };
-      const pd = (data['player'] as Record<string, unknown>) ?? data;
-      const teamData = pd['team'] as Record<string, unknown> | null;
-
-      let teamId: number | null = null;
-      if (teamData?.['id']) {
-        const team = await this.prisma.team.upsert({
-          where: { apiId: teamData['id'] as number },
-          create: { apiId: teamData['id'] as number, name: teamData['name'] as string },
-          update: {},
-        });
-        teamId = team.id;
-      }
-
-      player = await this.prisma.player.upsert({
-        where: { apiId: id },
-        create: {
-          apiId: id,
-          name: (pd['name'] as string) ?? 'Unknown',
-          firstName: pd['firstName'] as string | null,
-          lastName: pd['lastName'] as string | null,
-          teamId,
-          position: pd['position'] as string | null,
-          jerseyNumber: pd['jerseyNumber'] as number | null,
-          nationality: (pd['nationality'] as Record<string, unknown>)?.['name'] as string | null,
-          height: pd['height'] as number | null,
-          weight: pd['weight'] as number | null,
-          preferredFoot: pd['preferredFoot'] as string | null,
-          marketValue: pd['proposedMarketValue'] as bigint | null,
-          retired: (pd['retired'] as boolean) ?? false,
-        },
-        update: {},
-        include: { team: true },
-      });
-    }
-
-    return { player };
+  /** GET /api/players/:apiId — profil zawodnika */
+  @Get(':apiId')
+  async detail(@Param('apiId', ParseIntPipe) apiId: number) {
+    const player = await this.players.getOrFetch(apiId);
+    if (!player) throw new NotFoundException('Player not found');
+    return playerView(player);
   }
 }

@@ -1,0 +1,45 @@
+# Nowy stack: NestJS + Next.js (równolegle do Django z docker-compose.yml, na innych portach).
+#   docker compose -f docker-compose.nest.yml --env-file backend/.env up --build
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: varify_db
+      MYSQL_USER: varify
+      MYSQL_PASSWORD: ${DB_PASSWORD:-varify}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-varify}
+    volumes: [nest_db:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  backend:
+    build: ./backend
+    env_file: [backend/.env]
+    environment:
+      DATABASE_URL: mysql://varify:${DB_PASSWORD:-varify}@db:3306/varify_db
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    # migracje przy starcie (idempotentne), potem API + crony + kolejki
+    command: sh -c "npx prisma migrate deploy && node dist/main.js"
+    ports: ["3001:3001"]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-http://localhost:3001}
+    ports: ["3000:3000"]
+    depends_on: [backend]
+
+volumes:
+  nest_db:
