@@ -1,5 +1,9 @@
 # Nowy stack: NestJS + Next.js (równolegle do Django z docker-compose.yml, na innych portach).
 #   docker compose -f docker-compose.nest.yml --env-file backend/.env up --build
+# Osobna nazwa projektu: bez niej ten stack dzieli nazwę "varify" z docker-compose.yml (Django)
+# i oba nadpisują sobie kontenery db/redis.
+name: varify-nest
+
 services:
   db:
     image: mysql:8.0
