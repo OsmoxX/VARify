@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance, ResponseType } from 'axios';
-import { withRetry } from '../common/utils/retry.js';
+import { RetryAbortedError, withRetry } from '../common/utils/retry.js';
+import { LockService } from '../common/lock/lock.service.js';
+import { budgetExceeded, cooldownMsFor, monthKey, parseRateLimit, type RateLimitInfo } from './budget.js';
 import { arr, obj, type Json } from '../common/utils/json.js';
 
 export type ApiResult<T> =
@@ -24,6 +26,8 @@ export class SportApiService {
   private readonly logger = new Logger(SportApiService.name);
   private cooldownUntil = 0;
   private readonly retries: number;
+  private readonly monthlyLimit: number;
+  private lastRateLimit: RateLimitInfo = { limit: null, remaining: null, resetSeconds: null };
 
   // Top league IDs (SportAPI unique-tournament IDs) — odpowiednik PREMIUM_LEAGUE_IDS
   static readonly TOP_LEAGUE_IDS = new Set([
@@ -76,8 +80,13 @@ export class SportApiService {
     return !!leagueApiId && SportApiService.TOP_LEAGUE_IDS.has(leagueApiId);
   }
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly lock: LockService,
+  ) {
     this.retries = Number(this.config.get('SPORT_API_MAX_RETRIES') ?? 3);
+    // Własny budżet miesięczny (0/brak = wyłączony). Plan darmowy RapidAPI: ustaw np. 45 z 50.
+    this.monthlyLimit = Number(this.config.get('SPORT_API_MONTHLY_LIMIT') ?? 0);
     this.http = axios.create({
       baseURL: this.config.get<string>(
         'SPORT_API_BASE_URL',
@@ -107,7 +116,8 @@ export class SportApiService {
     }
     try {
       const res = await withRetry(
-        () => {
+        async () => {
+          if (!(await this.takeBudget())) throw new RetryAbortedError('monthly budget exhausted');
           this.logger.debug(`[API CALL] GET ${path}`);
           return this.http.get<T>(path, { responseType: opts.responseType });
         },
@@ -126,6 +136,7 @@ export class SportApiService {
             ),
         },
       );
+      this.noteRateLimit(res.headers as Record<string, unknown>);
       if (res.status === 204) {
         return { ok: false, status: 204, error: 'no content' };
       }
@@ -136,8 +147,13 @@ export class SportApiService {
         headers: res.headers as Record<string, unknown>,
       };
     } catch (err: unknown) {
+      if (err instanceof RetryAbortedError) {
+        this.logger.warn(`SportAPI ${path}: skipped — own monthly budget (${this.monthlyLimit}) exhausted`);
+        return { ok: false, status: 429, error: 'monthly request budget exhausted' };
+      }
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
+        if (err.response?.headers) this.noteRateLimit(err.response.headers as Record<string, unknown>);
         if (status === 429) this.startCooldown(err.response?.headers?.['retry-after']);
         if (status !== 404) {
           this.logger.warn(`SportAPI ${path}: ${status ?? err.code ?? err.message}`);
@@ -146,6 +162,38 @@ export class SportApiService {
       }
       return { ok: false, error: String(err) };
     }
+  }
+
+  /** Zużywa 1 jednostkę budżetu; false gdy limit własny wyczerpany. */
+  private async takeBudget(): Promise<boolean> {
+    if (this.monthlyLimit <= 0) return true;
+    const n = await this.lock.counter(`sportapi:budget:${monthKey()}`, 40 * 86400);
+    return !budgetExceeded(n, this.monthlyLimit);
+  }
+
+  /** Zapamiętuje limity z nagłówków RapidAPI; przy wyczerpaniu planu wstrzymuje wywołania. */
+  private noteRateLimit(headers: Record<string, unknown>) {
+    const rl = parseRateLimit(headers);
+    if (rl.remaining === null) return;
+    this.lastRateLimit = rl;
+    if (rl.remaining <= 5) {
+      this.logger.warn(`SportAPI plan: ${rl.remaining}/${rl.limit ?? '?'} requests left until reset`);
+    }
+    const cd = cooldownMsFor(rl);
+    if (cd > 0) {
+      this.cooldownUntil = Date.now() + cd;
+      this.logger.error(`SportAPI plan exhausted — pausing outbound calls for ${Math.round(cd / 60000)} min`);
+    }
+  }
+
+  /** Stan limitów (do /health/quota). */
+  async quotaStatus() {
+    const used = this.monthlyLimit > 0 ? await this.lock.peek(`sportapi:budget:${monthKey()}`) : null;
+    return {
+      plan: this.lastRateLimit,
+      budget: { limit: this.monthlyLimit > 0 ? this.monthlyLimit : null, used, month: monthKey() },
+      pausedUntil: this.cooldownUntil > Date.now() ? new Date(this.cooldownUntil).toISOString() : null,
+    };
   }
 
   private startCooldown(retryAfter: unknown) {

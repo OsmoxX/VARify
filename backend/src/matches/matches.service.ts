@@ -22,6 +22,7 @@ const LIVE_STATUS_WORDS = [
   'period',
   'paused',
   'interval',
+  'started', // SportAPI zwraca "Started" dla meczów niższych lig bez podziału na połowy
 ];
 const ENDED_LIST = [...SportApiService.ENDED_STATUSES];
 
@@ -126,7 +127,7 @@ export class MatchesService {
 
     const existing = await this.prisma.liveMatch.findUnique({
       where: { apiId },
-      select: { homeScore: true, awayScore: true, status: true },
+      select: { homeScore: true, awayScore: true, status: true, minute: true, matchTime: true, startDatetime: true, leagueId: true },
     });
 
     const homeUp = !!existing && homeScore > existing.homeScore;
@@ -156,11 +157,23 @@ export class MatchesService {
       isTop: SportApiService.isTopLeague(leagueApiId),
     };
 
-    await this.prisma.liveMatch.upsert({
-      where: { apiId },
-      create: { apiId, ...data },
-      update: data,
-    });
+    // Feed live ma ~1500 meczów co minutę — zapis tylko, gdy coś faktycznie się zmieniło.
+    const unchanged =
+      !!existing &&
+      existing.homeScore === homeScore &&
+      existing.awayScore === awayScore &&
+      existing.status === data.status &&
+      existing.minute === data.minute &&
+      existing.matchTime === data.matchTime &&
+      existing.leagueId === leagueId &&
+      (existing.startDatetime?.getTime() ?? null) === (startDatetime?.getTime() ?? null);
+    if (!unchanged) {
+      await this.prisma.liveMatch.upsert({
+        where: { apiId },
+        create: { apiId, ...data },
+        update: data,
+      });
+    }
 
     // Broadcast PO zapisie — klient, który odświeży REST po evencie, zobaczy spójny stan.
     if (scoreDiffers) {
@@ -401,6 +414,34 @@ export class MatchesService {
       select: { apiId: true },
     });
     return rows.map((r) => r.apiId);
+  }
+
+  /**
+   * Z listy zmienionych meczów zostawia tylko te, które ktoś śledzi (dzwoneczek / ulubiona drużyna).
+   * Dwa zapytania zbiorcze zamiast tysięcy zadań w kolejce po pierwszym syncu (~1500 meczów live).
+   */
+  async filterOfInterest(apiIds: number[]): Promise<number[]> {
+    if (apiIds.length === 0) return [];
+    const matches = await this.prisma.liveMatch.findMany({
+      where: { apiId: { in: apiIds } },
+      select: { id: true, apiId: true, homeTeamId: true, awayTeamId: true },
+    });
+    const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]).filter((x): x is number => x !== null))];
+    const [subs, favs] = await Promise.all([
+      this.prisma.matchSubscription.findMany({
+        where: { matchId: { in: matches.map((m) => m.id) }, isActive: true },
+        select: { matchId: true },
+        distinct: ['matchId'],
+      }),
+      teamIds.length
+        ? this.prisma.favoriteTeam.findMany({ where: { teamId: { in: teamIds }, isActive: true }, select: { teamId: true }, distinct: ['teamId'] })
+        : Promise.resolve([] as { teamId: number }[]),
+    ]);
+    const subIds = new Set(subs.map((s) => s.matchId));
+    const favTeams = new Set(favs.map((f) => f.teamId));
+    return matches
+      .filter((m) => subIds.has(m.id) || (m.homeTeamId !== null && favTeams.has(m.homeTeamId)) || (m.awayTeamId !== null && favTeams.has(m.awayTeamId)))
+      .map((m) => m.apiId);
   }
 
   /** Czy ktokolwiek śledzi mecz (dzwoneczek lub ulubiona drużyna)? */

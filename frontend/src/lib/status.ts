@@ -20,9 +20,10 @@ const STATUS_MAP: Record<string, string> = {
   cancelled: 'Odwołany',
   abandoned: 'Przerwany',
   awarded: 'Walkower',
+  started: 'Trwa', // SportAPI: mecze niższych lig bez podziału na połowy
 };
 
-const LIVE = ['1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', '1st extra', '2nd extra', 'penalties'];
+const LIVE = ['started', '1st half', '2nd half', 'extra time 1st half', 'extra time 2nd half', '1st extra', '2nd extra', 'penalties'];
 const BREAK = ['halftime', 'extra time halftime', 'awaiting extra time', 'awaiting penalties'];
 
 export const statusLabel = (status: string) => STATUS_MAP[status.toLowerCase().trim()] ?? status;

@@ -1,11 +1,21 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from './prisma/prisma.service.js';
+import { SportApiService } from './sport-api/sport-api.service.js';
 
 @Controller('health')
 @SkipThrottle()
 export class HealthController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sportApi: SportApiService,
+  ) {}
+
+  /** Stan limitów SportAPI (ile zapytań zostało, własny budżet, ewentualna pauza). */
+  @Get('quota')
+  quota() {
+    return this.sportApi.quotaStatus();
+  }
 
   @Get()
   async health() {

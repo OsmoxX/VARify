@@ -103,16 +103,16 @@ export class MatchesGateway implements OnGatewayConnection, OnGatewayDisconnect 
   /** Zdarzenie meczowe → pokój meczu + pokoje użytkowników-odbiorców (jedna emisja na socket). */
   broadcastMatchEvent(matchApiId: number, userIds: number[], payload: MatchEventPayload) {
     const rooms = [`match:${matchApiId}`, ...userIds.map((u) => `user:${u}`)];
-    this.server.to(rooms).emit('match_event', { matchApiId, ...payload });
+    this.server?.to(rooms).emit('match_event', { matchApiId, ...payload });
   }
 
   /** Zmiana wyniku → lista live i strony meczów (wszyscy). */
   broadcastScoreUpdate(matchApiId: number, payload: ScoreUpdatePayload) {
-    this.server.to('global').emit('live_score_update', { matchApiId, ...payload });
+    this.server?.to('global').emit('live_score_update', { matchApiId, ...payload });
   }
 
   /** Zmiana statusu (HT, 2nd half, Ended…). */
   broadcastStatusUpdate(matchApiId: number, payload: { status: string }) {
-    this.server.to('global').emit('live_status_update', { matchApiId, ...payload });
+    this.server?.to('global').emit('live_status_update', { matchApiId, ...payload });
   }
 }

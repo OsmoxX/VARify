@@ -203,6 +203,39 @@ describe.skipIf(!URL)('integracja z bazą', () => {
       expect(await prisma.team.count()).toBe(2);
     });
 
+    it('niezmieniony mecz NIE jest ponownie zapisywany (feed ma ~1500 meczów co minutę)', async () => {
+      const m = await seedMatch();
+      await new Promise((r) => setTimeout(r, 1100)); // updatedAt ma rozdzielczość ms, ale damy zapas
+      await matches.syncLiveMatches();
+      const after = await prisma.liveMatch.findUniqueOrThrow({ where: { apiId: 5001 } });
+      expect(after.updatedAt.getTime()).toBe(m.updatedAt.getTime());
+      liveEvents = [liveEvent({ homeScore: { current: 1 } })];
+      await matches.syncLiveMatches();
+      expect((await prisma.liveMatch.findUniqueOrThrow({ where: { apiId: 5001 } })).updatedAt.getTime()).toBeGreaterThan(m.updatedAt.getTime());
+    });
+
+    it('status "Started" (niższe ligi, bez minuty): trwa, a po zniknięciu z feedu jest kończony', async () => {
+      liveEvents = [liveEvent({ id: 7001, status: { description: 'Started' }, time: {} })];
+      await matches.syncLiveMatches();
+      expect((await matches.findAllLive()).map((x) => x.apiId)).toContain(7001);
+      liveEvents = [];
+      expect(await matches.syncLiveMatches()).toContain(7001);
+      expect((await prisma.liveMatch.findUniqueOrThrow({ where: { apiId: 7001 } })).status).toBe('Ended');
+    });
+
+    it('filterOfInterest: zostawia tylko mecze z subskrypcją lub ulubioną drużyną', async () => {
+      liveEvents = [liveEvent(), liveEvent({ id: 5002, homeTeam: { id: 20, name: 'X' }, awayTeam: { id: 21, name: 'Y' } }), liveEvent({ id: 5003, homeTeam: { id: 30, name: 'Fav FC' }, awayTeam: { id: 31, name: 'Z' } })];
+      await matches.syncLiveMatches();
+      const [m1, , m3] = await Promise.all([5001, 5002, 5003].map((id) => prisma.liveMatch.findUniqueOrThrow({ where: { apiId: id } })));
+      const user = await seedUser(50);
+      await prisma.matchSubscription.create({ data: { matchId: m1.id, userId: user.id } });
+      await prisma.favoriteTeam.create({ data: { userId: user.id, teamId: m3.homeTeamId! } });
+      expect((await matches.filterOfInterest([5001, 5002, 5003])).sort((a, b) => a - b)).toEqual([5001, 5003]);
+      expect(await matches.filterOfInterest([])).toEqual([]);
+      await prisma.favoriteTeam.updateMany({ data: { isActive: false } }); // wyciszona ulubiona
+      expect(await matches.filterOfInterest([5003])).toEqual([]);
+    });
+
     it('findAllLive: tylko trwające (bez Ended / Not started)', async () => {
       liveEvents = [liveEvent(), liveEvent({ id: 5002, status: { description: 'Ended' } }), liveEvent({ id: 5003, status: { description: 'Not started' } })];
       await matches.syncLiveMatches();

@@ -13,6 +13,7 @@ export class LockService implements OnModuleDestroy {
   private readonly logger = new Logger(LockService.name);
   private readonly redis: Redis;
   private readonly local = new Map<string, number>();
+  private readonly localCounters = new Map<string, number>();
 
   constructor(config: ConfigService) {
     this.redis = new Redis(config.get<string>('REDIS_URL') ?? 'redis://localhost:6379', {
@@ -58,6 +59,35 @@ export class LockService implements OnModuleDestroy {
     } catch (err) {
       this.logger.warn(`Redis unlock error (${key}): ${String(err)}`);
     }
+  }
+
+  /** Atomowy licznik z TTL (INCR). Zwraca nową wartość; przy braku Redisa — licznik w pamięci procesu. */
+  async counter(key: string, ttlSeconds: number): Promise<number> {
+    if (this.redis.status === 'ready') {
+      try {
+        const k = `counter:${key}`;
+        const n = await this.redis.incr(k);
+        if (n === 1) await this.redis.expire(k, ttlSeconds);
+        return n;
+      } catch (err) {
+        this.logger.warn(`Redis counter error (${key}): ${String(err)}`);
+      }
+    }
+    const n = (this.localCounters.get(key) ?? 0) + 1;
+    this.localCounters.set(key, n);
+    return n;
+  }
+
+  /** Odczyt licznika bez zwiększania. */
+  async peek(key: string): Promise<number> {
+    if (this.redis.status === 'ready') {
+      try {
+        return Number((await this.redis.get(`counter:${key}`)) ?? 0);
+      } catch {
+        /* fallback poniżej */
+      }
+    }
+    return this.localCounters.get(key) ?? 0;
   }
 
   async onModuleDestroy() {

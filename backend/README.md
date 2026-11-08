@@ -55,7 +55,7 @@ TEST_DATABASE_URL=mysql://… npm test
 | `POST ai/chat` | **PREMIUM** |
 | `POST stripe/checkout/:plan`, `POST stripe/portal` | JWT |
 | `POST stripe/webhook` | podpis `stripe-signature` |
-| `GET health` | publiczne |
+| `GET health`, `GET health/quota` | publiczne |
 
 Identyfikatory: mecze, drużyny, ulubione, subskrypcje = **lokalne `id`**; ligi i zawodnicy = **`apiId`** (jak strony Django).
 
@@ -67,6 +67,20 @@ Identyfikatory: mecze, drużyny, ulubione, subskrypcje = **lokalne `id`**; ligi 
 - **Blacklista:** mecze, dla których `/incidents` zwraca 404/403/204, mają `hasIncidentData=false` i są pomijane.
 - **Dzwoneczek:** atomowy `INSERT … ON DUPLICATE KEY UPDATE isActive = NOT isActive` + unikalne `(userId,matchId)` / `(sessionKey,matchId)`.
 - **Webhook Stripe:** weryfikacja podpisu na surowym ciele, id zdarzenia zapisywane w tej samej transakcji (idempotencja); `past_due` nie odbiera planu, `subscription.deleted` → FREE.
+
+## Plan darmowy SportAPI (np. 50 zapytań / miesiąc)
+
+Domyślnie backend odpytuje API co minutę (lista live) oraz codziennie o kalendarz i tabele — to tysiące zapytań.
+Na planie darmowym ustaw w `.env`:
+
+```bash
+SYNC_ENABLED=false            # wyłącza wszystkie crony
+SPORT_API_MONTHLY_LIMIT=45    # własny budżet; po przekroczeniu żadne wywołanie nie wychodzi do sieci
+```
+
+Dane odświeżasz ręcznie jednym zapytaniem: `docker compose -f docker-compose.nest.yml exec backend node dist/cli/sync-once.js`
+(lokalnie: `npm run sync:once`). Strony meczów, logo i kalendarz też zużywają zapytania (pierwsza wizyta w meczu ≈ 4,
+każdy herb = 1; wyniki są cache'owane w bazie). Stan limitów: `GET /api/health/quota`.
 
 ## Znane braki względem Django
 

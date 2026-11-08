@@ -260,7 +260,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="flex items-center justify-between max-w-2xl mx-auto py-4 gap-2">
           <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
-            <h2 className="text-base sm:text-xl font-bold text-white text-right truncate">
+            <h2 className="text-base sm:text-xl font-bold text-white text-right break-words">
               {match.homeTeam ? <Link href={`/team/${match.homeTeam.id}`} className="hover:text-emerald-400">{match.homeTeam.name}</Link> : 'Home'}
             </h2>
             <TeamLogo apiId={match.homeTeam?.apiId} name={match.homeTeam?.name ?? 'H'} size={36} />
@@ -278,7 +278,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="flex-1 flex items-center gap-3 min-w-0">
             <TeamLogo apiId={match.awayTeam?.apiId} name={match.awayTeam?.name ?? 'A'} size={36} />
-            <h2 className="text-base sm:text-xl font-bold text-white truncate">
+            <h2 className="text-base sm:text-xl font-bold text-white break-words">
               {match.awayTeam ? <Link href={`/team/${match.awayTeam.id}`} className="hover:text-emerald-400">{match.awayTeam.name}</Link> : 'Away'}
             </h2>
           </div>
