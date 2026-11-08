@@ -1,0 +1,552 @@
+/* Przeniesione z Django: matches/static/matches/base.css (nawigacja, powiadomienia, menu użytkownika) */
+/* =========================================
+   ZMIENNE KOLORYSTYCZNE
+========================================= */
+:root {
+    --bg-dark: #121212;
+    --nav-bg: #1e1e1e;
+    --card-bg: #242424;
+    --text-main: #e0e0e0;
+    --text-light: #f3f4f6;
+    --text-muted: #9ca3af;
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --danger: #ef4444;
+}
+
+/* =========================================
+   PASEK NAWIGACJI
+========================================= */
+.navbar {
+    background-color: var(--nav-bg);
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-brand {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-brand span {
+    color: var(--accent);
+}
+
+.nav-links {
+    display: flex;
+    gap: 6px;
+}
+
+.nav-link {
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 1rem;
+    padding: 8px 12px;
+    white-space: nowrap;
+    transition: 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--accent);
+}
+
+/* =========================================
+   WYSZUKIWARKA (NAVBAR)
+========================================= */
+.nav-search-container {
+    position: relative;
+    flex: 0 1 280px;
+    min-width: 150px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.nav-search-input {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    background-color: var(--bg-dark);
+    border: 1px solid #333;
+    border-radius: 20px;
+    color: white;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 8px;
+    z-index: 1001;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+a.search-item,
+div.search-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+
+a.search-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.search-item.no-result {
+    color: #666;
+    cursor: default;
+}
+
+/* =========================================
+   UKŁAD GŁÓWNY
+========================================= */
+.main-content {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* =========================================
+   PANEL POWIADOMIEŃ
+========================================= */
+.notif-wrapper {
+    position: relative;
+}
+
+.notif-bell-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.25rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.notif-bell-btn:hover {
+    color: var(--accent);
+}
+
+.notif-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    animation: badgePop 0.3s ease;
+}
+
+@keyframes badgePop {
+    0%   { transform: scale(0); }
+    60%  { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* Panel */
+.notif-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    max-height: 440px;
+    background: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.notif-panel-open {
+    display: flex;
+    animation: panelSlide 0.2s ease;
+}
+
+@keyframes panelSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.notif-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid #333;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-light);
+}
+
+.notif-clear-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.notif-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.notif-panel-body {
+    overflow-y: auto;
+    flex: 1;
+    max-height: 370px;
+}
+
+/* Notification item */
+.notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s;
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.notif-item.notif-unread {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid var(--accent);
+}
+
+.notif-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    line-height: 1;
+    padding-top: 2px;
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-text {
+    font-size: 0.88rem;
+    color: var(--text-main);
+    line-height: 1.35;
+    word-wrap: break-word;
+}
+
+.notif-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Empty state */
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.notif-empty i {
+    font-size: 2rem;
+    opacity: 0.4;
+}
+
+.notif-empty p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* =========================================
+   RESPONSYWNOŚĆ – MOBILE (≤ 768px)
+   base.css
+========================================= */
+@media (max-width: 768px) {
+
+    /* Navbar: stack vertically, tighter padding */
+    .navbar {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .nav-brand {
+        font-size: 1.4rem;
+    }
+
+    /* Wyszukiwarka zajmuje całą szerokość w drugiej linii */
+    .nav-search-container {
+        width: 100%;
+        order: 3;
+    }
+
+    /* Linki nawigacyjne kompaktowe */
+    .nav-links {
+        gap: 2px;
+    }
+
+    .nav-link {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+    }
+
+    /* Mniejsze marginesy głównego contentu */
+    .main-content {
+        margin: 20px auto;
+        padding: 0 12px;
+    }
+
+    /* Panel powiadomień – pełna szerokość na mobile i centrowanie */
+    .notif-panel {
+        position: fixed; /* Zmienia pozycję na względem okna przeglądarki */
+        top: 60px; /* Ustaw odpowiedni odstęp od góry (pod navbarem) */
+        left: 50%; /* Przesuwa lewą krawędź na środek ekranu */
+        transform: translateX(-50%); /* Cofa panel o połowę jego szerokości, idealnie go centrując */
+        width: 92vw; /* Zajmuje 92% szerokości ekranu, zostawiając ładne marginesy */
+        max-width: 400px; /* Zabezpieczenie dla większych telefonów/tabletów */
+        right: auto; /* Resetuje desktopowe ustawienie right: 0 */
+        z-index: 2000;
+    }
+    
+    /* Animacja wysuwania od góry dla fixed */
+    @keyframes panelSlide {
+        from { opacity: 0; transform: translate(-50%, -8px); }
+        to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+}
+
+/* =========================================
+   USER AVATAR DROPDOWN
+========================================= */
+.user-menu-wrapper {
+    position: relative;
+}
+
+.user-avatar-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    padding: 0;
+}
+
+.user-avatar-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+/* Dropdown panel */
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 240px;
+    background: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: dropdownSlide 0.18s ease;
+}
+
+.user-dropdown.user-dropdown-open {
+    display: flex;
+}
+
+@keyframes dropdownSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header: avatar + username + email */
+.user-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.user-dropdown-icon {
+    font-size: 2.4rem;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.user-dropdown-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.user-dropdown-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-light);
+    word-break: break-all;
+    line-height: 1.1;
+}
+
+/* Divider */
+.user-dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 0;
+}
+
+/* Menu items */
+.user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+
+.user-dropdown-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--text-muted);
+    transition: color 0.15s;
+}
+
+.user-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.user-dropdown-item:hover i {
+    color: var(--accent);
+}
+
+/* Logout – red highlight on hover */
+.user-dropdown-logout {
+    color: var(--text-muted);
+}
+
+.user-dropdown-logout:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--danger);
+}
+
+.user-dropdown-logout:hover i {
+    color: var(--danger);
+}
+
+@media (max-width: 768px) {
+    .user-dropdown {
+        right: -8px;
+        width: 220px;
+    }
+}
+
+/* =========================================
+   USER DROPDOWN - SUBSCRIPTION BADGES
+========================================= */
+.user-dropdown-tier {
+    margin-top: 2px;
+}
+
+.user-tier-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.user-tier-badge i {
+    margin-right: 5px;
+    font-size: 0.7rem;
+}
+
+.user-tier-badge.premium {
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(251,191,36,0.2);
+}
+
+.user-tier-badge.plus {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    font-weight: 700;
+}
+
+.user-tier-badge.free {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+

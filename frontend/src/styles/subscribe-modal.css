@@ -1,0 +1,68 @@
+/* Przeniesione z Django: /tmp/claude-0/-home-user-VARify/7324219d-62a5-586f-b402-32e70cee8284/scratchpad/modal.css (selektory objęte przestrzenią .vf-sub) */
+.vf-sub .guest-auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.72);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+.vf-sub .guest-auth-overlay.open { display: flex; }
+.vf-sub .guest-auth-box {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 1.25rem;
+            padding: 2.5rem 2rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            animation: vfm-gaFadeIn .25s ease;
+        }
+@keyframes vfm-gaFadeIn { from { opacity:0; transform:scale(.94) } to { opacity:1; transform:scale(1) } }
+.vf-sub .guest-auth-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: none; border: none; color: #94a3b8;
+            font-size: 1.1rem; cursor: pointer; padding: .25rem .5rem;
+        }
+.vf-sub .guest-auth-close:hover { color: #f1f5f9; }
+.vf-sub .guest-auth-icon {
+            font-size: 2.8rem; margin-bottom: 1rem;
+        }
+.vf-sub .guest-auth-box h2 {
+            color: #f1f5f9; font-size: 1.35rem; font-weight: 700;
+            margin: 0 0 .75rem;
+        }
+.vf-sub .guest-auth-box p {
+            color: #94a3b8; font-size: .95rem; line-height: 1.6;
+            margin: 0 0 1.75rem;
+        }
+.vf-sub .guest-auth-actions { display: flex; flex-direction: column; gap: .75rem; }
+.vf-sub .ga-btn-primary {
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            background: linear-gradient(135deg,#10b981,#059669);
+            color: #fff; font-weight: 700; font-size: 1rem;
+            border: none; border-radius: .75rem; padding: .85rem 1.5rem;
+            text-decoration: none; cursor: pointer;
+            transition: opacity .2s;
+        }
+.vf-sub .ga-btn-primary:hover { opacity: .88; }
+.vf-sub .ga-btn-outline {
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            background: transparent;
+            color: #94a3b8; font-size: .9rem;
+            border: 1px solid rgba(255,255,255,.12); border-radius: .75rem;
+            padding: .7rem 1.5rem; text-decoration: none; cursor: pointer;
+            transition: border-color .2s, color .2s;
+        }
+.vf-sub .ga-btn-outline:hover { border-color: #60a5fa; color: #93c5fd; }
+.vf-sub .guest-auth-divider {
+            display: flex; align-items: center; gap: .75rem; margin: .25rem 0;
+            color: #475569; font-size: .8rem;
+        }
+.vf-sub .guest-auth-divider::before,
+.vf-sub .guest-auth-divider::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08);
+        }
