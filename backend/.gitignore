@@ -5,3 +5,5 @@
 .env.*
 !.env.example
 *.log
+dump.rdb
+*.tsbuildinfo
