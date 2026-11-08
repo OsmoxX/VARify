@@ -1,28 +1,26 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import '@/styles/match.css';
 import Link from 'next/link';
-import { ArrowLeft, Bell, BarChart3, Clock, Users } from 'lucide-react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useApi } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth';
 import { useMatchRoom, useSocketEvent, type LiveScoreUpdate, type LiveStatusUpdate, type MatchEventPayload } from '@/lib/socket';
 import { useSubscriptions } from '@/lib/subscriptions';
 import { useNow } from '@/lib/hooks';
-import { isLiveStatus, liveMinute } from '@/lib/minute';
 import { playGoalSound } from '@/lib/sound';
-import { formatLocalTime } from '@/lib/time';
-import { Paywall } from '@/components/ui/Paywall';
-import { TeamLogo } from '@/components/ui/TeamLogo';
 import type { MatchSummary, Tier } from '@/lib/types';
 
 interface EventItem {
   id: number;
   incidentType: string;
   time: number;
+  addedTime: number | null;
   formattedTime: string;
   side: 'home' | 'away' | 'neutral';
   playerName: string | null;
   assistPlayerName: string | null;
+  assist2PlayerName: string | null;
   playerInName: string | null;
   playerOutName: string | null;
   injury: boolean;
@@ -73,90 +71,196 @@ interface DetailResponse {
   stats: StatPeriod[] | null;
 }
 
-const RATING_BG: Record<string, string> = {
-  'rating-green': 'bg-emerald-500',
-  'rating-yellow': 'bg-amber-500',
-  'rating-red': 'bg-red-500',
-  '': 'bg-zinc-600',
+const CLASS_LABELS: Record<string, string> = {
+  ownGoal: 'samobój',
+  penalty: 'karny',
+  missedPenalty: 'niestrzelony karny',
+  penaltyNotAwarded: 'karny nie uznany',
+  yellowRed: '2× żółta',
 };
+const POS_LABELS: Record<string, string> = { G: 'GK', D: 'DEF', M: 'MID', F: 'FWD' };
 
-const CLASS_LABEL: Record<string, string> = {
-  ownGoal: 'own goal',
-  penalty: 'penalty',
-  missedPenalty: 'missed penalty',
-  penaltyNotAwarded: 'penalty not awarded',
-  goalCancelled: 'goal cancelled',
-  cardUpgrade: 'card upgraded',
-  penaltyNotGiven: 'penalty overturned',
-  penaltyGiven: 'penalty awarded',
-  scored: 'scored',
-  missed: 'missed',
-  penaltyAwarded: 'penalty awarded',
+const firstWords = (name: string, n = 2) => {
+  const w = name.trim().split(/\s+/);
+  return w.length > n ? `${w.slice(0, n).join(' ')} …` : name;
 };
+const runningScore = (e: EventItem) => (e.homeScore !== null && e.awayScore !== null ? `${e.homeScore} - ${e.awayScore}` : '');
 
-function EventRow({ e }: { e: EventItem }) {
+const PAUSED = ['halftime', 'half time', 'ht', 'pause', 'break'];
+const LIVE_KW = ['half', 'live', 'progress', 'period', '1st', '2nd', 'extra', 'overtime'];
+
+/** Zegar MM:SS — port updateMatchClock z `match_detail.js`. */
+function clockText(m: MatchSummary, nowMs: number): string {
+  const status = m.status.toLowerCase();
+  if (PAUSED.some((k) => status.includes(k))) return 'HT';
+  if (status === 'ended') return 'FT';
+  if (!LIVE_KW.some((k) => status.includes(k))) return m.minute ? `${m.minute}:00` : m.status;
+  const start = Number(m.matchTime) || 0;
+  const initial = m.periodStartMinute;
+  if (start <= 0) return `${m.minute}:00`;
+  const elapsed = Math.max(0, Math.floor(nowMs / 1000) - start);
+  const cur = initial + Math.floor(elapsed / 60);
+  const secs = String(elapsed % 60).padStart(2, '0');
+  if (cur > 90 && !status.includes('extra')) return `90+${cur - 90}:${secs}`;
+  if (cur > 45 && initial === 0) return `45+${cur - 45}:${secs}`;
+  return `${cur}:${secs}`;
+}
+
+function FeedRow({ e }: { e: EventItem }) {
+  const score = runningScore(e);
+  const isGoal = e.incidentType === 'goal';
+  const label = CLASS_LABELS[e.incidentClass ?? (isGoal ? e.incidentType : '')] ?? '';
+  const timeLabel = e.formattedTime ? `${e.formattedTime}'` : '';
+  let body: React.ReactNode;
+
   if (e.incidentType === 'period') {
-    return <div className="text-center text-[11px] font-bold text-zinc-400 py-1.5 border-y border-dashed border-[#2d2d2d] my-1">{e.text} {e.homeScore !== null && `· ${e.homeScore}-${e.awayScore}`}</div>;
-  }
-  if (e.incidentType === 'injuryTime') {
-    return <div className="text-center text-[11px] text-zinc-500 py-1">+{e.injuryTimeLength ?? '?'} min added time</div>;
-  }
-  let icon = 'ℹ️';
-  let title = e.playerName ?? '';
-  let sub = '';
-  switch (e.incidentType) {
-    case 'goal':
-      icon = '⚽';
-      sub = [e.assistPlayerName && `assist: ${e.assistPlayerName}`, e.incidentClass && CLASS_LABEL[e.incidentClass]].filter(Boolean).join(' · ');
-      break;
-    case 'card':
-      icon = e.cardColor === 'red' ? '🟥' : e.cardColor === 'yellow-red' ? '🟨🟥' : '🟨';
-      sub = [e.reason, e.rescinded && 'rescinded by VAR'].filter(Boolean).join(' · ');
-      break;
-    case 'substitution':
-      icon = '🔄';
-      title = e.playerInName ?? '';
-      sub = `↔ ${e.playerOutName ?? ''}${e.injury ? ' (injury)' : ''}`;
-      break;
-    case 'varDecision':
-      icon = '📺';
-      sub = ['VAR', e.incidentClass && (CLASS_LABEL[e.incidentClass] ?? e.incidentClass), e.confirmed === false && 'not confirmed'].filter(Boolean).join(' · ');
-      break;
-    case 'inGamePenalty':
-      icon = '🎯';
-      sub = e.incidentClass ? (CLASS_LABEL[e.incidentClass] ?? e.incidentClass) : 'penalty';
-      break;
-  }
-  const right = e.side === 'away';
-  return (
-    <div className={`flex items-center gap-3 py-2 ${right ? 'flex-row-reverse text-right' : ''}`}>
-      <span className="w-12 text-center text-xs font-mono text-zinc-500 flex-shrink-0">{e.formattedTime}&apos;</span>
-      <span className="text-lg flex-shrink-0">{icon}</span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm text-zinc-100 truncate">{title}</p>
-        {sub && <p className="text-[11px] text-zinc-500 truncate">{sub}</p>}
+    const ht = e.text === 'HT' || e.time === 45;
+    const ft = e.text === 'FT' || e.time === 90;
+    body = (
+      <>
+        <div className="feed-badge period-badge">{e.text === 'HT' ? 'HT' : e.text === 'FT' ? 'FT' : e.time === 45 ? 'HT' : 'FT'}</div>
+        <div className="feed-info period-info">
+          {ht ? 'Koniec pierwszej połowy' : ft ? 'Koniec meczu' : (e.text ?? 'Przerwa')}
+          {score && <span className="period-score">{score}</span>}
+        </div>
+      </>
+    );
+  } else if (e.incidentType === 'injuryTime') {
+    body = (
+      <>
+        <div className="feed-badge injurytime-badge"><i className="fa-regular fa-clock" /></div>
+        <div className="feed-info injurytime-info">Sędzia dolicza: <strong>+{e.injuryTimeLength ?? e.addedTime ?? '?'} min</strong></div>
+      </>
+    );
+  } else if (e.incidentType === 'varDecision') {
+    body = (
+      <div className="feed-card var-card">
+        <div className="feed-icon"><i className="fa-solid fa-display var-icon" /></div>
+        <div className="feed-details">
+          <span className="player-name">{e.playerName}</span>
+          <span className="var-label">
+            VAR:{' '}
+            {e.confirmed === true ? (
+              <span className="var-confirmed"><i className="fa-solid fa-check" /> Potwierdzone</span>
+            ) : e.confirmed === false ? (
+              <span className="var-overturned"><i className="fa-solid fa-xmark" /> Odrzucone</span>
+            ) : (
+              <span className="var-pending">W trakcie analizy</span>
+            )}
+          </span>
+          {label && <span className="sub-info">({label})</span>}
+        </div>
       </div>
-      {e.incidentType === 'goal' && e.homeScore !== null && (
-        <span className="font-mono text-xs font-bold text-emerald-400 flex-shrink-0">{e.homeScore}-{e.awayScore}</span>
-      )}
+    );
+  } else {
+    const isCard = e.incidentType === 'card';
+    const isSub = e.incidentType === 'substitution';
+    const isPen = e.incidentType === 'inGamePenalty';
+    body = (
+      <div className="feed-card">
+        <div className="feed-icon">
+          {isGoal ? (
+            <>
+              <i className="fa-solid fa-futbol goal-icon" />
+              {score && <span className="goal-score">{score}</span>}
+            </>
+          ) : isCard ? (
+            e.cardColor === 'red' ? (
+              <div className="card-icon red" />
+            ) : e.cardColor === 'yellow-red' ? (
+              <div className="card-icon-double"><div className="card-icon yellow card-overlap" /><div className="card-icon red card-overlap" /></div>
+            ) : (
+              <div className="card-icon yellow" />
+            )
+          ) : isSub ? (
+            <i className="fa-solid fa-right-left sub-icon" />
+          ) : isPen ? (
+            <span className="penalty-icon"><i className="fa-solid fa-futbol" /></span>
+          ) : (
+            <i className="fa-solid fa-circle-info info-icon" />
+          )}
+        </div>
+        <div className="feed-details">
+          {isGoal ? (
+            <>
+              <span className="player-name">{e.playerName}{label && <span className="incident-tag">{label}</span>}</span>
+              {e.assistPlayerName && <span className="sub-info"><i className="fa-solid fa-shoe-prints" style={{ fontSize: '0.7rem' }} /> {e.assistPlayerName}</span>}
+              {e.assist2PlayerName && <span className="sub-info"><i className="fa-solid fa-shoe-prints" style={{ fontSize: '0.7rem' }} /> {e.assist2PlayerName}</span>}
+            </>
+          ) : isCard ? (
+            <>
+              <span className="player-name">{e.playerName}{e.rescinded && <span className="rescinded-tag">ANULOWANA</span>}</span>
+              {e.reason && <span className="sub-info">{e.reason}</span>}
+              {label && <span className="sub-info card-type-label">{label}</span>}
+            </>
+          ) : isSub ? (
+            <>
+              <span className="sub-detail"><i className="fa-solid fa-arrow-up" style={{ color: '#10b981' }} /> <span className="player-name">{e.playerInName || e.playerName || ''}</span></span>
+              {e.playerOutName && (
+                <span className="sub-detail">
+                  <i className="fa-solid fa-arrow-down" style={{ color: '#ef4444' }} /> <span className="player-out">{e.playerOutName}</span>
+                  {e.injury && <i className="fa-solid fa-kit-medical injury-badge" title="Kontuzja" />}
+                </span>
+              )}
+            </>
+          ) : isPen ? (
+            <>
+              <span className="player-name">
+                {e.playerName}
+                {e.incidentClass === 'missed' && <span className="rescinded-tag" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}>Nietrafiony karny</span>}
+                {e.incidentClass === 'awarded' && <span className="incident-tag">Karny przyznany</span>}
+              </span>
+              {e.reason === 'goalkeeperSave' ? <span className="sub-info"><i className="fa-solid fa-hands" /> Obrona bramkarza</span> : e.reason && <span className="sub-info">{e.reason}</span>}
+            </>
+          ) : (
+            <>
+              <span className="player-name">{e.playerName}</span>
+              {e.text && <span className="sub-info">{e.text}</span>}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`feed-row ${e.side}`}>
+      <div className="feed-time">{timeLabel}</div>
+      {body}
     </div>
   );
 }
 
-function Bench({ title, players }: { title: string; players: LineupPlayer[] }) {
+function PitchPlayer({ s, home }: { s: PitchSpot; home: boolean }) {
+  const p = s.player;
+  const name = firstWords(p.playerName);
   return (
-    <div>
-      <h4 className="text-[11px] uppercase tracking-wider text-zinc-500 mb-2">{title}</h4>
-      <ul className="space-y-1">
+    <div className={`pitch-player ${home ? 'home-player' : 'away-player'}`} style={{ '--p-top': `${s.top}%`, '--p-left': `${s.left}%` } as React.CSSProperties}>
+      <div className={`pitch-player-circle${p.isCaptain ? ' captain-circle' : ''}`}>{p.shirtNumber ?? ''}</div>
+      <div className="pitch-player-name">
+        {p.playerApiId ? <Link href={`/player/${p.playerApiId}`} style={{ color: 'inherit', textDecoration: 'none' }}>{name}</Link> : name}
+      </div>
+      {p.avgRating && <div className={`pitch-rating ${s.ratingClass}`}>{p.avgRating}</div>}
+    </div>
+  );
+}
+
+function SubsGrid({ title, players }: { title: string; players: LineupPlayer[] }) {
+  return (
+    <div className="subs-half">
+      <div className="subs-title"><i className="fa-solid fa-arrow-right-arrow-left" /> {title}</div>
+      <div className="subs-grid">
+        {players.length === 0 && <p className="no-data">Brak danych.</p>}
         {players.map((p) => (
-          <li key={p.id} className="flex items-center gap-2 text-xs text-zinc-300">
-            <span className="w-6 text-right font-mono text-zinc-500">{p.shirtNumber ?? ''}</span>
-            <span className="truncate">{p.playerName}</span>
-            {p.avgRating && <span className="ml-auto text-[10px] text-zinc-500">{p.avgRating}</span>}
-          </li>
+          <div key={p.id} className="sub-card">
+            <span className="sub-num">{p.shirtNumber ?? '–'}</span>
+            <span className="sub-name">
+              {p.playerApiId ? <Link href={`/player/${p.playerApiId}`} style={{ color: 'inherit', textDecoration: 'none' }}>{p.playerName}</Link> : p.playerName}
+            </span>
+            <span className="sub-pos">{POS_LABELS[p.position ?? ''] ?? p.position ?? ''}</span>
+          </div>
         ))}
-        {players.length === 0 && <li className="text-xs text-zinc-600">—</li>}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -165,8 +269,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const { user, ready, tier } = useAuth();
   const { isSubscribed, isPending, toggle } = useSubscriptions();
-  const now = useNow(15000);
-  // Dane z REST (ponowne pobranie po zmianie konta/planu — zakres danych zależy od tieru).
+  const now = useNow(1000);
   const { data: fetched, error, reload } = useApi<DetailResponse>(ready ? `/matches/${id}?u=${user?.id ?? 0}&t=${tier}` : null);
   // Nadpisanie z WebSocketu dotyczy konkretnego obiektu `fetched`; nowe dane z REST je unieważniają.
   const [liveOverride, setLive] = useState<{ base: DetailResponse; home: number; away: number; status: string } | null>(null);
@@ -192,7 +295,6 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const apiId = data?.match.apiId ?? null;
   useMatchRoom(apiId);
 
-  // Nowy incydent/zmiana wyniku → odśwież oś czasu (z krótkim opóźnieniem, aby zebrać serię zdarzeń)
   const scheduleRefetch = useCallback(() => {
     if (refetchTimer.current) clearTimeout(refetchTimer.current);
     refetchTimer.current = setTimeout(reload, 1500);
@@ -220,196 +322,200 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
   if (error && !data) {
     return (
-      <div className="py-20 text-center text-zinc-400 space-y-3">
-        <p>{error.status === 404 ? 'Match not found.' : error.message}</p>
-        <Link href="/" className="text-emerald-400 underline text-sm">Back to Live Matches</Link>
+      <div className="vf-match">
+        <div className="detail-wrapper">
+          <Link href="/" className="back-btn-modern"><i className="fa-solid fa-chevron-left" /> Wróć do wyników</Link>
+          <p className="no-data">{error.status === 404 ? 'Nie znaleziono meczu.' : error.message}</p>
+        </div>
       </div>
     );
   }
-  if (!data) return <div className="py-20 text-center text-zinc-500 text-sm">Loading match details...</div>;
+  if (!data) {
+    return (
+      <div className="vf-match">
+        <div className="detail-wrapper"><p className="no-data"><i className="fa-solid fa-circle-notch fa-spin" /> Ładowanie meczu...</p></div>
+      </div>
+    );
+  }
 
   const { match, events, access, lineups } = data;
-  const live = isLiveStatus(match.status);
-  const minute = liveMinute({ periodStartMinute: match.periodStartMinute, matchTime: match.matchTime, status: match.status }, now);
   const subscribed = isSubscribed(match.id);
   const stats = data.stats ?? [];
   const activePeriod = stats[Math.min(period, Math.max(stats.length - 1, 0))];
-
-  const tabs = [
-    { key: 'timeline' as const, label: 'Timeline', icon: Clock },
-    { key: 'lineups' as const, label: 'Lineups', icon: Users },
-    { key: 'stats' as const, label: 'Stats', icon: BarChart3 },
-  ];
+  const spotsHome = data.pitchHome ?? [];
+  const spotsAway = data.pitchAway ?? [];
 
   return (
-    <div className="space-y-6">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white">
-        <ArrowLeft className="w-4 h-4" /> Back to Live Matches
-      </Link>
+    <div className="vf-match">
+      <div className="detail-wrapper">
+        <Link href="/" className="back-btn-modern"><i className="fa-solid fa-chevron-left" /> Wróć do wyników</Link>
 
-      <div className="relative bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6 shadow-lg overflow-hidden">
-        {goalBanner && (
-          <div className="absolute inset-x-0 top-0 flex justify-center pointer-events-none">
-            <span className="anim-goal-pop mt-2 px-5 py-1.5 rounded-full bg-emerald-500 text-black text-sm font-extrabold tracking-wide shadow-lg shadow-emerald-500/30">⚽ GOAL!</span>
-          </div>
-        )}
-        <div className="text-center text-xs text-zinc-400 mb-2">
-          {match.league && <Link href={`/league/${match.league.apiId}`} className="hover:text-emerald-400">{match.league.name}</Link>}
-          {match.league?.country && ` • ${match.league.country}`}
-          {match.startDatetime && ` • ${formatLocalTime(match.startDatetime)}`}
-        </div>
-        <div className="flex items-center justify-between max-w-2xl mx-auto py-4 gap-2">
-          <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
-            <h2 className="text-base sm:text-xl font-bold text-white text-right break-words">
-              {match.homeTeam ? <Link href={`/team/${match.homeTeam.id}`} className="hover:text-emerald-400">{match.homeTeam.name}</Link> : 'Home'}
-            </h2>
-            <TeamLogo apiId={match.homeTeam?.apiId} name={match.homeTeam?.name ?? 'H'} size={36} />
-          </div>
-          <div className="px-4 sm:px-6 flex flex-col items-center">
-            <div key={`${match.homeScore}-${match.awayScore}`} className={`flex items-center gap-3 font-mono text-3xl sm:text-4xl font-extrabold text-white ${goalBanner ? 'anim-score-bump' : ''}`}>
-              <span>{match.homeScore}</span>
-              <span className="text-zinc-600">:</span>
-              <span>{match.awayScore}</span>
-            </div>
-            <div className={`mt-2 flex items-center gap-1.5 text-xs font-semibold ${live ? 'text-emerald-400' : 'text-zinc-400'}`}>
-              {live && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />}
-              <span>{live && minute > 0 ? `${minute}' · ${match.status}` : match.status}</span>
-            </div>
-          </div>
-          <div className="flex-1 flex items-center gap-3 min-w-0">
-            <TeamLogo apiId={match.awayTeam?.apiId} name={match.awayTeam?.name ?? 'A'} size={36} />
-            <h2 className="text-base sm:text-xl font-bold text-white break-words">
-              {match.awayTeam ? <Link href={`/team/${match.awayTeam.id}`} className="hover:text-emerald-400">{match.awayTeam.name}</Link> : 'Away'}
-            </h2>
-          </div>
-        </div>
-        <div className="flex justify-center mt-2">
-          <button
-            onClick={() => void toggle(match.id, match.apiId).catch(() => {})}
-            disabled={isPending(match.id)}
-            aria-pressed={subscribed}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all disabled:opacity-60 ${
-              subscribed ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            <Bell className={`w-3.5 h-3.5 ${subscribed ? 'fill-current' : ''}`} />
-            {subscribed ? 'Alerts on' : 'Get alerts'}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex gap-1 border-b border-[#262626]">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === key ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Icon className="w-4 h-4" /> {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'timeline' && (
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4 divide-y divide-[#242424]">
-          {events.length === 0 ? (
-            <p className="text-center text-sm text-zinc-500 py-8">No events yet.</p>
-          ) : (
-            events.map((e) => <EventRow key={e.id} e={e} />)
-          )}
-        </div>
-      )}
-
-      {tab === 'lineups' &&
-        (!access.lineups || !lineups ? (
-          <Paywall required="PLUS" feature="Lineups and the formation pitch" loggedIn={!!user} />
-        ) : (
-          <div className="space-y-6">
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
-              <div className="flex justify-between text-sm font-semibold text-white mb-3">
-                <span>{match.homeTeam?.name} {match.homeFormation && <span className="ml-1 text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">{match.homeFormation}</span>}</span>
-                <span>{match.awayFormation && <span className="mr-1 text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">{match.awayFormation}</span>} {match.awayTeam?.name}</span>
+        <div className="match-card-premium">
+          <div className="scoreboard-header" style={{ position: 'relative' }}>
+            {goalBanner && (
+              <div className="anim-goal-pop" style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', padding: '6px 20px', borderRadius: 999, background: '#10b981', color: '#000', fontWeight: 800, boxShadow: '0 4px 20px rgba(16,185,129,0.4)', zIndex: 5 }}>⚽ GOL!</div>
+            )}
+            <div className="team-block"><span className="team-name-lg">{match.homeTeam?.name}</span></div>
+            <div className="score-center">
+              <div className={`main-score${goalBanner ? ' anim-score-bump' : ''}`} key={`${match.homeScore}-${match.awayScore}`}>{match.homeScore} - {match.awayScore}</div>
+              <div className="status-badge">
+                <span className="pulse-icon" />
+                <span>{clockText(match, now)}</span>
               </div>
-              <div className="pitch-field relative w-full aspect-[2/1] rounded-lg border-2 border-white/30 overflow-hidden">
-                {[...(data.pitchHome ?? []), ...(data.pitchAway ?? [])].map((s) => (
-                  <div
-                    key={`${s.left}-${s.top}-${s.player.id}`}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                    style={{ left: `${s.left}%`, top: `${s.top}%` }}
-                    title={`${s.player.playerName}${s.player.avgRating ? ` · ${s.player.avgRating}` : ''}`}
-                  >
-                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full ${RATING_BG[s.ratingClass] ?? 'bg-zinc-600'} border-2 border-white/80 text-[10px] sm:text-xs font-bold text-white flex items-center justify-center`}>
-                      {s.player.shirtNumber ?? ''}
-                    </div>
-                    <span className="hidden sm:block mt-0.5 max-w-[5.5rem] truncate text-[10px] text-white [text-shadow:0_1px_2px_rgba(0,0,0,.9)]">
-                      {s.player.playerName.split(' ').slice(-1)[0]}{s.player.isCaptain ? ' (C)' : ''}
-                    </span>
+              <button
+                className={`bell-btn${subscribed ? ' bell-active' : ''}`}
+                style={{ margin: '10px auto 0' }}
+                onClick={() => void toggle(match.id, match.apiId).catch(() => {})}
+                disabled={isPending(match.id)}
+                aria-pressed={subscribed}
+                title={subscribed ? 'Wyłącz powiadomienia' : 'Włącz powiadomienia'}
+              >
+                <i className="fa-solid fa-bell" />
+              </button>
+            </div>
+            <div className="team-block"><span className="team-name-lg">{match.awayTeam?.name}</span></div>
+          </div>
+
+          <div className="match-tabs">
+            <button className={`tab-btn${tab === 'timeline' ? ' active' : ''}`} onClick={() => setTab('timeline')}>Oś czasu</button>
+            <button className={`tab-btn${tab === 'lineups' ? ' active' : ''}`} onClick={() => setTab('lineups')}>Składy</button>
+            <button className={`tab-btn${tab === 'stats' ? ' active' : ''}`} onClick={() => setTab('stats')}>Statystyki</button>
+          </div>
+
+          {/* OŚ CZASU */}
+          <div className="tab-content" style={{ display: tab === 'timeline' ? 'block' : 'none' }}>
+            <div className="timeline-container">
+              {events.length === 0 ? <p className="no-data">Brak zdarzeń.</p> : events.map((e) => <FeedRow key={e.id} e={e} />)}
+            </div>
+          </div>
+
+          {/* SKŁADY (PLUS) */}
+          <div className="tab-content" style={{ display: tab === 'lineups' ? 'block' : 'none' }}>
+            {access.lineups && lineups ? (
+              <>
+                <div className="pitch-container">
+                  <div className="pitch-teams-header">
+                    <div className="team-header-home">{match.homeTeam?.name}{match.homeFormation && <span className="formation-tag">{match.homeFormation}</span>}</div>
+                    <div className="team-header-away">{match.awayFormation && <span className="formation-tag">{match.awayFormation}</span>}{match.awayTeam?.name}</div>
                   </div>
-                ))}
-                {!data.pitchHome?.length && !data.pitchAway?.length && (
-                  <p className="absolute inset-0 flex items-center justify-center text-sm text-white/80">Lineups not announced yet</p>
+                  <div className="pitch-field">
+                    <div className="pitch-half-line" />
+                    <div className="pitch-center-circle" />
+                    <div className="pitch-center-dot" />
+                    <div className="pitch-penalty-box pitch-penalty-left" />
+                    <div className="pitch-penalty-box pitch-penalty-right" />
+                    <div className="pitch-goal-box pitch-goal-left" />
+                    <div className="pitch-goal-box pitch-goal-right" />
+                    <div className="pitch-corner pitch-corner-tl" />
+                    <div className="pitch-corner pitch-corner-tr" />
+                    <div className="pitch-corner pitch-corner-bl" />
+                    <div className="pitch-corner pitch-corner-br" />
+                    {spotsHome.map((s) => <PitchPlayer key={`h${s.player.id}`} s={s} home />)}
+                    {spotsAway.map((s) => <PitchPlayer key={`a${s.player.id}`} s={s} home={false} />)}
+                    {spotsHome.length === 0 && spotsAway.length === 0 && (
+                      <div className="pitch-empty-state">
+                        <div className="pitch-empty-icon"><i className="fa-solid fa-people-group" /></div>
+                        <div className="pitch-empty-text">Składy na boisku niedostępne</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="subs-section">
+                  <SubsGrid title={`Rezerwa – ${match.homeTeam?.name ?? ''}`} players={lineups.homeSubs} />
+                  <SubsGrid title={`Rezerwa - ${match.awayTeam?.name ?? ''}`} players={lineups.awaySubs} />
+                </div>
+
+                {((data.missingHome?.length ?? 0) > 0 || (data.missingAway?.length ?? 0) > 0) && (
+                  <div className="subs-section missing-section">
+                    {[{ team: match.homeTeam?.name, list: data.missingHome ?? [] }, { team: match.awayTeam?.name, list: data.missingAway ?? [] }].map(({ team, list }, i) => (
+                      <div className="subs-half" key={i}>
+                        {list.length > 0 && (
+                          <>
+                            <div className="subs-title"><i className="fa-solid fa-user-injured" /> Kontuzje i Zawieszenia – {team}</div>
+                            <div className="subs-grid">
+                              {list.map((m) => (
+                                <div key={m.id} className="sub-card missing-card">
+                                  <span className="sub-num"><i className="fa-solid fa-ban" /></span>
+                                  <span className="sub-name">{m.playerName}</span>
+                                  <span className={`sub-pos status-${m.type}`}>{m.type.toUpperCase()}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-6 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
-              <Bench title={`${match.homeTeam?.name ?? 'Home'} — substitutes`} players={lineups.homeSubs} />
-              <Bench title={`${match.awayTeam?.name ?? 'Away'} — substitutes`} players={lineups.awaySubs} />
-            </div>
-            {[...(data.missingHome ?? []), ...(data.missingAway ?? [])].length > 0 && (
-              <div className="grid sm:grid-cols-2 gap-6 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
-                {[
-                  { team: match.homeTeam?.name, list: data.missingHome ?? [] },
-                  { team: match.awayTeam?.name, list: data.missingAway ?? [] },
-                ].map(({ team, list }) => (
-                  <div key={team}>
-                    <h4 className="text-[11px] uppercase tracking-wider text-zinc-500 mb-2">{team} — unavailable</h4>
-                    <ul className="space-y-1">
-                      {list.map((m) => (
-                        <li key={m.id} className="text-xs text-zinc-300">
-                          {m.type === 'doubtful' ? '❔' : '🚑'} {m.playerName}
-                          {m.reason && <span className="text-zinc-500"> · {m.reason}</span>}
-                        </li>
-                      ))}
-                      {list.length === 0 && <li className="text-xs text-zinc-600">—</li>}
-                    </ul>
+              </>
+            ) : (
+              <div className="paywall-blur-wrapper">
+                <div className="paywall-blur-content">
+                  <div className="paywall-placeholder-rows">
+                    <div className="paywall-placeholder-row" />
+                    <div className="paywall-placeholder-row" style={{ opacity: 0.7, width: '80%' }} />
+                    <div className="paywall-placeholder-row" style={{ opacity: 0.5, width: '90%' }} />
+                    <div className="paywall-placeholder-row" style={{ opacity: 0.4, width: '70%' }} />
+                    <div className="paywall-placeholder-row" style={{ opacity: 0.6, width: '85%' }} />
+                    <div className="paywall-placeholder-row" style={{ opacity: 0.3, width: '75%' }} />
                   </div>
-                ))}
+                </div>
+                <div className="paywall-overlay">
+                  <div className="paywall-overlay-box">
+                    <div className="paywall-icon"><i className="fa-solid fa-lock" /></div>
+                    <h3>Odblokuj składy i historię H2H</h3>
+                    <p>Szczegółowe składy, rezerwowi, kontuzjowani gracze<br />oraz historia bezpośrednich spotkań &mdash; dostępne od planu <strong>PLUS</strong>.</p>
+                    <Link href="/subscribe" className="paywall-upgrade-btn"><i className="fa-solid fa-arrow-up-right-from-square" /> Sprawdź cennik</Link>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        ))}
 
-      {tab === 'stats' &&
-        (!access.stats ? (
-          <Paywall required="PREMIUM" feature="Advanced match statistics" loggedIn={!!user} />
-        ) : stats.length === 0 ? (
-          <p className="text-center text-sm text-zinc-500 py-10">No statistics available for this match.</p>
-        ) : (
-          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4 space-y-4">
-            <div className="flex gap-2">
-              {stats.map((p, i) => (
-                <button key={p.period} onClick={() => setPeriod(i)} className={`px-3 py-1 rounded-md text-xs ${i === period ? 'bg-emerald-600 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
-                  {p.period === 'ALL' ? 'Full match' : p.period === '1ST' ? '1st half' : p.period === '2ND' ? '2nd half' : p.period}
-                </button>
-              ))}
-            </div>
-            {activePeriod?.items.map((it) => (
-              <div key={it.name}>
-                <div className="flex justify-between text-xs text-zinc-300 mb-1">
-                  <span className="font-semibold">{it.home}</span>
-                  <span className="text-zinc-500">{it.name}</span>
-                  <span className="font-semibold">{it.away}</span>
+          {/* STATYSTYKI (PREMIUM) */}
+          <div className="tab-content" style={{ display: tab === 'stats' ? 'block' : 'none' }}>
+            {access.stats ? (
+              stats.length > 0 ? (
+                <div className="stats-container">
+                  <div className="stats-period-tabs">
+                    {stats.map((p, i) => (
+                      <button key={p.period} className={`period-btn${i === period ? ' active' : ''}`} onClick={() => setPeriod(i)}>
+                        {p.period === 'ALL' ? 'Cały mecz' : p.period === '1ST' ? '1. połowa' : p.period === '2ND' ? '2. połowa' : p.period}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="stats-period-panel">
+                    {activePeriod?.items.map((it, i) => (
+                      <div key={`${it.name}-${i}`} className={`stat-row${it.isPossession ? ' stat-highlight' : ''}`}>
+                        <div className="stat-value stat-home-val">{it.home}</div>
+                        <div className="stat-bar-wrapper">
+                          <div className="stat-label">{it.name}</div>
+                          <div className="stat-bar-dual">
+                            <div className="stat-bar-home" style={{ width: `${it.homePct}%` }} />
+                            <div className="stat-bar-away" style={{ width: `${it.awayPct}%` }} />
+                          </div>
+                        </div>
+                        <div className="stat-value stat-away-val">{it.away}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex h-1.5 rounded-full overflow-hidden bg-zinc-800">
-                  <div className="bg-emerald-500" style={{ width: `${it.homePct}%` }} />
-                  <div className="bg-sky-500" style={{ width: `${it.awayPct}%` }} />
-                </div>
+              ) : (
+                <div className="stats-empty"><i className="fa-solid fa-chart-bar" /> Statystyki niedostępne</div>
+              )
+            ) : (
+              <div className="paywall-premium-banner">
+                <div className="paywall-premium-crown"><i className="fa-solid fa-crown" /></div>
+                <h3>Statystyki xG i zaawansowane dane</h3>
+                <p>Oczekiwane bramki (xG), posiadanie piłki, strzały celne<br />i dziesiątki innych wskaźników &mdash; dostępne wyłącznie w planie <strong>PREMIUM</strong>.</p>
+                <p className="paywall-premium-tagline">Wznieś swoje analizy na najwyższy poziom.</p>
+                <Link href="/subscribe" className="paywall-upgrade-btn paywall-upgrade-premium"><i className="fa-solid fa-crown" /> Wybierz Premium</Link>
               </div>
-            ))}
+            )}
           </div>
-        ))}
+        </div>
+      </div>
     </div>
   );
 }

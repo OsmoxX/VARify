@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
+import '@/styles/calendar.css';
 import { useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, Trophy } from 'lucide-react';
 import { useApi, useMounted } from '@/lib/hooks';
 import { formatLocalTime, localDateStr, userTimeZone } from '@/lib/time';
+import { LeagueControls } from '@/components/live/LeagueControls';
 import type { LeagueGroupData, TeamRef } from '@/lib/types';
 
 interface Upcoming {
@@ -21,11 +21,17 @@ interface CalendarResponse {
   total: number;
 }
 
+const DAY_NAMES = ['Ndz', 'Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob'];
+
+/** Nadchodzące mecze — port `calendar.html` + `calendar.js` (pasek 5 dni, filtr lig, godziny w strefie użytkownika). */
 export default function CalendarPage() {
   const mounted = useMounted();
   const [selected, setSelected] = useState<string | null>(null);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [expandAll, setExpandAll] = useState(true);
 
-  // 5 dni od "dziś" w strefie użytkownika (nie UTC — toISOString przesuwał dzień po północy)
+  // 5 dni od „dziś” w strefie użytkownika (nie UTC — toISOString przesuwał dzień po północy)
   const days = useMemo(() => {
     if (!mounted) return [];
     const base = new Date();
@@ -33,9 +39,8 @@ export default function CalendarPage() {
       const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
       return {
         dateStr: localDateStr(d),
-        weekday: d.toLocaleDateString([], { weekday: 'short' }),
-        dayNumber: d.getDate(),
-        month: d.toLocaleDateString([], { month: 'short' }),
+        name: i === 0 ? 'Dziś' : i === 1 ? 'Jutro' : DAY_NAMES[d.getDay()]!,
+        date: `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`,
       };
     });
   }, [mounted]);
@@ -44,66 +49,86 @@ export default function CalendarPage() {
   const tz = mounted ? userTimeZone() : 'UTC';
   const { data, loading, error, reload } = useApi<CalendarResponse>(date ? `/calendar?date=${date}&tz=${encodeURIComponent(tz)}` : null);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 pb-2 border-b border-[#222]">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-          <CalendarIcon className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-white">Match Calendar</h1>
-          <p className="text-xs text-zinc-400">Fixtures by day · times shown in your local time ({tz})</p>
-        </div>
-      </div>
+  const leagues = data?.leagues ?? [];
+  const shown = leagues.filter((l) => !hidden.has(l.leagueApiId));
+  const top = shown.filter((l) => l.isTop);
+  const other = shown.filter((l) => !l.isTop);
 
-      <div className="flex gap-2 overflow-x-auto pb-2">
+  const toggleCollapsed = (id: string) =>
+    setCollapsed((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+
+  const section = (l: LeagueGroupData<Upcoming>) => (
+    <div key={l.leagueApiId} className={`league-section${l.isTop ? ' top-league' : ''}${collapsed.has(l.leagueApiId) ? ' collapsed' : ''}`}>
+      <div className="league-header" onClick={() => toggleCollapsed(l.leagueApiId)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleCollapsed(l.leagueApiId)}>
+        <div className="league-info">
+          {l.isTop ? <i className="fa-solid fa-star league-icon" style={{ color: 'var(--accent)' }} /> : <i className="fa-solid fa-trophy league-icon" />}
+          <span className="league-title">{l.leagueName}</span>
+          {l.country && <span className="country-tag">• {l.country}</span>}
+        </div>
+        <i className="fa-solid fa-chevron-down chevron-icon" />
+      </div>
+      <div className="league-matches">
+        {l.matches.map((m) => (
+          <div key={m.id} className="match-row upcoming-match-row">
+            <div className="team team-home">{m.homeTeam?.name}</div>
+            <div className="score-container">
+              <div className="kickoff-time"><i className="fa-regular fa-clock" /> {formatLocalTime(m.startDatetime)}</div>
+            </div>
+            <div className="team team-away">{m.awayTeam?.name}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="vf-calendar">
+      <LeagueControls
+        title="Nadchodzące mecze"
+        titleExtra={<i className="fa-solid fa-calendar-days calendar-icon-title" />}
+        leagues={leagues.map((l) => ({ id: l.leagueApiId, name: l.leagueName }))}
+        hidden={hidden}
+        onHiddenChange={setHidden}
+        expandAll={expandAll}
+        onExpandAllChange={(v) => {
+          setExpandAll(v);
+          setCollapsed(v ? new Set() : new Set(leagues.map((l) => l.leagueApiId)));
+        }}
+      />
+
+      <div className="day-picker">
         {days.map((d) => (
-          <button
-            key={d.dateStr}
-            onClick={() => setSelected(d.dateStr)}
-            className={`flex-1 min-w-[80px] p-3 rounded-xl border text-center transition-all ${
-              d.dateStr === date ? 'bg-emerald-500/15 border-emerald-500 text-white font-bold ring-1 ring-emerald-500/50' : 'bg-[#1e1e1e] border-[#2a2a2a] text-zinc-400 hover:text-white hover:bg-zinc-800'
-            }`}
-          >
-            <div className="text-[10px] uppercase tracking-wider">{d.weekday}</div>
-            <div className="text-lg font-bold my-0.5 text-zinc-100">{d.dayNumber}</div>
-            <div className="text-[10px] text-zinc-500">{d.month}</div>
+          <button key={d.dateStr} className={`day-picker-btn${d.dateStr === date ? ' active' : ''}`} onClick={() => setSelected(d.dateStr)}>
+            <span className="day-name">{d.name}</span>
+            <span className="day-date">{d.date}</span>
           </button>
         ))}
       </div>
 
-      {error ? (
-        <div className="py-16 text-center space-y-3">
-          <p className="text-sm text-red-400">{error.message}</p>
-          <button onClick={reload} className="px-4 py-2 rounded-lg bg-zinc-800 text-xs text-white">Try again</button>
-        </div>
-      ) : loading || !data ? (
-        <div className="py-20 text-center text-zinc-500 text-sm">Loading scheduled fixtures...</div>
-      ) : data.leagues.length === 0 ? (
-        <div className="py-20 text-center text-zinc-500 text-sm">No matches scheduled for this date.</div>
-      ) : (
-        <div className="space-y-4">
-          {data.leagues.map((lg) => (
-            <div key={lg.leagueApiId} className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
-              <Link href={`/league/${lg.leagueApiId}`} className="px-4 py-2.5 bg-[#181818] border-b border-[#252525] flex items-center gap-2 hover:text-emerald-400">
-                {lg.isTop && <Trophy className="w-4 h-4 text-amber-400" />}
-                <span className="text-xs font-semibold text-zinc-200">{lg.leagueName}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">{lg.matches.length}</span>
-              </Link>
-              <div className="divide-y divide-[#252525]">
-                {lg.matches.map((m) => (
-                  <div key={m.id} className="p-3 flex items-center text-xs hover:bg-zinc-800/40">
-                    <span className="w-14 text-zinc-500 font-mono text-center">{formatLocalTime(m.startDatetime)}</span>
-                    <span className="flex-1 font-medium text-zinc-200 text-right truncate">{m.homeTeam?.name ?? 'Home'}</span>
-                    <span className="px-3 text-zinc-600 font-bold">vs</span>
-                    <span className="flex-1 font-medium text-zinc-200 truncate">{m.awayTeam?.name ?? 'Away'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="calendar-container">
+        {error ? (
+          <div className="empty-state">
+            <i className="fa-solid fa-triangle-exclamation" />
+            <p>Błąd ładowania meczów. {error.message}</p>
+            <button className="filter-btn" style={{ margin: '12px auto 0' }} onClick={reload}>Spróbuj ponownie</button>
+          </div>
+        ) : loading || !data ? (
+          <div className="empty-state"><i className="fa-solid fa-circle-notch fa-spin" /><p>Ładowanie meczów...</p></div>
+        ) : shown.length === 0 ? (
+          <div className="empty-state"><i className="fa-solid fa-calendar-xmark" /><p>Brak nadchodzących meczów na ten dzień.</p></div>
+        ) : (
+          <>
+            {top.map(section)}
+            {top.length > 0 && other.length > 0 && <div className="other-leagues-divider"><span>Inne ligi</span></div>}
+            {other.map(section)}
+          </>
+        )}
+      </div>
     </div>
   );
 }

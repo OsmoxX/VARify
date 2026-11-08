@@ -1,4 +1,4 @@
-/* Przeniesione z Django: accounts/static/accounts/css/subscribe.css (selektory objęte przestrzenią .vf-sub) */
+/* Port z Django: subscribe.css (selektory objęte przestrzenią .vf-sub) */
 .vf-sub *,
 .vf-sub *::before,
 .vf-sub *::after { box-sizing: border-box; margin: 0; padding: 0; }

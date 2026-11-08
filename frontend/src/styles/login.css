@@ -1,4 +1,4 @@
-/* Przeniesione z Django: matches/static/matches/login.css (selektory objęte przestrzenią .vf-login) */
+/* Port z Django: login.css (selektory objęte przestrzenią .vf-login) */
 .vf-login *,
 .vf-login *::before,
 .vf-login *::after { box-sizing: border-box; margin: 0; padding: 0; }

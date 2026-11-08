@@ -1,4 +1,4 @@
-/* Przeniesione z Django: matches/static/matches/register.css (selektory objęte przestrzenią .vf-register) */
+/* Port z Django: register.css (selektory objęte przestrzenią .vf-register) */
 .vf-register *,
 .vf-register *::before,
 .vf-register *::after { box-sizing: border-box; margin: 0; padding: 0; }

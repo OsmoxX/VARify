@@ -1,0 +1,125 @@
+/* Port z Django: calendar.css (selektory objęte przestrzenią .vf-calendar) */
+.vf-calendar .calendar-icon-title {
+    color: var(--accent);
+    font-size: 1.4rem;
+    margin-left: 10px;
+}
+.vf-calendar .day-picker {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 0 16px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.vf-calendar .day-picker::-webkit-scrollbar {
+    display: none;
+}
+.vf-calendar .day-picker-btn {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.3px;
+    min-width: 72px;
+}
+.vf-calendar .day-picker-btn .day-name {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    opacity: 0.7;
+}
+.vf-calendar .day-picker-btn .day-date {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.vf-calendar .day-picker-btn:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--accent);
+}
+.vf-calendar .day-picker-btn.active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.vf-calendar .day-picker-btn.active .day-date {
+    color: var(--accent);
+}
+.vf-calendar .day-section {
+    margin-bottom: 28px;
+}
+.vf-calendar .day-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 14px 20px;
+    margin-bottom: 12px;
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.12);
+    border-radius: 12px;
+    letter-spacing: 0.3px;
+}
+.vf-calendar .day-header i {
+    font-size: 1.2rem;
+}
+.vf-calendar .match-status-ended {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+.vf-calendar .kickoff-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+}
+.vf-calendar .kickoff-time i {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+.vf-calendar .upcoming-match-row {
+    cursor: default;
+}
+.vf-calendar .no-matches-msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    opacity: 0.7;
+}
+.vf-calendar .no-matches-msg i {
+    font-size: 0.9rem;
+}
+@media (max-width: 600px) {
+.vf-calendar .day-header {
+        font-size: 0.95rem;
+        padding: 10px 14px;
+    }
+.vf-calendar .day-picker-btn {
+        padding: 8px 12px;
+        min-width: 60px;
+    }
+}

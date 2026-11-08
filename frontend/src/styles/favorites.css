@@ -1,0 +1,425 @@
+/* Port z Django: favorites.css (selektory objęte przestrzenią .vf-favorites) */
+.vf-favorites .toggle-favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+
+    
+    transition:
+        background 0.25s ease,
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.25s ease;
+}
+.vf-favorites .toggle-favorite-btn i {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.35);
+    transition:
+        color 0.25s ease,
+        text-shadow 0.25s ease;
+    pointer-events: none; 
+}
+.vf-favorites .toggle-favorite-btn:not(.is-favorite):hover {
+    background: rgba(255, 215, 0, 0.1);
+    transform: scale(1.1);
+}
+.vf-favorites .toggle-favorite-btn:not(.is-favorite):hover i {
+    color: rgba(255, 215, 0, 0.6);
+}
+.vf-favorites .toggle-favorite-btn.is-favorite i {
+    color: #ffd700;
+    text-shadow:
+        0 0 8px rgba(255, 215, 0, 0.6),
+        0 0 16px rgba(255, 215, 0, 0.25);
+}
+.vf-favorites .toggle-favorite-btn.is-favorite {
+    background: rgba(255, 215, 0, 0.12);
+}
+.vf-favorites .toggle-favorite-btn.is-favorite:hover {
+    background: rgba(255, 215, 0, 0.08);
+    transform: scale(1.05);
+}
+.vf-favorites .toggle-favorite-btn.is-favorite:hover i {
+    color: #ffec6e;
+    text-shadow:
+        0 0 10px rgba(255, 215, 0, 0.7),
+        0 0 20px rgba(255, 215, 0, 0.35);
+}
+.vf-favorites .toggle-favorite-btn.fav-pop {
+    animation: vffafavorites-fav-star-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes vffafavorites-fav-star-pop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.35); }
+    70%  { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+.vf-favorites .toggle-favorite-btn.is-loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+.vf-favorites .toggle-favorite-btn {
+    position: relative;
+}
+.vf-favorites .toggle-favorite-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(15, 15, 25, 0.92);
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 50;
+}
+.vf-favorites .toggle-favorite-btn:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.vf-favorites .team-name-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.vf-favorites .team-name-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.vf-favorites .team-name-row h1 {
+    margin: 0;
+}
+.vf-favorites .team-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.vf-favorites .team-link .toggle-favorite-btn {
+    width: 26px;
+    height: 26px;
+    margin-left: 4px;
+}
+.vf-favorites .team-link .toggle-favorite-btn i {
+    font-size: 0.85rem;
+}
+.vf-favorites .fav-page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+.vf-favorites .fav-page-header h1 {
+    font-size: 1.8rem;
+    color: var(--text-light);
+    margin: 0;
+    font-weight: 700;
+}
+.vf-favorites .fav-page-header .header-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #ffd700;
+    flex-shrink: 0;
+}
+.vf-favorites .fav-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 215, 0, 0.12);
+    color: #ffd700;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.vf-favorites .fav-section {
+    margin-bottom: 48px;
+}
+.vf-favorites .fav-section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin: 0 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.vf-favorites .fav-section-title i {
+    color: var(--accent);
+}
+.vf-favorites .fav-teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+.vf-favorites .fav-team-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.vf-favorites .fav-team-card:hover {
+    border-color: rgba(255, 215, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.06);
+    transform: translateY(-2px);
+}
+.vf-favorites .fav-team-card.removing {
+    animation: vffafavorites-cardFadeOut 0.3s ease forwards;
+}
+@keyframes vffafavorites-cardFadeOut {
+    0%   { opacity: 1; transform: scale(1); max-height: 200px; }
+    50%  { opacity: 0.3; transform: scale(0.95); }
+    100% { opacity: 0; transform: scale(0.9); max-height: 0; padding: 0; margin: 0; overflow: hidden; }
+}
+.vf-favorites .fav-team-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    flex-shrink: 0;
+}
+.vf-favorites .fav-team-logo-fallback {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.vf-favorites .fav-team-info {
+    flex: 1;
+    min-width: 0;
+}
+.vf-favorites .fav-team-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s;
+}
+.vf-favorites .fav-team-name:hover {
+    color: var(--accent);
+}
+.vf-favorites .fav-team-card .toggle-favorite-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.vf-favorites .fav-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+.vf-favorites .fav-empty-state .empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+    opacity: 0.3;
+    display: block;
+}
+.vf-favorites .fav-empty-state h3 {
+    font-size: 1.15rem;
+    color: var(--text-light);
+    margin: 0 0 8px;
+    font-weight: 600;
+}
+.vf-favorites .fav-empty-state p {
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+}
+.vf-favorites .fav-search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.vf-favorites .fav-search-wrapper {
+    position: relative;
+    flex: 1;
+}
+.vf-favorites .fav-search-wrapper i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+.vf-favorites .fav-search-input {
+    width: 100%;
+    padding: 11px 16px 11px 40px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: var(--text-light);
+    font-size: 0.92rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.vf-favorites .fav-search-input:focus {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+}
+.vf-favorites .fav-search-input::placeholder {
+    color: var(--text-muted);
+}
+.vf-favorites .fav-search-btn {
+    padding: 11px 22px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.vf-favorites .fav-search-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+.vf-favorites .fav-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.vf-favorites .fav-search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    transition: border-color 0.2s, background 0.2s;
+}
+.vf-favorites .fav-search-result-item:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+.vf-favorites .fav-result-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 3px;
+    flex-shrink: 0;
+}
+.vf-favorites .fav-result-logo-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.vf-favorites .fav-result-name {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    transition: color 0.2s;
+}
+.vf-favorites .fav-result-name:hover {
+    color: var(--accent);
+}
+.vf-favorites .fav-results-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+.vf-favorites .fav-results-count strong {
+    color: var(--accent);
+}
+.vf-favorites .fav-clear-search-btn {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    margin-left: 10px;
+    transition: color 0.2s;
+}
+.vf-favorites .fav-clear-search-btn:hover {
+    color: var(--danger);
+}
+@media (max-width: 768px) {
+.vf-favorites .fav-teams-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+.vf-favorites .fav-page-header h1 {
+        font-size: 1.4rem;
+    }
+.vf-favorites .fav-search-form {
+        flex-direction: column;
+    }
+.vf-favorites .fav-search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+@media (max-width: 480px) {
+.vf-favorites .fav-teams-grid {
+        grid-template-columns: 1fr;
+    }
+}

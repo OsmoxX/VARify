@@ -1,0 +1,160 @@
+/* Port z Django: league.css (selektory objęte przestrzenią .vf-league) */
+.vf-league .tabs-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    background: #1c1c1e;
+    padding: 6px;
+    border-radius: 12px;
+}
+.vf-league .tab-btn {
+    flex: 1;
+    background: transparent;
+    color: #9ca3af;
+    border: none;
+    padding: 12px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.vf-league .tab-btn:hover {
+    color: #e5e7eb;
+}
+.vf-league .tab-btn.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+.vf-league .tab-content {
+    animation: vfleleague-fadeIn 0.3s ease forwards;
+}
+@keyframes vfleleague-fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.vf-league .table-container {
+    overflow-x: auto;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 4px;
+}
+.vf-league .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #d1d5db;
+}
+.vf-league .standings-table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-weight: 600;
+}
+.vf-league .standings-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+}
+.vf-league .standings-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+.vf-league .col-pos {
+    width: 40px;
+    font-weight: 700;
+    color: #10b981;
+}
+.vf-league .col-num {
+    width: 50px;
+    color: #9ca3af;
+}
+.vf-league .col-team {
+    text-align: left;
+    white-space: nowrap;
+}
+.vf-league .team-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f3f4f6;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.vf-league .team-link:hover {
+    color: #10b981;
+}
+.vf-league .team-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+.vf-league .col-pts {
+    font-weight: 800;
+    color: #fff;
+}
+.vf-league .empty-table {
+    padding: 30px !important;
+    color: #6b7280;
+    font-style: italic;
+}
+.vf-league .upcoming-score {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    font-size: 0.85rem !important;
+}
+@media (max-width: 768px) {
+.vf-league .table-container {
+        padding: 2px;
+        border-radius: 8px;
+        
+    }
+.vf-league .standings-table {
+        width: 100%;
+        table-layout: auto;
+        font-size: 0.78rem;
+    }
+.vf-league .standings-table th,
+.vf-league .standings-table td {
+        padding: 9px 5px;
+    }
+.vf-league .col-num {
+        width: 30px;
+        padding: 9px 3px;
+    }
+.vf-league .col-pos {
+        width: 24px;
+        padding: 9px 3px;
+    }
+.vf-league .col-pts {
+        padding: 9px 4px;
+    }
+.vf-league .col-team {
+        white-space: normal;
+        min-width: 80px;
+    }
+.vf-league .team-link {
+        gap: 5px;
+        font-size: 0.78rem;
+    }
+.vf-league .team-icon {
+        width: 18px;
+        height: 18px;
+    }
+.vf-league .tab-btn {
+        font-size: 0.82rem;
+        padding: 10px 0;
+        gap: 5px;
+    }
+.vf-league .team-match-row {
+        padding: 10px 12px;
+    }
+}

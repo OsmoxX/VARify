@@ -1,34 +1,52 @@
 'use client';
 
+import '@/styles/account.css';
+import '@/styles/account-push.css';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BellRing, CreditCard, Lock } from 'lucide-react';
-import { api, ApiError } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasAccess } from '@/lib/types';
 import { disablePush, enablePush, isPushEnabled, pushSupported } from '@/lib/push';
 
-const input = 'mt-1 w-full bg-[#181818] border border-[#333] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50';
+type Msg = { ok: boolean; text: string } | null;
 
+function PasswordField({ id, label, hint, value, onChange }: { id: string; label: string; hint?: string; value: string; onChange: (v: string) => void }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="form-group">
+      <label htmlFor={id}>{label} {hint && <small>({hint})</small>}</label>
+      <div className="input-eye-wrapper">
+        <input type={show ? 'text' : 'password'} id={id} className="form-input" value={value} onChange={(e) => onChange(e.target.value)} autoComplete={id === 'current_password' ? 'current-password' : 'new-password'} maxLength={72} />
+        <button type="button" className="toggle-eye" onClick={() => setShow(!show)} aria-label={show ? 'Ukryj hasło' : 'Pokaż hasło'}>
+          <i className={`fa-solid ${show ? 'fa-eye-slash' : 'fa-eye'}`} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Ustawienia konta — port `account_settings.html`. */
 export default function AccountPage() {
-  const { user, tier, ready, refresh, logout } = useAuth();
+  const { user, tier, ready, refresh } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [initFor, setInitFor] = useState<number | null>(null);
+  const [profileMsg, setProfileMsg] = useState<Msg>(null);
   const [curPw, setCurPw] = useState('');
   const [newPw, setNewPw] = useState('');
-  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwMsg, setPwMsg] = useState<Msg>(null);
   const [push, setPush] = useState<boolean | null>(null);
   const [pushMsg, setPushMsg] = useState<string | null>(null);
-  const [initFor, setInitFor] = useState<number | null>(null);
 
   useEffect(() => {
     if (ready && !user) router.replace('/login?next=/account');
   }, [ready, user, router]);
 
-  // Inicjalizacja pól formularza raz na użytkownika (bez setState w ciele efektu: tylko "ustaw gdy zmieniony")
+  // Inicjalizacja pól raz na użytkownika
   if (user && initFor !== user.id) {
     setInitFor(user.id);
     setEmail(user.email);
@@ -45,7 +63,7 @@ export default function AccountPage() {
     };
   }, []);
 
-  if (!ready || !user) return <div className="py-20 text-center text-zinc-500 text-sm">Loading...</div>;
+  if (!ready || !user) return <div className="vf-account"><div className="account-wrapper"><p className="account-subtitle">Ładowanie...</p></div></div>;
   const canRename = hasAccess(tier, 'PLUS');
 
   const saveProfile = async (e: React.FormEvent) => {
@@ -54,22 +72,25 @@ export default function AccountPage() {
     try {
       await api.patch('/account/profile', { email: email.trim(), ...(canRename ? { username: username.trim() } : {}) });
       await refresh();
-      setProfileMsg({ ok: true, text: 'Profile updated.' });
+      setProfileMsg({ ok: true, text: 'Dane profilu zostały zaktualizowane.' });
     } catch (err) {
-      setProfileMsg({ ok: false, text: err instanceof Error ? err.message : 'Update failed' });
+      setProfileMsg({ ok: false, text: err instanceof Error ? err.message : 'Nie udało się zapisać zmian.' });
     }
   };
 
   const changePw = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwMsg(null);
+    if (newPw.length < 8) return setPwMsg({ ok: false, text: 'Nowe hasło musi mieć co najmniej 8 znaków.' });
+    if (newPw !== confirmPw) return setPwMsg({ ok: false, text: 'Hasła nie są identyczne.' });
     try {
       await api.post('/account/password', { currentPassword: curPw, newPassword: newPw });
       setCurPw('');
       setNewPw('');
-      setPwMsg({ ok: true, text: 'Password changed.' });
+      setConfirmPw('');
+      setPwMsg({ ok: true, text: 'Hasło zostało zmienione.' });
     } catch (err) {
-      setPwMsg({ ok: false, text: err instanceof Error ? err.message : 'Could not change password' });
+      setPwMsg({ ok: false, text: err instanceof Error ? err.message : 'Nie udało się zmienić hasła.' });
     }
   };
 
@@ -80,76 +101,137 @@ export default function AccountPage() {
       else await enablePush();
       setPush(await isPushEnabled());
     } catch (err) {
-      setPushMsg(err instanceof ApiError || err instanceof Error ? err.message : 'Failed');
+      setPushMsg(err instanceof Error ? err.message : 'Nie udało się zmienić ustawienia');
     }
   };
 
-  const billing = async () => {
+  const openPortal = async () => {
     try {
       const res = await api.post<{ url: string }>('/stripe/portal');
       window.location.href = res.url;
     } catch (err) {
-      setProfileMsg({ ok: false, text: err instanceof Error ? err.message : 'Billing portal unavailable' });
+      setProfileMsg({ ok: false, text: err instanceof Error ? err.message : 'Panel płatności jest niedostępny.' });
     }
   };
 
-  const card = 'bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5 space-y-4';
-  return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-xl font-bold text-white">Account</h1>
+  const alert = (m: Msg) =>
+    m && (
+      <div className={`account-alert account-alert-${m.ok ? 'success' : 'error'}`} role="status">
+        <i className={`fa-solid ${m.ok ? 'fa-circle-check' : 'fa-circle-exclamation'}`} /> {m.text}
+      </div>
+    );
 
-      <section className={card}>
-        <div className="flex items-center justify-between">
+  return (
+    <div className="vf-account">
+      <div className="account-wrapper">
+        <Link className="back-btn-modern" href="/"><i className="fa-solid fa-chevron-left" /> Powrót</Link>
+
+        <div className="account-header">
+          <div className="account-avatar"><i className="fa-solid fa-circle-user" /></div>
           <div>
-            <p className="text-xs text-zinc-500">Current plan</p>
-            <p className="text-lg font-bold text-white">{tier}</p>
-            {user.subscriptionStatus === 'past_due' && <p className="text-xs text-amber-400 mt-1">Payment failed — update your card to keep your plan.</p>}
-          </div>
-          <div className="flex gap-2">
-            {tier !== 'FREE' && (
-              <button onClick={() => void billing()} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-white">
-                <CreditCard className="w-4 h-4" /> Billing
-              </button>
-            )}
-            {tier !== 'PREMIUM' && <Link href="/subscribe" className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white">Upgrade</Link>}
+            <h1 className="account-title">{user.username}</h1>
+            <p className="account-subtitle">Ustawienia konta</p>
           </div>
         </div>
-      </section>
 
-      <form onSubmit={saveProfile} className={card}>
-        <h2 className="text-sm font-semibold text-white">Profile</h2>
-        <label className="block text-xs text-zinc-400">Email<input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} /></label>
-        <label className="block text-xs text-zinc-400">
-          <span className="flex items-center gap-1.5">Username {!canRename && <Lock className="w-3 h-3 text-amber-400" />}</span>
-          <input value={username} minLength={3} maxLength={30} disabled={!canRename} onChange={(e) => setUsername(e.target.value)} className={input} />
-          {!canRename && <span className="text-[11px] text-zinc-500">Changing the username requires the PLUS plan.</span>}
-        </label>
-        {profileMsg && <p className={`text-xs ${profileMsg.ok ? 'text-emerald-400' : 'text-red-400'}`} role="status">{profileMsg.text}</p>}
-        <button className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white">Save</button>
-      </form>
+        {/* SUBSKRYPCJA */}
+        <div className="account-card">
+          <h2 className="account-card-title sub-card-header">
+            <span><i className="fa-solid fa-credit-card" /> Twoja Subskrypcja</span>
+            {tier === 'PREMIUM' ? (
+              <span className="sub-card-badge premium"><i className="fa-solid fa-crown" /> Wyższy Plan PREMIUM</span>
+            ) : tier === 'PLUS' ? (
+              <span className="sub-card-badge plus"><i className="fa-solid fa-star" /> Aktywny Plan PLUS</span>
+            ) : (
+              <span className="sub-card-badge free">Darmowy Plan FREE</span>
+            )}
+          </h2>
+          <div className="sub-info-container">
+            <div className="sub-info-box">
+              <p className="sub-info-label">Status Konta</p>
+              <div className="sub-info-status">
+                <span className="status-dot" style={user.subscriptionStatus === 'past_due' ? { background: '#f59e0b' } : undefined} />
+                <span className="status-text">{user.subscriptionStatus === 'past_due' ? 'Płatność nieudana — zaktualizuj kartę' : 'Aktywne (Zgodne z regulaminem)'}</span>
+              </div>
+            </div>
+            {tier !== 'FREE' && (
+              <div className="sub-info-box">
+                <p className="sub-info-label">Cykl Rozliczeniowy</p>
+                <p className="sub-info-value">Odświeżane automatycznie (co miesiąc)</p>
+                <p className="sub-info-footer"><i className="fa-brands fa-stripe" /> Bezpieczne płatności obsługiwane i chronione przez Stripe.</p>
+              </div>
+            )}
+            <div className="sub-action-wrapper">
+              <Link href="/subscribe" className={`btn-sub-action ${tier === 'FREE' ? 'free' : 'active-sub'}`}>
+                {tier === 'FREE' ? (<><i className="fa-solid fa-arrow-up-right-from-square" /> Poznaj możliwości ulepszenia planu</>) : tier === 'PLUS' ? (<><i className="fa-solid fa-crown" /> Przełącz na Premium</>) : (<><i className="fa-solid fa-gear" /> Zapoznaj się z ofertami</>)}
+              </Link>
+              {tier !== 'FREE' && (
+                <button type="button" className="btn-sub-action active-sub" style={{ marginTop: 8, cursor: 'pointer' }} onClick={() => void openPortal()}>
+                  <i className="fa-solid fa-credit-card" /> Zarządzaj / anuluj subskrypcję
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
 
-      <form onSubmit={changePw} className={card}>
-        <h2 className="text-sm font-semibold text-white">Change password</h2>
-        <label className="block text-xs text-zinc-400">Current password<input type="password" required autoComplete="current-password" value={curPw} onChange={(e) => setCurPw(e.target.value)} className={input} /></label>
-        <label className="block text-xs text-zinc-400">New password (min. 8 characters)<input type="password" required minLength={8} maxLength={72} autoComplete="new-password" value={newPw} onChange={(e) => setNewPw(e.target.value)} className={input} /></label>
-        {pwMsg && <p className={`text-xs ${pwMsg.ok ? 'text-emerald-400' : 'text-red-400'}`} role="status">{pwMsg.text}</p>}
-        <button className="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-sm font-semibold text-white">Update password</button>
-      </form>
+        {/* DANE PROFILU */}
+        <div className="account-card">
+          <h2 className="account-card-title"><i className="fa-solid fa-user-pen" /> Dane profilu</h2>
+          {alert(profileMsg)}
+          <form className="account-form" onSubmit={saveProfile}>
+            <div className="form-group">
+              <label htmlFor="username">Nazwa użytkownika</label>
+              {canRename ? (
+                <input type="text" id="username" className="form-input" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" minLength={3} maxLength={30} />
+              ) : (
+                <>
+                  <div className="input-locked-wrapper">
+                    <input type="text" id="username" className="form-input input-locked" value={username} readOnly title="Zmiana nicku wymaga planu PLUS" />
+                    <i className="fa-solid fa-lock input-lock-icon" style={{ color: '#f59e0b' }} />
+                  </div>
+                  <span className="form-hint-locked">
+                    <i className="fa-solid fa-lock" style={{ fontSize: '0.7rem' }} /> Zmiana nicku dostępna od planu <Link href="/subscribe" className="hint-upgrade-link">PLUS →</Link>
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="form-group">
+              <label htmlFor="email">Adres e-mail</label>
+              <input type="email" id="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+            </div>
+            <button type="submit" className="btn-save"><i className="fa-solid fa-floppy-disk" /> Zapisz zmiany</button>
+          </form>
+        </div>
 
-      <section className={card}>
-        <h2 className="text-sm font-semibold text-white flex items-center gap-2"><BellRing className="w-4 h-4" /> Push notifications</h2>
-        <p className="text-xs text-zinc-400">Get goal, card and kick-off alerts on this device even when VARify is closed.</p>
-        {pushSupported() ? (
-          <button onClick={() => void togglePush()} disabled={push === null} className={`px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${push ? 'bg-zinc-700 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}>
-            {push ? 'Disable on this device' : 'Enable on this device'}
-          </button>
-        ) : (
-          <p className="text-xs text-zinc-500">Push is not supported in this browser.</p>
-        )}
-        {pushMsg && <p className="text-xs text-red-400">{pushMsg}</p>}
-      </section>
+        {/* PUSH */}
+        <div className="account-card">
+          <h2 className="account-card-title"><i className="fa-solid fa-bell" /> Powiadomienia (Push)</h2>
+          <div className="push-settings-container">
+            <div className="push-settings-text">
+              <p><strong>Wyniki na żywo i powiadomienia</strong></p>
+              <p className="text-muted">Bądź na bieżąco, nawet gdy aplikacja jest zamknięta.</p>
+              {pushMsg && <p style={{ color: '#f87171', fontSize: '0.8rem' }}>{pushMsg}</p>}
+              {!pushSupported() && <p className="text-muted">Ta przeglądarka nie obsługuje powiadomień push.</p>}
+            </div>
+            <label className="push-switch" title="Włącz powiadomienia na tym urządzeniu">
+              <input type="checkbox" checked={!!push} disabled={push === null || !pushSupported()} onChange={() => void togglePush()} />
+              <span className="push-slider" />
+            </label>
+          </div>
+        </div>
 
-      <button onClick={() => { logout(); router.push('/'); }} className="text-xs text-red-400 hover:underline">Log out</button>
+        {/* HASŁO */}
+        <div className="account-card">
+          <h2 className="account-card-title"><i className="fa-solid fa-lock" /> Zmiana hasła</h2>
+          {alert(pwMsg)}
+          <form className="account-form" onSubmit={changePw}>
+            <PasswordField id="current_password" label="Obecne hasło" value={curPw} onChange={setCurPw} />
+            <PasswordField id="new_password" label="Nowe hasło" hint="min. 8 znaków" value={newPw} onChange={setNewPw} />
+            <PasswordField id="confirm_password" label="Powtórz nowe hasło" value={confirmPw} onChange={setConfirmPw} />
+            <button type="submit" className="btn-save btn-save-danger"><i className="fa-solid fa-key" /> Zmień hasło</button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
